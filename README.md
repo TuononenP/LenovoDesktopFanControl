@@ -1,88 +1,111 @@
 # Lenovo Desktop Fan Control
 
-A modern, high-performance Windows desktop application built with WPF and .NET 10 to monitor and control fan speeds, custom curves, and lighting profiles on Lenovo desktop PCs using WMI interfaces and Windows LampArray APIs.
+A modern WPF application for monitoring and controlling fan speeds, custom fan curves, and tower lighting on supported Lenovo desktop PCs. It uses Lenovo WMI interfaces and the Windows LampArray API, with a visual test service for UI development without compatible hardware.
 
----
+![Lenovo Desktop Fan Control dashboard](docs/images/dashboard.png)
 
-## 🚀 Key Features
+## Key Features
 
-- **Dynamic Fan Speed Control**: Fine-tune fan behavior or switch between system presets (Quiet, Balanced, Performance).
-- **Interactive Curve Editor**: Beautiful UI control for plotting custom temperature-to-speed curves.
-- **RGB Lighting Integration**: Manage system lighting via the Windows LampArray API (`LampArrayLightingService`).
-- **System Theme Harmony**: Integrates natively with Windows Light and Dark themes, adjusting title bar styling and colors dynamically.
-- **Multilingual Support**: Fully localized with resource dictionaries for English (`en`) and Finnish (`fi-FI`).
-- **Auto-Start Integration**: Seamless options to launch the controller minimized or directly at system boot.
-- **Visual Mock / Simulation Mode**: Built-in `VisualTestFanControlService` to run, preview, and test UI components safely on any Windows machine without requiring direct Lenovo hardware.
+- Quiet, Balanced, Performance, and Custom SmartFan modes
+- Live fan RPM and temperature monitoring
+- Per-fan target speeds and interactive custom fan curves
+- Multi-channel fan-zone telemetry
+- Tower-lighting power, brightness, global color, and per-zone color controls
+- Persistent fan, lighting-preference, language, startup, and tray settings
+- English and Finnish localization
+- Start with Windows and minimize-to-tray support
+- Visual test mode for development on unsupported hardware
 
----
+## Requirements
 
-## 🛠️ System Requirements & Architecture
+- Windows 10 or Windows 11
+- .NET 10 SDK or runtime
+- A supported Lenovo desktop for hardware control
+- Administrator privileges for Lenovo WMI access, requested through `app.manifest`
 
-- **Operating System**: Windows 10/11 (Target SDK: `windows10.0.26100.0`)
-- **Runtime**: .NET 10.0
-- **Privileges**: **Administrator rights** are required to interface with Lenovo WMI hardware control classes. This is enforced via `app.manifest`.
+The project targets `net10.0-windows10.0.26100.0`.
 
----
+## Building and Running
 
-## 📂 Codebase Structure
-
-The project follows clean MVVM (Model-View-ViewModel) design principles and is divided into two primary projects:
-
-```
-LenovoDesktopFanControl/
-├── LenovoDesktopFanControl/                     # Main WPF Application
-│   ├── Assets/                                  # App icons and media
-│   ├── Models/                                  # Domain entities (FanInfo, FanTable, SmartFanMode)
-│   ├── Services/                                # Hardware access, settings, localization, and theme services
-│   │   ├── AutoStartService.cs                  # Configures startup behavior in Windows Registry
-│   │   ├── FanFirmwareCompatibility.cs         # Checks system model/firmware matching
-│   │   ├── LampArrayLightingService.cs          # Direct lighting control implementation
-│   │   ├── NativeWindowTheme.cs                 # Native Windows system theme sync
-│   │   ├── VisualTestFanControlService.cs       # Mock service for non-Lenovo hardware development
-│   │   └── WmiFanControlService.cs              # WMI communication with Lenovo fan controller
-│   ├── ViewModels/                              # Presenters (MainViewModel, FanViewModel, RelayCommand)
-│   └── Views/                                   # XAML Pages, custom UserControls, Styles, and Value Converters
-│
-└── LenovoDesktopFanControl.Tests/               # Unit testing Suite
-    ├── MainViewModelTests.cs                    # UI logic and command tests
-    ├── ModelTests.cs                            # Configuration and parser tests
-    ├── LocalizationServiceTests.cs              # Multi-language verification tests
-    └── FanFirmwareCompatibilityTests.cs          # Hardware identification and compatibility logic tests
-```
-
----
-
-## 💻 Building and Running
-
-### Prerequisites
-1. Ensure the latest .NET 10 SDK is installed.
-2. Launch your command prompt or IDE (such as Rider or Visual Studio) as **Administrator**.
-
-### Commands
-
-**Build the Solution:**
-```sh
+```powershell
 dotnet build
-```
-
-**Run the Application:**
-```sh
 dotnet run
-```
-
-**Run Unit Tests:**
-```sh
 dotnet test
 ```
 
----
+Run the application from an elevated terminal when accessing real hardware.
 
-## 🧪 Visual Test Mode & Non-Lenovo Devices
+## Codebase Structure
 
-For development and UI design modifications, you can configure the app to run with `VisualTestFanControlService` instead of `WmiFanControlService`. This allows developers on non-Lenovo PCs (or laptops) to fully run the application, interact with the fan curve UI, and verify theme adjustments without running into WMI communication errors.
+The solution uses MVVM and is split into the WPF application and its xUnit test project.
 
----
+```text
+LenovoDesktopFanControl/
+|-- LenovoDesktopFanControl.sln
+|-- LenovoDesktopFanControl/                 WPF application
+|   |-- App.xaml(.cs)                        Application startup and shared resources
+|   |-- MainWindow.xaml(.cs)                 Main dashboard, tray, and window lifecycle
+|   |-- app.manifest                         Administrator elevation configuration
+|   |-- Assets/                              Application icon and asset generation
+|   |-- Models/
+|   |   |-- FanInfo.cs                       Fan and telemetry-channel data
+|   |   |-- FanSettings.cs                   Persisted application settings
+|   |   |-- FanTable.cs                      Ten-point firmware fan curves
+|   |   |-- LightingDeviceInfo.cs            Lighting devices, zones, and colors
+|   |   `-- SmartFanMode.cs                  Firmware operating modes
+|   |-- Services/
+|   |   |-- WmiFanControlService.cs          Lenovo fan discovery and control
+|   |   |-- WmiLightingService.cs            Lenovo WMI lighting control
+|   |   |-- LampArrayLightingService.cs      Windows Dynamic Lighting integration
+|   |   |-- SettingsService.cs               JSON settings persistence
+|   |   |-- LocalizationService.cs           Runtime language selection
+|   |   |-- AutoStartService.cs              Windows startup registration
+|   |   |-- FanFirmwareCompatibility.cs      Model and firmware compatibility checks
+|   |   |-- NativeWindowTheme.cs             Native title-bar appearance
+|   |   `-- VisualTestFanControlService.cs   Hardware-free UI development service
+|   |-- ViewModels/
+|   |   |-- MainViewModel.cs                 App state, polling, settings, and commands
+|   |   |-- FanViewModel.cs                  Fan-zone control and summarized telemetry
+|   |   |-- FanChannelViewModel.cs           Individual telemetry channels
+|   |   |-- LightingViewModel.cs             Lighting discovery and control state
+|   |   `-- RelayCommand.cs                  MVVM command implementation
+|   |-- Views/
+|   |   |-- Controls/                        Fan cards, icons, and curve editor
+|   |   |-- Converters/                      WPF binding converters
+|   |   |-- Markup/                          Localization markup extension
+|   |   `-- TrayMenuRenderer.cs              System-tray menu presentation
+|   |-- Themes/                              Colors, controls, and typography resources
+|   `-- Resources/                           English and Finnish resource files
+|-- LenovoDesktopFanControl.Tests/           xUnit unit and view-model tests
+|   |-- MainViewModelTests.cs
+|   |-- FanViewModelTests.cs
+|   |-- LightingViewModelTests.cs
+|   |-- SettingsServiceTests.cs
+|   |-- WmiFanControlServiceTests.cs
+|   `-- TestDoubles.cs
+`-- docs/images/                             README images
+```
 
-## 📄 License
+### Main Runtime Flow
 
-This project is licensed under the MIT License - see the [LICENSE](file:///c:/Users/petri/RiderProjects/LenovoDesktopFanControl/LICENSE) file for details.
+`MainWindow` creates `MainViewModel`, which loads persisted settings and coordinates the fan and lighting services. `WmiFanControlService` handles Lenovo fan firmware operations. Lighting is exposed through `ILightingControlService` and can be backed by Lenovo WMI or Windows LampArray. View models expose this state to the XAML controls and save user selections through `SettingsService`.
+
+LampArray lighting is controlled while the application is running. The selected lighting preferences are restored when the application starts, but the hardware may return to its firmware-defined profile after the application exits.
+
+### Settings and Logs
+
+Settings are stored as JSON under:
+
+```text
+%LOCALAPPDATA%\LenovoDesktopFanControl\settings.json
+```
+
+Application diagnostics are written by `Services/Log.cs` under the same application data area.
+
+## Visual Test Mode
+
+For UI development without supported Lenovo hardware, construct the main view model with `VisualTestFanControlService`. It provides simulated fans and telemetry while keeping the normal view and view-model layers intact.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
