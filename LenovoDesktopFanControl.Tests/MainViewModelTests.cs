@@ -402,6 +402,35 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task ShutdownAsync_PersistsCurrentLightingSettingsWithoutApplying()
+    {
+        var lightingService = new FakeLightingControlService
+        {
+            Device = new LightingDeviceInfo(
+                "Tower", "id", 1, 0x17EF, 0xC955,
+                [new LightingZoneInfo(7, "Front", LightingZoneKind.Accent, 1, [0])])
+        };
+        var settings = new InMemorySettingsService();
+        var viewModel = new MainViewModel(
+            new FakeFanControlService(), settings, new FakeAutoStartService(), lightingService);
+        await viewModel.InitializeAsync();
+        viewModel.Lighting.IsEnabled = false;
+        viewModel.Lighting.Brightness = 37;
+        viewModel.Lighting.Zones[0].SelectedColor =
+            viewModel.Lighting.Colors.Single(color => color.Name == "Purple");
+
+        await viewModel.ShutdownAsync();
+
+        Assert.False(settings.Settings.LightingEnabled);
+        Assert.Equal(37, settings.Settings.LightingBrightness);
+        var savedColor = Assert.Single(settings.Settings.LightingZoneColors).Value;
+        Assert.Equal(7, savedColor.ZoneIndex);
+        Assert.Equal((byte)145, savedColor.Red);
+        Assert.Equal((byte)85, savedColor.Green);
+        Assert.Equal((byte)255, savedColor.Blue);
+    }
+
+    [Fact]
     public async Task EffectiveStatusKind_IsBusyWhileOperationIsInProgress()
     {
         var viewModel = new MainViewModel(

@@ -642,6 +642,7 @@ public class MainViewModel : INotifyPropertyChanged
             }
         }
 
+        SaveLightingSettings();
         _settingsService.Save(_settings);
     }
 
