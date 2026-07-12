@@ -53,6 +53,14 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         SourceInitialized += OnSourceInitialized;
         StateChanged += OnStateChanged;
+        Activated += OnWindowActivated;
+    }
+
+    private void OnWindowActivated(object? sender, EventArgs e)
+    {
+        if (!_isInitialized)
+            return;
+        _ = _viewModel.Lighting.ReapplyAsync();
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -232,6 +240,7 @@ public partial class MainWindow : Window
             SourceInitialized -= OnSourceInitialized;
             StateChanged -= OnStateChanged;
             Closing -= OnClosing;
+            Activated -= OnWindowActivated;
             Loc.Instance.PropertyChanged -= OnLocalizationChanged;
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;

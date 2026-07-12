@@ -113,6 +113,7 @@ internal sealed class FakeLightingControlService : ILightingControlService
     public List<bool> EnabledCalls { get; } = [];
     public List<double> BrightnessCalls { get; } = [];
     public List<(byte Red, byte Green, byte Blue)> ColorCalls { get; } = [];
+    public List<(int ZoneIndex, byte Red, byte Green, byte Blue)> ZoneColorCalls { get; } = [];
     public bool IsDisposed { get; private set; }
 
     public Task<LightingDeviceInfo?> DiscoverAsync() => DiscoverException == null
@@ -134,6 +135,12 @@ internal sealed class FakeLightingControlService : ILightingControlService
     public Task SetColorAsync(byte red, byte green, byte blue)
     {
         ColorCalls.Add((red, green, blue));
+        return Task.CompletedTask;
+    }
+
+    public Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue)
+    {
+        ZoneColorCalls.Add((zoneIndex, red, green, blue));
         return Task.CompletedTask;
     }
 

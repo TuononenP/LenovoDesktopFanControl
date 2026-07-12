@@ -53,7 +53,24 @@
   <data name="LightingEnabled" xml:space="preserve"><value>Valot</value></data>
   <data name="Brightness" xml:space="preserve"><value>Kirkkaus</value></data>
   <data name="ApplyLighting" xml:space="preserve"><value>Käytä valaistusta</value></data>
+  <data name="GlobalColor" xml:space="preserve"><value>Kaikki valot</value></data>
   <data name="MaxRpm" xml:space="preserve"><value>Maksimikierrokset</value></data>
+  <data name="ZoneBranding" xml:space="preserve"><value>Legion-logo</value></data>
+  <data name="ZoneAccent" xml:space="preserve"><value>Korostusvalot</value></data>
+  <data name="ZoneIllumination" xml:space="preserve"><value>Valaistus</value></data>
+  <data name="ZoneStatus" xml:space="preserve"><value>Tilavalo</value></data>
+  <data name="ZonePresentation" xml:space="preserve"><value>Esittely</value></data>
+  <data name="ZoneControl" xml:space="preserve"><value>Ohjausvalo</value></data>
+  <data name="ZoneMixed" xml:space="preserve"><value>Sekalaiset valot</value></data>
+  <data name="ZoneUndefined" xml:space="preserve"><value>Yleisvalaistus</value></data>
+  <data name="ZoneFrontPanel" xml:space="preserve"><value>Etupaneeli</value></data>
+  <data name="ZoneRearPanel" xml:space="preserve"><value>Takapaneeli</value></data>
+  <data name="ZoneSidePanel" xml:space="preserve"><value>Sivupaneeli</value></data>
+  <data name="ZoneFanLight" xml:space="preserve"><value>Tuuletinvalaistus</value></data>
+  <data name="ZonePowerButton" xml:space="preserve"><value>Virtapainike</value></data>
+  <data name="ZoneLogoLight" xml:space="preserve"><value>Logovalo</value></data>
+  <data name="ZoneLightingSync" xml:space="preserve"><value>Valaistuksen synkronointi</value></data>
+  <data name="ZoneGeneric" xml:space="preserve"><value>Vyöhyke</value></data>
 
   <!-- Options -->
   <data name="Options" xml:space="preserve"><value>Asetukset</value></data>

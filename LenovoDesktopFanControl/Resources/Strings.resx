@@ -53,7 +53,24 @@
   <data name="LightingEnabled" xml:space="preserve"><value>Lights</value></data>
   <data name="Brightness" xml:space="preserve"><value>Brightness</value></data>
   <data name="ApplyLighting" xml:space="preserve"><value>Apply Lighting</value></data>
+  <data name="GlobalColor" xml:space="preserve"><value>All Lights</value></data>
   <data name="MaxRpm" xml:space="preserve"><value>Max RPM</value></data>
+  <data name="ZoneBranding" xml:space="preserve"><value>Legion Banner</value></data>
+  <data name="ZoneAccent" xml:space="preserve"><value>Accent Lights</value></data>
+  <data name="ZoneIllumination" xml:space="preserve"><value>Illumination</value></data>
+  <data name="ZoneStatus" xml:space="preserve"><value>Status Light</value></data>
+  <data name="ZonePresentation" xml:space="preserve"><value>Presentation</value></data>
+  <data name="ZoneControl" xml:space="preserve"><value>Control Light</value></data>
+  <data name="ZoneMixed" xml:space="preserve"><value>Mixed Lights</value></data>
+  <data name="ZoneUndefined" xml:space="preserve"><value>General Lighting</value></data>
+  <data name="ZoneFrontPanel" xml:space="preserve"><value>Front Panel</value></data>
+  <data name="ZoneRearPanel" xml:space="preserve"><value>Rear Panel</value></data>
+  <data name="ZoneSidePanel" xml:space="preserve"><value>Side Panel</value></data>
+  <data name="ZoneFanLight" xml:space="preserve"><value>Fan Lighting</value></data>
+  <data name="ZonePowerButton" xml:space="preserve"><value>Power Button</value></data>
+  <data name="ZoneLogoLight" xml:space="preserve"><value>Logo Light</value></data>
+  <data name="ZoneLightingSync" xml:space="preserve"><value>Lighting Sync</value></data>
+  <data name="ZoneGeneric" xml:space="preserve"><value>Zone</value></data>
 
   <!-- Options -->
   <data name="Options" xml:space="preserve"><value>Options</value></data>

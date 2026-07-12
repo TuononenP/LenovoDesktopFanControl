@@ -9,6 +9,9 @@ public class FanSettings
     public bool StartWithWindows { get; set; }
     public bool MinimizeToTray { get; set; }
     public string Language { get; set; } = "en";
+    public bool LightingEnabled { get; set; } = true;
+    public int LightingBrightness { get; set; } = 100;
+    public Dictionary<int, LightingZoneColor> LightingZoneColors { get; set; } = new();
 
     public byte[] GetOrDefaultCurve(int fanId)
     {

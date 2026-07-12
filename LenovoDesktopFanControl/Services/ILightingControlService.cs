@@ -8,4 +8,5 @@ public interface ILightingControlService : IDisposable
     Task SetEnabledAsync(bool enabled);
     Task SetBrightnessAsync(double brightness);
     Task SetColorAsync(byte red, byte green, byte blue);
+    Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue);
 }

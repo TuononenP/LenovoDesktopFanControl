@@ -151,6 +151,7 @@ public class MainViewModel : INotifyPropertyChanged
         _autoStartService = autoStartService ?? new AutoStartService();
         _settings = new FanSettings();
         Lighting = new LightingViewModel(lightingControlService);
+        Lighting.Applied += OnLightingApplied;
 
         _timer = new DispatcherTimer
         {
@@ -250,7 +251,10 @@ public class MainViewModel : INotifyPropertyChanged
 
             StartWithWindows = _autoStartService.IsEnabled();
             MinimizeToTray = _settings.MinimizeToTray;
+            Lighting.IsEnabled = _settings.LightingEnabled;
+            Lighting.Brightness = _settings.LightingBrightness;
             await Lighting.InitializeAsync();
+            ApplySavedLightingZoneColors();
 
             IsSupported = await _service.IsSupportedAsync();
             if (!IsSupported)
@@ -612,6 +616,7 @@ public class MainViewModel : INotifyPropertyChanged
     public void StopTimer()
     {
         _timer.Stop();
+        SaveLightingSettings();
         _settingsService.Save(_settings);
         Lighting.Dispose();
     }
@@ -645,5 +650,40 @@ public class MainViewModel : INotifyPropertyChanged
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void OnLightingApplied(object? sender, EventArgs e)
+    {
+        SaveLightingSettings();
+        _settingsService.Save(_settings);
+    }
+
+    private void ApplySavedLightingZoneColors()
+    {
+        if (_settings.LightingZoneColors.Count == 0)
+            return;
+
+        foreach (var zone in Lighting.Zones)
+        {
+            if (!_settings.LightingZoneColors.TryGetValue(zone.Index, out var saved))
+                continue;
+
+            var match = Lighting.Colors.FirstOrDefault(c =>
+                c.Red == saved.Red && c.Green == saved.Green && c.Blue == saved.Blue);
+            zone.SelectedColor = match;
+        }
+    }
+
+    private void SaveLightingSettings()
+    {
+        _settings.LightingEnabled = Lighting.IsEnabled;
+        _settings.LightingBrightness = Lighting.Brightness;
+        _settings.LightingZoneColors.Clear();
+        foreach (var zone in Lighting.Zones)
+        {
+            if (zone.SelectedColor == null) continue;
+            _settings.LightingZoneColors[zone.Index] =
+                new LightingZoneColor(zone.Index, zone.SelectedColor.Red, zone.SelectedColor.Green, zone.SelectedColor.Blue);
+        }
     }
 }

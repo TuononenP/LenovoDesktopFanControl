@@ -25,14 +25,14 @@
         <conv:WidthToColumnCountConverter x:Key="WidthToColumns" />
 
         <Style x:Key="PanelCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="Background" Value="{StaticResource SurfaceGradientBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="14" />
         </Style>
     </Window.Resources>
 
-    <Grid Background="{StaticResource WindowBrush}">
+    <Grid Background="{StaticResource WindowGradientBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -133,80 +133,136 @@
 
                 <Border Height="1" Margin="0,6,0,18" Background="{StaticResource BorderBrush}" />
 
-                <Border Margin="0,0,0,18"
-                        Padding="14,11"
-                        Background="{StaticResource SurfaceElevatedBrush}"
+                <Border Margin="0,0,0,14"
+                        Padding="14"
+                        Background="{StaticResource SurfaceGradientBrush}"
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="10"
                         Visibility="{Binding Lighting.IsAvailable, Converter={StaticResource Bool2Vis}}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="18" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="18" />
-                            <ColumnDefinition Width="220" />
-                            <ColumnDefinition Width="18" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="340" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="{loc:Loc TowerLighting}"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="{Binding Lighting.DeviceSummary}"
-                                       Margin="0,2,0,0"
-                                       FontSize="10.5"
-                                       Foreground="{StaticResource TextMutedBrush}" />
-                        </StackPanel>
-
-                        <CheckBox Grid.Column="2"
-                                  Content="{loc:Loc LightingEnabled}"
-                                  VerticalAlignment="Center"
-                                  Style="{StaticResource ToggleSwitchStyle}"
-                                  IsChecked="{Binding Lighting.IsEnabled}"
-                                  Command="{Binding Lighting.ToggleCommand}" />
-
-                        <StackPanel Grid.Column="4" VerticalAlignment="Center">
-                            <Grid>
-                                <TextBlock Text="{loc:Loc Brightness}"
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc TowerLighting}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding Lighting.DeviceSummary}"
+                                           Margin="0,2,0,0"
                                            FontSize="10.5"
                                            Foreground="{StaticResource TextMutedBrush}" />
-                                <TextBlock HorizontalAlignment="Right"
+                            </StackPanel>
+
+                            <CheckBox Grid.Column="2"
+                                      Content="{loc:Loc LightingEnabled}"
+                                      VerticalAlignment="Center"
+                                      Style="{StaticResource ToggleSwitchStyle}"
+                                      IsChecked="{Binding Lighting.IsEnabled}"
+                                      Command="{Binding Lighting.ToggleCommand}" />
+
+                            <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                                <Grid>
+                                    <TextBlock Text="{loc:Loc Brightness}"
+                                               FontSize="10.5"
+                                               Foreground="{StaticResource TextMutedBrush}" />
+                                    <TextBlock HorizontalAlignment="Right"
+                                               FontSize="10.5"
+                                               Foreground="{StaticResource AccentBrush}">
+                                        <Run Text="{Binding Lighting.Brightness}" /><Run Text="%" />
+                                    </TextBlock>
+                                </Grid>
+                                <Slider Margin="0,4,0,0"
+                                        Minimum="0" Maximum="100"
+                                        TickFrequency="5"
+                                        Value="{Binding Lighting.Brightness}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="6" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc GlobalColor}"
                                            FontSize="10.5"
-                                           Foreground="{StaticResource AccentBrush}">
-                                    <Run Text="{Binding Lighting.Brightness}" /><Run Text="%" />
-                                </TextBlock>
-                            </Grid>
-                            <Slider Margin="0,4,0,0"
-                                    Minimum="0" Maximum="100"
-                                    TickFrequency="5"
-                                    Value="{Binding Lighting.Brightness}" />
-                        </StackPanel>
+                                           Foreground="{StaticResource TextMutedBrush}" />
+                                <ComboBox Margin="0,2,0,0"
+                                          MinWidth="130"
+                                          ItemsSource="{Binding Lighting.Colors}"
+                                          SelectedItem="{Binding Lighting.GlobalColor, Mode=TwoWay}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
 
-                        <ComboBox Grid.Column="6"
-                                  MinWidth="130"
-                                  VerticalAlignment="Center"
-                                  ItemsSource="{Binding Lighting.Colors}"
-                                  DisplayMemberPath="Name"
-                                  SelectedItem="{Binding Lighting.SelectedColor}" />
+                            <TextBlock Grid.Column="7"
+                                       Margin="16,0"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding Lighting.Status}"
+                                       FontSize="10.5"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       TextTrimming="CharacterEllipsis" />
 
-                        <TextBlock Grid.Column="7"
-                                   Margin="16,0"
-                                   VerticalAlignment="Center"
-                                   Text="{Binding Lighting.Status}"
-                                   FontSize="10.5"
-                                   Foreground="{StaticResource TextMutedBrush}" />
+                            <Button Grid.Column="8"
+                                    Content="{loc:Loc ApplyLighting}"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding Lighting.ApplyCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" />
+                        </Grid>
 
-                        <Button Grid.Column="8"
-                                Content="{loc:Loc ApplyLighting}"
-                                VerticalAlignment="Center"
-                                Command="{Binding Lighting.ApplyCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" />
-                    </Grid>
+                        <ItemsControl Margin="0,12,0,0"
+                                      ItemsSource="{Binding Lighting.Zones}"
+                                      Visibility="{Binding Lighting.HasZones, Converter={StaticResource Bool2Vis}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,10,8"
+                                            Padding="10,7"
+                                            Background="#441D2342"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="140" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Name}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <ComboBox Grid.Column="2"
+                                                  MinWidth="130"
+                                                  VerticalAlignment="Center"
+                                                  ItemsSource="{Binding DataContext.Lighting.Colors, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedItem="{Binding SelectedColor, Mode=TwoWay}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Name}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
 
                 <WrapPanel>
