@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LenovoDesktopFanControl", "LenovoDesktopFanControl\LenovoDesktopFanControl.csproj", "{D1367AB5-EE01-485E-BBA8-05E938950BC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LenovoDesktopFanControl.Tests", "LenovoDesktopFanControl.Tests\LenovoDesktopFanControl.Tests.csproj", "{56E9F36E-1F49-48CB-87CC-94D0633DE889}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D1367AB5-EE01-485E-BBA8-05E938950BC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1367AB5-EE01-485E-BBA8-05E938950BC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1367AB5-EE01-485E-BBA8-05E938950BC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1367AB5-EE01-485E-BBA8-05E938950BC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56E9F36E-1F49-48CB-87CC-94D0633DE889}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56E9F36E-1F49-48CB-87CC-94D0633DE889}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56E9F36E-1F49-48CB-87CC-94D0633DE889}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56E9F36E-1F49-48CB-87CC-94D0633DE889}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

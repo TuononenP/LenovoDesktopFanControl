@@ -1,0 +1,17 @@
+<UserControl x:Class="LenovoDesktopFanControl.Views.Controls.FanIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False"
+             Focusable="False">
+    <Viewbox Stretch="Uniform">
+        <Grid Width="64" Height="64">
+            <Ellipse Stroke="{StaticResource AccentBrush}" StrokeThickness="4" />
+            <Path Data="M 32,29 L 32,11 M 35,33 L 51,42 M 29,33 L 13,42"
+                  Stroke="{StaticResource AccentBrush}"
+                  StrokeThickness="7"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round" />
+            <Ellipse Width="13" Height="13" Fill="{StaticResource AccentBrush}" />
+        </Grid>
+    </Viewbox>
+</UserControl>

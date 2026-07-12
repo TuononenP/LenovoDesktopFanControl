@@ -1,0 +1,454 @@
+<Window x:Class="LenovoDesktopFanControl.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ctrl="clr-namespace:LenovoDesktopFanControl.Views.Controls"
+        xmlns:conv="clr-namespace:LenovoDesktopFanControl.Views.Converters"
+        xmlns:models="clr-namespace:LenovoDesktopFanControl.Models"
+        xmlns:loc="clr-namespace:LenovoDesktopFanControl.Views.Markup"
+        mc:Ignorable="d"
+        Title="{loc:Loc AppTitle}"
+        Width="1120" Height="760"
+        MinWidth="720" MinHeight="560"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        AutomationProperties.Name="{loc:Loc AppTitle}">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="Bool2Vis" />
+        <conv:BoolToInverseVisibilityConverter x:Key="Bool2InvVis" />
+        <conv:ModeToBoolConverter x:Key="Mode2Bool" />
+        <conv:LocFormatConverter x:Key="LocFmt" />
+        <conv:WidthToColumnCountConverter x:Key="WidthToColumns" />
+
+        <Style x:Key="PanelCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="14" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource WindowBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Product header -->
+        <Grid Grid.Row="0" Margin="28,22,28,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Width="44" Height="44"
+                    Background="{StaticResource AccentSoftBrush}"
+                    BorderBrush="#445B9DFF"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <ctrl:FanIcon Width="26" Height="26" />
+            </Border>
+
+            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{loc:Loc AppTitle}"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock Text="{loc:Loc AppSubtitle}"
+                           Margin="0,3,0,0"
+                           FontSize="12.5"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource TextMutedBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Control center -->
+        <Border Grid.Row="1"
+                Margin="28,0,28,18"
+                Padding="20"
+                Style="{StaticResource PanelCardStyle}">
+            <StackPanel>
+                <WrapPanel>
+                    <StackPanel Margin="0,0,24,12">
+                        <TextBlock Text="{loc:Loc SmartFanMode}"
+                                   Style="{StaticResource EyebrowTextStyle}"
+                                   Margin="2,0,0,8" />
+                        <Border HorizontalAlignment="Left"
+                                Padding="3"
+                                Background="{StaticResource WindowBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="{loc:Loc ModeQuiet}"
+                                             AutomationProperties.Name="{loc:Loc ModeQuiet}"
+                                             AutomationProperties.HelpText="{loc:Loc TooltipModeQuiet}"
+                                             ToolTip="{loc:Loc TooltipModeQuiet}"
+                                             Style="{StaticResource ModeSegmentStyle}"
+                                             GroupName="FanMode"
+                                             IsChecked="{Binding SelectedFanMode, Converter={StaticResource Mode2Bool}, ConverterParameter={x:Static models:SmartFanMode.Quiet}, Mode=TwoWay}" />
+                                <RadioButton Content="{loc:Loc ModeBalanced}"
+                                             AutomationProperties.Name="{loc:Loc ModeBalanced}"
+                                             AutomationProperties.HelpText="{loc:Loc TooltipModeBalanced}"
+                                             ToolTip="{loc:Loc TooltipModeBalanced}"
+                                             Style="{StaticResource ModeSegmentStyle}"
+                                             GroupName="FanMode"
+                                             IsChecked="{Binding SelectedFanMode, Converter={StaticResource Mode2Bool}, ConverterParameter={x:Static models:SmartFanMode.Balanced}, Mode=TwoWay}" />
+                                <RadioButton Content="{loc:Loc ModePerformance}"
+                                             AutomationProperties.Name="{loc:Loc ModePerformance}"
+                                             AutomationProperties.HelpText="{loc:Loc TooltipModePerformance}"
+                                             ToolTip="{loc:Loc TooltipModePerformance}"
+                                             Style="{StaticResource ModeSegmentStyle}"
+                                             GroupName="FanMode"
+                                             IsChecked="{Binding SelectedFanMode, Converter={StaticResource Mode2Bool}, ConverterParameter={x:Static models:SmartFanMode.Performance}, Mode=TwoWay}" />
+                                <RadioButton Content="{loc:Loc ModeCustom}"
+                                             AutomationProperties.Name="{loc:Loc ModeCustom}"
+                                             AutomationProperties.HelpText="{loc:Loc TooltipModeCustom}"
+                                             ToolTip="{loc:Loc TooltipModeCustom}"
+                                             Style="{StaticResource ModeSegmentStyle}"
+                                             GroupName="FanMode"
+                                             IsChecked="{Binding SelectedFanMode, Converter={StaticResource Mode2Bool}, ConverterParameter={x:Static models:SmartFanMode.Custom}, Mode=TwoWay}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,22,0,12"
+                                VerticalAlignment="Top">
+                        <Button Content="{loc:Loc ResetToDefault}"
+                                Command="{Binding ResetCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="0,0,10,0" />
+                        <Button Content="{loc:Loc ApplyMode}"
+                                Command="{Binding ApplyModeCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+                    </StackPanel>
+                </WrapPanel>
+
+                <Border Height="1" Margin="0,6,0,18" Background="{StaticResource BorderBrush}" />
+
+                <Border Margin="0,0,0,18"
+                        Padding="14,11"
+                        Background="{StaticResource SurfaceElevatedBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Visibility="{Binding Lighting.IsAvailable, Converter={StaticResource Bool2Vis}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{loc:Loc TowerLighting}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding Lighting.DeviceSummary}"
+                                       Margin="0,2,0,0"
+                                       FontSize="10.5"
+                                       Foreground="{StaticResource TextMutedBrush}" />
+                        </StackPanel>
+
+                        <CheckBox Grid.Column="2"
+                                  Content="{loc:Loc LightingEnabled}"
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource ToggleSwitchStyle}"
+                                  IsChecked="{Binding Lighting.IsEnabled}"
+                                  Command="{Binding Lighting.ToggleCommand}" />
+
+                        <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                            <Grid>
+                                <TextBlock Text="{loc:Loc Brightness}"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBlock HorizontalAlignment="Right"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource AccentBrush}">
+                                    <Run Text="{Binding Lighting.Brightness}" /><Run Text="%" />
+                                </TextBlock>
+                            </Grid>
+                            <Slider Margin="0,4,0,0"
+                                    Minimum="0" Maximum="100"
+                                    TickFrequency="5"
+                                    Value="{Binding Lighting.Brightness}" />
+                        </StackPanel>
+
+                        <ComboBox Grid.Column="6"
+                                  MinWidth="130"
+                                  VerticalAlignment="Center"
+                                  ItemsSource="{Binding Lighting.Colors}"
+                                  DisplayMemberPath="Name"
+                                  SelectedItem="{Binding Lighting.SelectedColor}" />
+
+                        <TextBlock Grid.Column="7"
+                                   Margin="16,0"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding Lighting.Status}"
+                                   FontSize="10.5"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+
+                        <Button Grid.Column="8"
+                                Content="{loc:Loc ApplyLighting}"
+                                VerticalAlignment="Center"
+                                Command="{Binding Lighting.ApplyCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+                    </Grid>
+                </Border>
+
+                <WrapPanel>
+                    <CheckBox Content="{loc:Loc FullSpeed}"
+                              Margin="0,0,28,12"
+                              Style="{StaticResource ToggleSwitchStyle}"
+                              IsChecked="{Binding IsFullSpeed}"
+                              IsEnabled="{Binding IsFullSpeedSupported}"
+                              ToolTip="{loc:Loc TooltipFullSpeed}"
+                              ToolTipService.ShowOnDisabled="True"
+                              AutomationProperties.HelpText="{loc:Loc TooltipFullSpeed}"
+                              Command="{Binding FullSpeedCommand}"
+                              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
+                    <CheckBox Content="{loc:Loc StartWithWindows}"
+                              Margin="0,0,28,12"
+                              IsChecked="{Binding StartWithWindows}"
+                              Command="{Binding ToggleAutoStartCommand}" />
+                    <CheckBox Content="{loc:Loc MinimizeToTray}"
+                              Margin="0,0,28,12"
+                              IsChecked="{Binding MinimizeToTray}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="{loc:Loc Language}"
+                                   Margin="0,0,10,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="12" />
+                        <ComboBox x:Name="LanguageComboBox"
+                                  AutomationProperties.Name="{loc:Loc Language}"
+                                  ItemsSource="{Binding AvailableLanguages}"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedValuePath="Code"
+                                  SelectedValue="{Binding SelectedLanguage, Mode=TwoWay}"
+                                  MinWidth="124" />
+                    </StackPanel>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Dashboard content -->
+        <ScrollViewer Grid.Row="2"
+                      Margin="20,0,20,0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <Border Margin="8,0,8,16"
+                        Padding="14,12"
+                        Background="{StaticResource WarningSoftBrush}"
+                        BorderBrush="#55F5B942"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Visibility="{Binding HasConflictWarning, Converter={StaticResource Bool2Vis}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="22" Height="22"
+                                Background="#33F5B942"
+                                CornerRadius="11">
+                            <TextBlock Text="!"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ConflictWarning}"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource WarningBrush}" />
+                        <Button Grid.Column="2"
+                                Margin="14,0,0,0"
+                                Content="{loc:Loc ShutdownConflicts}"
+                                Click="ShutdownConflicts_Click"
+                                ToolTip="{loc:Loc TooltipShutdownConflicts}"
+                                AutomationProperties.HelpText="{loc:Loc TooltipShutdownConflicts}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                    </Grid>
+                </Border>
+
+                <Border Margin="8,8,8,20"
+                        Padding="34"
+                        MaxWidth="680"
+                        HorizontalAlignment="Center"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="#55FF6B7A"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Visibility="{Binding IsSupported, Converter={StaticResource Bool2InvVis}}">
+                    <StackPanel>
+                        <Border Width="48" Height="48"
+                                Margin="0,0,0,16"
+                                HorizontalAlignment="Center"
+                                Background="{StaticResource DangerSoftBrush}"
+                                CornerRadius="24">
+                            <TextBlock Text="!"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource DangerBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc MsgFanControlNotAvailable}"
+                                   HorizontalAlignment="Center"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{loc:Loc MsgNotSupportedLong}"
+                                   Margin="0,9,0,0"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   FontSize="13"
+                                   LineHeight="20"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <ItemsControl x:Name="FanItems"
+                              ItemsSource="{Binding Fans}"
+                              Margin="0,0,0,16"
+                              HorizontalContentAlignment="Stretch">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource WidthToColumns}}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ctrl:FanCard HorizontalAlignment="Stretch" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Margin="0,36"
+                            Visibility="{Binding ShowNoFans, Converter={StaticResource Bool2Vis}}">
+                    <Ellipse Width="8" Height="8" Fill="{StaticResource TextMutedBrush}" />
+                    <TextBlock Text="{loc:Loc MsgNoFansShort}"
+                               Margin="0,10,0,0"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Status bar -->
+        <Border Grid.Row="3"
+                Padding="28,11"
+                Background="#99121923"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Ellipse x:Name="StatusDot"
+                         Width="8" Height="8"
+                         Margin="0,0,9,0"
+                         AutomationProperties.Name="{loc:Loc StatusLabel}"
+                         AutomationProperties.ItemStatus="{Binding EffectiveStatusKind}">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding EffectiveStatusKind}"
+                                             Value="{x:Static models:ApplicationStatusKind.Connected}">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding EffectiveStatusKind}"
+                                             Value="{x:Static models:ApplicationStatusKind.Warning}">
+                                    <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding EffectiveStatusKind}"
+                                             Value="{x:Static models:ApplicationStatusKind.Busy}">
+                                    <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding EffectiveStatusKind}"
+                                             Value="{x:Static models:ApplicationStatusKind.Unsupported}">
+                                    <Setter Property="Fill" Value="{StaticResource UnsupportedBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding EffectiveStatusKind}"
+                                             Value="{x:Static models:ApplicationStatusKind.Error}">
+                                    <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="1"
+                           Text="{Binding StatusMessage}"
+                           AutomationProperties.Name="{loc:Loc StatusLabel}"
+                           AutomationProperties.LiveSetting="Polite"
+                           Margin="0,0,12,0"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Grid.Column="2"
+                           Text="{loc:Loc AppTitle}"
+                           FontSize="11"
+                           Foreground="{StaticResource TextMutedBrush}" />
+            </Grid>
+        </Border>
+
+        <!-- Loading overlay -->
+        <Border x:Name="LoadingOverlay"
+                Grid.RowSpan="4"
+                Panel.ZIndex="100"
+                AutomationProperties.Name="{loc:Loc Loading}"
+                AutomationProperties.LiveSetting="Assertive"
+                IsVisibleChanged="LoadingOverlay_IsVisibleChanged"
+                Background="#F20B1017"
+                Visibility="{Binding IsBusy, Converter={StaticResource Bool2Vis}}">
+            <Border Width="300"
+                    Padding="28"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14">
+                <StackPanel>
+                    <Border Width="42" Height="42"
+                            Margin="0,0,0,18"
+                            HorizontalAlignment="Center"
+                            Background="{StaticResource AccentSoftBrush}"
+                            CornerRadius="21">
+                        <Ellipse Width="12" Height="12" Fill="{StaticResource AccentBrush}" />
+                    </Border>
+                    <TextBlock Text="{loc:Loc Loading}"
+                               HorizontalAlignment="Center"
+                               FontSize="16"
+                               FontWeight="SemiBold" />
+                    <ProgressBar Width="200" Height="5"
+                                 Margin="0,16,0,0"
+                                 IsIndeterminate="True" />
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</Window>

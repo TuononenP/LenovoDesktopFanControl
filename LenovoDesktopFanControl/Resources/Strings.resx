@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Window titles -->
+  <data name="AppTitle" xml:space="preserve"><value>Lenovo Desktop Fan Control</value></data>
+  <data name="AppSubtitle" xml:space="preserve"><value>Precision cooling control and real-time system monitoring</value></data>
+  <data name="CurveEditorTitle" xml:space="preserve"><value>Fan Curve Editor</value></data>
+
+  <!-- Loading -->
+  <data name="Loading" xml:space="preserve"><value>Loading...</value></data>
+
+  <!-- Mode labels -->
+  <data name="SmartFanMode" xml:space="preserve"><value>SmartFan Mode</value></data>
+  <data name="ModeQuiet" xml:space="preserve"><value>Quiet</value></data>
+  <data name="ModeBalanced" xml:space="preserve"><value>Balanced</value></data>
+  <data name="ModePerformance" xml:space="preserve"><value>Performance</value></data>
+  <data name="ModeCustom" xml:space="preserve"><value>Custom</value></data>
+
+  <!-- Full speed -->
+  <data name="FullSpeed" xml:space="preserve"><value>Full Speed</value></data>
+  <data name="TowerLighting" xml:space="preserve"><value>Tower Lighting</value></data>
+  <data name="LightingEnabled" xml:space="preserve"><value>Lights</value></data>
+  <data name="Brightness" xml:space="preserve"><value>Brightness</value></data>
+  <data name="ApplyLighting" xml:space="preserve"><value>Apply Lighting</value></data>
+  <data name="MaxRpm" xml:space="preserve"><value>Max RPM</value></data>
+
+  <!-- Options -->
+  <data name="Options" xml:space="preserve"><value>Options</value></data>
+  <data name="StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="MinimizeToTray" xml:space="preserve"><value>Minimize to tray</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+
+  <!-- Buttons -->
+  <data name="ApplyMode" xml:space="preserve"><value>Apply Mode</value></data>
+  <data name="ResetToDefault" xml:space="preserve"><value>Reset to Default</value></data>
+  <data name="ApplySpeed" xml:space="preserve"><value>Apply Speed</value></data>
+  <data name="EditCurve" xml:space="preserve"><value>Edit Curve</value></data>
+  <data name="Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ResetDefault" xml:space="preserve"><value>Reset Default</value></data>
+
+  <!-- Fan card -->
+  <data name="Applying" xml:space="preserve"><value>Applying...</value></data>
+  <data name="FanStatusLive" xml:space="preserve"><value>Live monitoring</value></data>
+  <data name="CurrentSpeed" xml:space="preserve"><value>Current speed</value></data>
+  <data name="Temperature" xml:space="preserve"><value>Temperature</value></data>
+  <data name="SpeedSuffix" xml:space="preserve"><value>% speed</value></data>
+  <data name="TempLabel" xml:space="preserve"><value>Temp: </value></data>
+  <data name="TargetSpeed" xml:space="preserve"><value>Target Speed:</value></data>
+
+  <!-- Fan names -->
+  <data name="FanNameCpu" xml:space="preserve"><value>CPU Fan</value></data>
+  <data name="FanNamePump" xml:space="preserve"><value>Water-Cooling Pump</value></data>
+  <data name="FanNameGpu" xml:space="preserve"><value>GPU Fan</value></data>
+  <data name="FanNameChassis" xml:space="preserve"><value>Chassis Fan</value></data>
+  <data name="FanNameN" xml:space="preserve"><value>Fan {0}</value></data>
+
+  <!-- Curve editor -->
+  <data name="CurveEditorHeader" xml:space="preserve"><value>System Fan Curve Editor</value></data>
+  <data name="CurveEditorSubtitle" xml:space="preserve"><value>Shape fan response across the temperature range</value></data>
+  <data name="FanSpeed" xml:space="preserve"><value>Fan Speed</value></data>
+  <data name="ValidationError" xml:space="preserve"><value>Values must be non-decreasing!</value></data>
+
+  <!-- Status bar -->
+  <data name="StatusLabel" xml:space="preserve"><value>Status:</value></data>
+
+  <!-- Messages -->
+  <data name="MsgInitializing" xml:space="preserve"><value>Initializing...</value></data>
+  <data name="MsgNotSupported" xml:space="preserve"><value>This device does not support fan control via WMI. Make sure Lenovo Vantage Gaming Feature Driver is installed.</value></data>
+  <data name="MsgConnected" xml:space="preserve"><value>Connected - {0} fan(s) detected</value></data>
+  <data name="MsgNoFans" xml:space="preserve"><value>No fans detected. The device may not expose fans via WMI.</value></data>
+  <data name="MsgNoFansShort" xml:space="preserve"><value>No fans detected.</value></data>
+  <data name="MsgFanControlNotAvailable" xml:space="preserve"><value>Fan Control Not Available</value></data>
+  <data name="MsgNotSupportedLong" xml:space="preserve"><value>This device does not support fan control via WMI. Make sure Lenovo Vantage Gaming Feature Driver is installed and you are running as Administrator.</value></data>
+  <data name="MsgModeSet" xml:space="preserve"><value>Mode set to {0}</value></data>
+  <data name="MsgErrorSettingMode" xml:space="preserve"><value>Error setting mode: {0}</value></data>
+  <data name="MsgFullSpeedEnabled" xml:space="preserve"><value>Full speed mode enabled</value></data>
+  <data name="MsgFullSpeedDisabled" xml:space="preserve"><value>Full speed mode disabled</value></data>
+  <data name="MsgError" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="MsgResetToDefaults" xml:space="preserve"><value>Reset to defaults (Balanced mode)</value></data>
+  <data name="MsgErrorResetting" xml:space="preserve"><value>Error resetting: {0}</value></data>
+  <data name="MsgReappliedCurve" xml:space="preserve"><value>Re-applied the saved global fan curve ({0} fan zone(s) detected)</value></data>
+  <data name="MsgAppliedSpeed" xml:space="preserve"><value>Applied global fan curve with a {0}% target</value></data>
+  <data name="MsgAppliedCurve" xml:space="preserve"><value>Applied the global custom fan curve</value></data>
+  <data name="MsgStartWithWindowsEnabled" xml:space="preserve"><value>Start with Windows enabled</value></data>
+  <data name="MsgStartWithWindowsDisabled" xml:space="preserve"><value>Start with Windows disabled</value></data>
+  <data name="MsgErrorTogglingAutostart" xml:space="preserve"><value>Error toggling auto-start: {0}</value></data>
+  <data name="MsgInitializationError" xml:space="preserve"><value>Initialization error: {0}</value></data>
+  <data name="MsgConflictWarning" xml:space="preserve"><value>Warning: {0} is running and may conflict with fan control. Consider closing it for best results.</value></data>
+
+  <data name="ShutdownConflicts" xml:space="preserve"><value>Shut down conflicts</value></data>
+  <data name="ConfirmShutdownConflictsTitle" xml:space="preserve"><value>Shut down Lenovo software?</value></data>
+  <data name="ConfirmShutdownConflicts" xml:space="preserve"><value>This will stop the detected Lenovo Vantage processes and VantageService. Unsaved work in Lenovo Vantage may be lost. Continue?</value></data>
+  <data name="MsgConflictShutdownSuccess" xml:space="preserve"><value>Stopped {0} conflicting Lenovo component(s)</value></data>
+  <data name="MsgConflictShutdownPartial" xml:space="preserve"><value>Could not stop all conflicting components: {0}</value></data>
+  <data name="MsgConflictShutdownError" xml:space="preserve"><value>Error stopping conflicting components: {0}</value></data>
+
+  <!-- Contextual help -->
+  <data name="TooltipModeQuiet" xml:space="preserve"><value>Prioritizes low noise with conservative fan speeds.</value></data>
+  <data name="TooltipModeBalanced" xml:space="preserve"><value>Balances cooling performance and fan noise.</value></data>
+  <data name="TooltipModePerformance" xml:space="preserve"><value>Uses more aggressive cooling for sustained performance.</value></data>
+  <data name="TooltipModeCustom" xml:space="preserve"><value>Uses your manual target speeds and custom fan curve.</value></data>
+  <data name="TooltipFullSpeed" xml:space="preserve"><value>Runs supported fans at maximum speed. This increases noise and should be used only when maximum cooling is required. Availability depends on Lenovo firmware and drivers.</value></data>
+  <data name="TooltipManualSpeed" xml:space="preserve"><value>Applies one global curve to every firmware fan zone. Lenovo's safe minimum is enforced.</value></data>
+  <data name="TooltipEditCurve" xml:space="preserve"><value>Edit the single global curve used by every firmware fan zone. The curve must never decrease.</value></data>
+  <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Stops detected Lenovo Vantage and Gaming AI processes and services after confirmation.</value></data>
+
+  <!-- Accessibility -->
+  <data name="AutomationFanControl" xml:space="preserve"><value>Fan control</value></data>
+  <data name="AutomationTargetSpeedHelp" xml:space="preserve"><value>Use the arrow keys to adjust the target fan speed.</value></data>
+  <data name="AutomationCurvePoint" xml:space="preserve"><value>Fan speed at {0} °C</value></data>
+  <data name="AutomationCurvePointHelp" xml:space="preserve"><value>Use the arrow keys to adjust this curve point.</value></data>
+
+  <!-- Tray -->
+  <data name="TrayShow" xml:space="preserve"><value>Show</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+</root>

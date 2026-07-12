@@ -1,0 +1,41 @@
+## OS-specific files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## .NET Build artifacts
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+*.exe
+*.dll
+*.pdb
+
+## Visual Studio & Rider IDE files
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.DotSettings.user
+*.csproj.user
+riderModule.iml
+/_ReSharper.Caches/
+App.Metrics/
+
+## NuGet packages
+packages/
+*.nupkg
+project.lock.json
+project.assets.json
+
+## Test Results
+TestResults/
+*.trx
+*.xml
+
+## User/Environment Settings & Logs
+*.log
+*.tmp
+local.settings.json

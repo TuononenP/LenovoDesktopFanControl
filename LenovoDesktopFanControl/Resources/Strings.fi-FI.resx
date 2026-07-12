@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Window titles -->
+  <data name="AppTitle" xml:space="preserve"><value>Lenovo Työpöydän Tuulinohjaus</value></data>
+  <data name="AppSubtitle" xml:space="preserve"><value>Tarkka jäähdytyksen ohjaus ja reaaliaikainen valvonta</value></data>
+  <data name="CurveEditorTitle" xml:space="preserve"><value>Tuulikäyräeditori</value></data>
+
+  <!-- Loading -->
+  <data name="Loading" xml:space="preserve"><value>Ladataan...</value></data>
+
+  <!-- Mode labels -->
+  <data name="SmartFanMode" xml:space="preserve"><value>SmartFan-tila</value></data>
+  <data name="ModeQuiet" xml:space="preserve"><value>Hiljainen</value></data>
+  <data name="ModeBalanced" xml:space="preserve"><value>Tasapainoinen</value></data>
+  <data name="ModePerformance" xml:space="preserve"><value>Suorituskyky</value></data>
+  <data name="ModeCustom" xml:space="preserve"><value>Mukautettu</value></data>
+
+  <!-- Full speed -->
+  <data name="FullSpeed" xml:space="preserve"><value>Täysi nopeus</value></data>
+  <data name="TowerLighting" xml:space="preserve"><value>Tornin valaistus</value></data>
+  <data name="LightingEnabled" xml:space="preserve"><value>Valot</value></data>
+  <data name="Brightness" xml:space="preserve"><value>Kirkkaus</value></data>
+  <data name="ApplyLighting" xml:space="preserve"><value>Käytä valaistusta</value></data>
+  <data name="MaxRpm" xml:space="preserve"><value>Maksimikierrokset</value></data>
+
+  <!-- Options -->
+  <data name="Options" xml:space="preserve"><value>Asetukset</value></data>
+  <data name="StartWithWindows" xml:space="preserve"><value>Käynnistä Windowsin kanssa</value></data>
+  <data name="MinimizeToTray" xml:space="preserve"><value>Pienennä ilmaisinalueelle</value></data>
+  <data name="Language" xml:space="preserve"><value>Kieli</value></data>
+
+  <!-- Buttons -->
+  <data name="ApplyMode" xml:space="preserve"><value>Käytä tilaa</value></data>
+  <data name="ResetToDefault" xml:space="preserve"><value>Palauta oletukset</value></data>
+  <data name="ApplySpeed" xml:space="preserve"><value>Käytä nopeutta</value></data>
+  <data name="EditCurve" xml:space="preserve"><value>Muokkaa käyrää</value></data>
+  <data name="Apply" xml:space="preserve"><value>Käytä</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Peruuta</value></data>
+  <data name="ResetDefault" xml:space="preserve"><value>Palauta oletus</value></data>
+
+  <!-- Fan card -->
+  <data name="Applying" xml:space="preserve"><value>Toteutetaan...</value></data>
+  <data name="FanStatusLive" xml:space="preserve"><value>Reaaliaikainen valvonta</value></data>
+  <data name="CurrentSpeed" xml:space="preserve"><value>Nykyinen nopeus</value></data>
+  <data name="Temperature" xml:space="preserve"><value>Lämpötila</value></data>
+  <data name="SpeedSuffix" xml:space="preserve"><value>% nopeus</value></data>
+  <data name="TempLabel" xml:space="preserve"><value>Lämpö: </value></data>
+  <data name="TargetSpeed" xml:space="preserve"><value>Tavoitenopeus:</value></data>
+
+  <!-- Fan names -->
+  <data name="FanNameCpu" xml:space="preserve"><value>CPU-tuuletin</value></data>
+  <data name="FanNamePump" xml:space="preserve"><value>Vesijäähdytyspumppu</value></data>
+  <data name="FanNameGpu" xml:space="preserve"><value>GPU-tuuletin</value></data>
+  <data name="FanNameChassis" xml:space="preserve"><value>Kotelo-tuuletin</value></data>
+  <data name="FanNameN" xml:space="preserve"><value>Tuuletin {0}</value></data>
+
+  <!-- Curve editor -->
+  <data name="CurveEditorHeader" xml:space="preserve"><value>Järjestelmän tuuletinkäyräeditori</value></data>
+  <data name="CurveEditorSubtitle" xml:space="preserve"><value>Määritä tuulettimen vaste lämpötila-alueella</value></data>
+  <data name="FanSpeed" xml:space="preserve"><value>Tuuletinnopeus</value></data>
+  <data name="ValidationError" xml:space="preserve"><value>Arvojen on oltava ei-väheneviä!</value></data>
+
+  <!-- Status bar -->
+  <data name="StatusLabel" xml:space="preserve"><value>Tila:</value></data>
+
+  <!-- Messages -->
+  <data name="MsgInitializing" xml:space="preserve"><value>Alustetaan...</value></data>
+  <data name="MsgNotSupported" xml:space="preserve"><value>Tämä laite ei tue tuulentohjausta WMI:n kautta. Varmista, että Lenovo Vantage Gaming Feature Driver on asennettu.</value></data>
+  <data name="MsgConnected" xml:space="preserve"><value>Yhdistetty - {0} tuuletinta löydetty</value></data>
+  <data name="MsgNoFans" xml:space="preserve"><value>Tuulettimia ei löytynyt. Laite ei ehkä paljasta tuulettimia WMI:n kautta.</value></data>
+  <data name="MsgNoFansShort" xml:space="preserve"><value>Tuulettimia ei löytynyt.</value></data>
+  <data name="MsgFanControlNotAvailable" xml:space="preserve"><value>Tuulentohjaus ei saatavilla</value></data>
+  <data name="MsgNotSupportedLong" xml:space="preserve"><value>Tämä laite ei tue tuulentohjausta WMI:n kautta. Varmista, että Lenovo Vantage Gaming Feature Driver on asennettu ja että sinulla on järjestelmänvalvojan oikeudet.</value></data>
+  <data name="MsgModeSet" xml:space="preserve"><value>Tila asetettu: {0}</value></data>
+  <data name="MsgErrorSettingMode" xml:space="preserve"><value>Virhe tilan asetuksessa: {0}</value></data>
+  <data name="MsgFullSpeedEnabled" xml:space="preserve"><value>Täysnopeustila käytössä</value></data>
+  <data name="MsgFullSpeedDisabled" xml:space="preserve"><value>Täysnopeustila poistettu käytöstä</value></data>
+  <data name="MsgError" xml:space="preserve"><value>Virhe: {0}</value></data>
+  <data name="MsgResetToDefaults" xml:space="preserve"><value>Palautettu oletuksiin (Tasapainoinen tila)</value></data>
+  <data name="MsgErrorResetting" xml:space="preserve"><value>Virhe palautuksessa: {0}</value></data>
+  <data name="MsgReappliedCurve" xml:space="preserve"><value>Tallennettu yleinen tuuletinkäyrä palautettu ({0} tuuletinvyöhykettä löydetty)</value></data>
+  <data name="MsgAppliedSpeed" xml:space="preserve"><value>Yleinen tuuletinkäyrä asetettu {0}% tavoitteella</value></data>
+  <data name="MsgAppliedCurve" xml:space="preserve"><value>Yleinen mukautettu tuuletinkäyrä otettu käyttöön</value></data>
+  <data name="MsgStartWithWindowsEnabled" xml:space="preserve"><value>Windows-käynnistys käytössä</value></data>
+  <data name="MsgStartWithWindowsDisabled" xml:space="preserve"><value>Windows-käynnistys poistettu käytöstä</value></data>
+  <data name="MsgErrorTogglingAutostart" xml:space="preserve"><value>Virhe autokäynnistyksen vaihdossa: {0}</value></data>
+  <data name="MsgInitializationError" xml:space="preserve"><value>Alustusvirhe: {0}</value></data>
+  <data name="MsgConflictWarning" xml:space="preserve"><value>Varoitus: {0} on käynnissä ja voi häiritä tuulentohjausta. Harkitse sen sulkemista parhaan tuloksen saamiseksi.</value></data>
+
+  <data name="ShutdownConflicts" xml:space="preserve"><value>Sulje ristiriidat</value></data>
+  <data name="ConfirmShutdownConflictsTitle" xml:space="preserve"><value>Suljetaanko Lenovo-ohjelmistot?</value></data>
+  <data name="ConfirmShutdownConflicts" xml:space="preserve"><value>Tämä pysäyttää havaitut Lenovo Vantage -prosessit ja VantageService-palvelun. Lenovo Vantagen tallentamattomat muutokset voidaan menettää. Jatketaanko?</value></data>
+  <data name="MsgConflictShutdownSuccess" xml:space="preserve"><value>Pysäytettiin {0} ristiriitaista Lenovo-komponenttia</value></data>
+  <data name="MsgConflictShutdownPartial" xml:space="preserve"><value>Kaikkia ristiriitaisia komponentteja ei voitu pysäyttää: {0}</value></data>
+  <data name="MsgConflictShutdownError" xml:space="preserve"><value>Virhe ristiriitaisten komponenttien pysäytyksessä: {0}</value></data>
+
+  <!-- Contextual help -->
+  <data name="TooltipModeQuiet" xml:space="preserve"><value>Painottaa hiljaisuutta maltillisilla tuuletinnopeuksilla.</value></data>
+  <data name="TooltipModeBalanced" xml:space="preserve"><value>Tasapainottaa jäähdytystehon ja tuuletinmelun.</value></data>
+  <data name="TooltipModePerformance" xml:space="preserve"><value>Käyttää tehokkaampaa jäähdytystä jatkuvaa suorituskykyä varten.</value></data>
+  <data name="TooltipModeCustom" xml:space="preserve"><value>Käyttää manuaalisia tavoitenopeuksia ja mukautettua tuuletinkäyrää.</value></data>
+  <data name="TooltipFullSpeed" xml:space="preserve"><value>Käyttää tuettuja tuulettimia enimmäisnopeudella. Tämä lisää melua ja sitä tulisi käyttää vain, kun tarvitaan suurinta jäähdytystehoa. Saatavuus riippuu Lenovon laiteohjelmistosta ja ajureista.</value></data>
+  <data name="TooltipManualSpeed" xml:space="preserve"><value>Asettaa yhden yleisen käyrän kaikille laiteohjelmiston tuuletinvyöhykkeille. Lenovon turvallinen vähimmäiskäyrä varmistetaan.</value></data>
+  <data name="TooltipEditCurve" xml:space="preserve"><value>Muokkaa kaikkien tuuletinvyöhykkeiden käyttämää yleistä käyrää. Käyrä ei saa koskaan laskea.</value></data>
+  <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Pysäyttää vahvistuksen jälkeen havaitut Lenovo Vantage- ja Gaming AI -prosessit ja palvelut.</value></data>
+
+  <!-- Accessibility -->
+  <data name="AutomationFanControl" xml:space="preserve"><value>Tuulettimen ohjaus</value></data>
+  <data name="AutomationTargetSpeedHelp" xml:space="preserve"><value>Säädä tuulettimen tavoitenopeutta nuolinäppäimillä.</value></data>
+  <data name="AutomationCurvePoint" xml:space="preserve"><value>Tuulettimen nopeus lämpötilassa {0} °C</value></data>
+  <data name="AutomationCurvePointHelp" xml:space="preserve"><value>Säädä tätä käyräpistettä nuolinäppäimillä.</value></data>
+
+  <!-- Tray -->
+  <data name="TrayShow" xml:space="preserve"><value>Näytä</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Lopeta</value></data>
+</root>
