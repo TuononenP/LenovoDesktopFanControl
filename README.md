@@ -1,110 +1,243 @@
 # Lenovo Desktop Fan Control
 
-A modern WPF application for monitoring and controlling fan speeds, custom fan curves, and tower lighting on supported Lenovo desktop PCs. It uses Lenovo WMI interfaces and the Windows LampArray API, with a visual test service for UI development without compatible hardware.
+Lenovo Desktop Fan Control is a Windows desktop application for monitoring and controlling fans and tower lighting on supported Lenovo systems. It combines Lenovo WMI fan control with Windows Dynamic Lighting in a compact WPF dashboard built on .NET 10.
 
 ![Lenovo Desktop Fan Control dashboard](docs/images/dashboard.png)
 
-## Key Features
+## Features
+
+### Fan control
 
 - Quiet, Balanced, Performance, and Custom SmartFan modes
 - Live fan RPM and temperature monitoring
-- Per-fan target speeds and interactive custom fan curves
-- Multi-channel fan-zone telemetry
-- Tower-lighting power, brightness, global color, and per-zone color controls
-- Persistent fan, lighting-preference, language, startup, and tray settings
-- English and Finnish localization
-- Start with Windows and minimize-to-tray support
-- Visual test mode for development on unsupported hardware
+- Per-fan target speeds
+- Interactive ten-point fan-curve editor
+- Multi-channel telemetry grouped into logical fan zones
+- Full-speed mode when supported by the firmware
+- Automatic restoration of Balanced mode when the application exits from Custom mode
 
-## Requirements
+### Tower lighting
+
+- Windows Dynamic Lighting/LampArray device discovery
+- Lighting power and brightness controls
+- Global color selection
+- Independent color selection for detected lighting zones
+- Saved lighting preferences restored at startup and when the window regains focus
+
+### Desktop integration
+
+- Start with Windows
+- Minimize to the notification area
+- Single-instance application behavior
+- English and Finnish localization
+- High-contrast palette support
+- Administrator elevation through the application manifest
+- Conflict detection for other fan-control applications
+
+## Lighting Behavior and Limitation
+
+The application currently controls tower lighting through Windows LampArray. LampArray control belongs to the running process. When the application closes, Windows releases the lighting device and Lenovo firmware may restore its own profile, commonly blue.
+
+The application saves the selected power state, brightness, and per-zone colors and reapplies them the next time it starts or becomes active. It cannot currently guarantee that a selected color remains active while the process is closed. Keeping the application minimized in the notification area retains LampArray control.
+
+`WmiLightingService` is experimental and is not the active runtime backend. The tested controller rejects its undocumented firmware writes, so it should not be treated as a persistent-lighting solution yet.
+
+## Compatibility and Requirements
 
 - Windows 10 or Windows 11
-- .NET 10 SDK or runtime
-- A supported Lenovo desktop for hardware control
-- Administrator privileges for Lenovo WMI access, requested through `app.manifest`
+- .NET 10 Desktop Runtime to run a built application
+- .NET 10 SDK to build from source
+- A supported Lenovo desktop for real fan control
+- A Windows LampArray-compatible Lenovo lighting controller for lighting control
+- Administrator privileges for Lenovo WMI operations
 
-The project targets `net10.0-windows10.0.26100.0`.
+Target framework: `net10.0-windows10.0.26100.0`.
 
-## Building and Running
+Hardware support is detected at runtime. Unsupported systems show a clear status instead of attempting fan-control writes.
+
+## Build, Run, and Test
+
+Clone the repository and open an elevated PowerShell terminal in its root directory.
 
 ```powershell
+dotnet restore
 dotnet build
-dotnet run
+dotnet run --project LenovoDesktopFanControl
 dotnet test
 ```
 
-Run the application from an elevated terminal when accessing real hardware.
+The application manifest requests administrator elevation when the app starts. Release builds and tests can be run with:
+
+```powershell
+dotnet build -c Release
+dotnet test -c Release
+```
+
+## Using the Application
+
+1. Select a SmartFan mode and choose **Apply Mode**.
+2. For manual control, select Custom mode, adjust a fan’s target speed, and choose **Apply Speed**.
+3. Use **Edit Curve** to configure and apply a ten-point curve for an individual fan zone.
+4. In Tower Lighting, enable the lights, select brightness and colors, then choose **Apply Lighting**.
+5. Enable **Minimize to tray** if lighting should remain under application control after the main window is closed or minimized.
+
+Applying custom fan control changes firmware behavior. Monitor temperatures and use conservative curves appropriate for the installed hardware.
+
+## Visual Test Mode
+
+The built-in visual service provides deterministic fan telemetry without Lenovo fan hardware. Set the desired simulated fan count from 0 through 8 before launching:
+
+```powershell
+$env:LENOVO_FAN_CONTROL_VISUAL_TEST_FANS = "4"
+dotnet run --project LenovoDesktopFanControl
+```
+
+Remove the variable to return to real WMI discovery:
+
+```powershell
+Remove-Item Env:LENOVO_FAN_CONTROL_VISUAL_TEST_FANS
+```
+
+Visual test mode simulates fan control. Lighting discovery still uses the configured lighting service.
+
+## Settings and Logs
+
+Application data is stored in:
+
+```text
+%LOCALAPPDATA%\LenovoDesktopFanControl\
+|-- settings.json
+`-- log.txt
+```
+
+`settings.json` contains fan curves, mode, language, startup/tray preferences, and lighting preferences. `log.txt` records hardware discovery, control operations, warnings, and errors.
+
+If behavior is unexpected, close the application, inspect `log.txt`, and include the relevant entries with any bug report. Deleting `settings.json` resets application preferences to their defaults.
+
+## Architecture
+
+The application follows MVVM:
+
+- Views define the WPF interface and forward user actions through bindings and commands.
+- View models coordinate polling, commands, status, localization, and persistence.
+- Services isolate WMI, LampArray, settings, startup registration, logging, and native Windows behavior.
+- Models represent firmware modes, fan telemetry, curves, settings, and lighting zones.
+
+At startup, `MainWindow` selects either `VisualTestFanControlService` or `WmiFanControlService`, constructs `MainViewModel`, and initializes settings, lighting, firmware compatibility, and fan discovery. `MainViewModel` periodically refreshes telemetry and persists user configuration through `SettingsService`.
 
 ## Codebase Structure
-
-The solution uses MVVM and is split into the WPF application and its xUnit test project.
 
 ```text
 LenovoDesktopFanControl/
 |-- LenovoDesktopFanControl.sln
+|-- README.md
+|-- LICENSE
+|-- docs/
+|   `-- images/                              README screenshots
 |-- LenovoDesktopFanControl/                 WPF application
-|   |-- App.xaml(.cs)                        Application startup and shared resources
-|   |-- MainWindow.xaml(.cs)                 Main dashboard, tray, and window lifecycle
-|   |-- app.manifest                         Administrator elevation configuration
-|   |-- Assets/                              Application icon and asset generation
+|   |-- App.xaml(.cs)                        Startup, single instance, accessibility
+|   |-- MainWindow.xaml(.cs)                 Dashboard, tray, and window lifecycle
+|   |-- app.manifest                         Administrator elevation
+|   |-- Assets/                              Application icon and generation script
 |   |-- Models/
+|   |   |-- ApplicationStatusKind.cs         UI connection and error states
 |   |   |-- FanInfo.cs                       Fan and telemetry-channel data
-|   |   |-- FanSettings.cs                   Persisted application settings
+|   |   |-- FanSettings.cs                   Persisted configuration model
 |   |   |-- FanTable.cs                      Ten-point firmware fan curves
+|   |   |-- LanguageInfo.cs                  Available UI languages
 |   |   |-- LightingDeviceInfo.cs            Lighting devices, zones, and colors
 |   |   `-- SmartFanMode.cs                  Firmware operating modes
 |   |-- Services/
-|   |   |-- WmiFanControlService.cs          Lenovo fan discovery and control
-|   |   |-- WmiLightingService.cs            Lenovo WMI lighting control
-|   |   |-- LampArrayLightingService.cs      Windows Dynamic Lighting integration
-|   |   |-- SettingsService.cs               JSON settings persistence
-|   |   |-- LocalizationService.cs           Runtime language selection
+|   |   |-- IWmiFanControlService.cs         Fan-control abstraction
+|   |   |-- WmiFanControlService.cs          Lenovo WMI fan discovery and control
+|   |   |-- ILightingControlService.cs        Lighting abstraction
+|   |   |-- LampArrayLightingService.cs      Active Windows lighting backend
+|   |   |-- WmiLightingService.cs            Experimental Lenovo lighting backend
+|   |   |-- FanFirmwareCompatibility.cs      Model and firmware checks
+|   |   |-- VisualTestFanControlService.cs   Simulated fan hardware
+|   |   |-- SettingsService.cs               JSON persistence
 |   |   |-- AutoStartService.cs              Windows startup registration
-|   |   |-- FanFirmwareCompatibility.cs      Model and firmware compatibility checks
-|   |   |-- NativeWindowTheme.cs             Native title-bar appearance
-|   |   `-- VisualTestFanControlService.cs   Hardware-free UI development service
+|   |   |-- LocalizationService.cs           Runtime localization
+|   |   |-- NativeWindowTheme.cs             Native title-bar styling
+|   |   |-- MotionPreferences.cs             Reduced-motion preferences
+|   |   |-- VisualScaleVerifier.cs           Layout verification support
+|   |   `-- Log.cs                           Local diagnostic logging
 |   |-- ViewModels/
-|   |   |-- MainViewModel.cs                 App state, polling, settings, and commands
-|   |   |-- FanViewModel.cs                  Fan-zone control and summarized telemetry
-|   |   |-- FanChannelViewModel.cs           Individual telemetry channels
-|   |   |-- LightingViewModel.cs             Lighting discovery and control state
+|   |   |-- MainViewModel.cs                 Application state and orchestration
+|   |   |-- FanViewModel.cs                  Fan-zone control and summary
+|   |   |-- FanChannelViewModel.cs           Individual telemetry channel
+|   |   |-- LightingViewModel.cs             Lighting state and commands
 |   |   `-- RelayCommand.cs                  MVVM command implementation
 |   |-- Views/
-|   |   |-- Controls/                        Fan cards, icons, and curve editor
+|   |   |-- Controls/                        Fan cards, icon, and curve editor
 |   |   |-- Converters/                      WPF binding converters
 |   |   |-- Markup/                          Localization markup extension
-|   |   `-- TrayMenuRenderer.cs              System-tray menu presentation
-|   |-- Themes/                              Colors, controls, and typography resources
-|   `-- Resources/                           English and Finnish resource files
-|-- LenovoDesktopFanControl.Tests/           xUnit unit and view-model tests
-|   |-- MainViewModelTests.cs
-|   |-- FanViewModelTests.cs
-|   |-- LightingViewModelTests.cs
-|   |-- SettingsServiceTests.cs
-|   |-- WmiFanControlServiceTests.cs
-|   `-- TestDoubles.cs
-`-- docs/images/                             README images
+|   |   `-- TrayMenuRenderer.cs              Notification-area menu rendering
+|   |-- Themes/                              Colors, controls, and typography
+|   `-- Resources/                           English and Finnish strings
+`-- LenovoDesktopFanControl.Tests/           xUnit test project
+    |-- MainViewModelTests.cs                App orchestration and persistence
+    |-- FanViewModelTests.cs                 Fan-zone behavior and commands
+    |-- LightingViewModelTests.cs            Lighting behavior
+    |-- ModelTests.cs                        Fan curves and settings models
+    |-- SettingsServiceTests.cs              JSON persistence
+    |-- WmiFanControlServiceTests.cs         WMI parsing helpers
+    |-- ConverterTests.cs                    WPF converters
+    `-- TestDoubles.cs                       In-memory service fakes
 ```
 
-### Main Runtime Flow
+## Contributing
 
-`MainWindow` creates `MainViewModel`, which loads persisted settings and coordinates the fan and lighting services. `WmiFanControlService` handles Lenovo fan firmware operations. Lighting is exposed through `ILightingControlService` and can be backed by Lenovo WMI or Windows LampArray. View models expose this state to the XAML controls and save user selections through `SettingsService`.
+Keep hardware access behind service interfaces and UI logic in view models. Add regression tests for behavior changes, especially settings persistence, firmware writes, and error handling.
 
-LampArray lighting is controlled while the application is running. The selected lighting preferences are restored when the application starts, but the hardware may return to its firmware-defined profile after the application exits.
+Before submitting changes:
 
-### Settings and Logs
-
-Settings are stored as JSON under:
-
-```text
-%LOCALAPPDATA%\LenovoDesktopFanControl\settings.json
+```powershell
+dotnet build -c Release
+dotnet test -c Release
+git diff --check
 ```
 
-Application diagnostics are written by `Services/Log.cs` under the same application data area.
+Do not commit generated `bin/` or `obj/` output, local settings, or logs.
 
-## Visual Test Mode
+## Releases
 
-For UI development without supported Lenovo hardware, construct the main view model with `VisualTestFanControlService`. It provides simulated fans and telemetry while keeping the normal view and view-model layers intact.
+The release workflow in `.github/workflows/release.yml` runs the complete test suite and publishes two Windows x64 packages:
+
+- A smaller framework-dependent build that requires the .NET 10 Desktop Runtime
+- A self-contained single-file build that includes the required runtime
+
+It also publishes `SHA256SUMS.txt` for integrity verification. Create a semantic-version tag to start a release:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow can also be started manually from the GitHub Actions page by providing a version such as `1.0.0`. Manual runs create and push the corresponding tag after the build and tests succeed.
+
+## Troubleshooting
+
+### Fan control is unavailable
+
+- Run the application as administrator.
+- Confirm the machine is a supported Lenovo desktop.
+- Close other fan-control applications reported by the conflict warning.
+- Review `%LOCALAPPDATA%\LenovoDesktopFanControl\log.txt`.
+
+### Lighting does not appear
+
+- Confirm Windows Dynamic Lighting recognizes the device.
+- Close applications that may already own the lighting controller.
+- Restart the application and inspect LampArray discovery entries in `log.txt`.
+
+### Lighting changes after exit
+
+This is the LampArray lifecycle limitation described above. Enable minimize-to-tray and leave the application running if the selected profile must remain active.
+
+### Settings behave unexpectedly
+
+Exit the application and rename or delete `%LOCALAPPDATA%\LenovoDesktopFanControl\settings.json` to regenerate defaults.
 
 ## License
 
