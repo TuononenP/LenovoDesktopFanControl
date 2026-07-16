@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Threading;
 using LenovoDesktopFanControl.Models;
 using LenovoDesktopFanControl.Services;
 
@@ -44,6 +45,7 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
 public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly ILightingControlService? _service;
+    private readonly Dispatcher _dispatcher;
     private bool _isAvailable;
     private bool _isEnabled = true;
     private bool _isBusy;
@@ -51,6 +53,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     private LightingColorOption? _globalColor;
     private string _deviceSummary = "";
     private string _status = "";
+    private bool _pendingReapply;
 
     public ObservableCollection<LightingColorOption> Colors { get; } =
     [
@@ -66,7 +69,21 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     public ObservableCollection<LightingZoneViewModel> Zones { get; } = [];
 
     public bool IsAvailable { get => _isAvailable; private set { _isAvailable = value; OnPropertyChanged(); } }
-    public bool IsBusy { get => _isBusy; private set { _isBusy = value; OnPropertyChanged(); } }
+    public bool IsBusy
+    {
+        get => _isBusy;
+        private set
+        {
+            _isBusy = value;
+            OnPropertyChanged();
+            if (!_isBusy && _pendingReapply)
+            {
+                _pendingReapply = false;
+                Log.Info("Draining deferred lighting reapply after busy state ended");
+                _ = ReapplyAsync();
+            }
+        }
+    }
     public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; OnPropertyChanged(); } }
     public int Brightness { get => _brightness; set { _brightness = Math.Clamp(value, 0, 100); OnPropertyChanged(); } }
     public LightingColorOption? GlobalColor
@@ -94,9 +111,40 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     public LightingViewModel(ILightingControlService? service)
     {
         _service = service;
+        _dispatcher = Dispatcher.CurrentDispatcher;
         _globalColor = Colors[0];
         ApplyCommand = new RelayCommand(async () => await ApplyAsync());
         ToggleCommand = new RelayCommand(async () => await ToggleAsync());
+
+        if (_service != null)
+            _service.AvailabilityChanged += OnServiceAvailabilityChanged;
+    }
+
+    private void OnServiceAvailabilityChanged(object? sender, EventArgs e)
+    {
+        if (_dispatcher.CheckAccess())
+            HandleAvailabilityChanged();
+        else
+            _ = _dispatcher.BeginInvoke(HandleAvailabilityChanged);
+    }
+
+    private async void HandleAvailabilityChanged()
+    {
+        if (_service == null || !IsAvailable)
+            return;
+
+        if (!_service.IsControlAvailable)
+            return;
+
+        if (IsBusy)
+        {
+            Log.Info("Lighting control became available but busy; deferring reapply");
+            _pendingReapply = true;
+            return;
+        }
+
+        Log.Info("Lighting control became available, re-applying lighting state");
+        await ReapplyAsync();
     }
 
     public async Task InitializeAsync()
@@ -130,8 +178,14 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task ReapplyAsync()
     {
-        if (_service == null || !IsAvailable || IsBusy)
+        if (_service == null || !IsAvailable)
             return;
+        if (IsBusy)
+        {
+            Log.Info("ReapplyAsync requested while busy; deferring");
+            _pendingReapply = true;
+            return;
+        }
         Log.Info($"ReapplyAsync: brightness={Brightness}%, zones={Zones.Count}, enabled={IsEnabled}");
         try
         {
@@ -231,7 +285,12 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public void Dispose() => _service?.Dispose();
+    public void Dispose()
+    {
+        if (_service != null)
+            _service.AvailabilityChanged -= OnServiceAvailabilityChanged;
+        _service?.Dispose();
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>

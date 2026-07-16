@@ -196,4 +196,70 @@ public class LightingViewModelTests
         Assert.Equal(2, service.EnabledCalls.Count);
         Assert.Equal(statusBefore, viewModel.Status);
     }
+
+    [Fact]
+    public async Task AvailabilityChanged_WhileBusy_DefersReapplyUntilBusyEnds()
+    {
+        var service = new FakeLightingControlService { Device = SingleZoneDevice(10) };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        viewModel.Brightness = 60;
+        viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Green");
+        viewModel.IsEnabled = true;
+
+        service.BrightnessGate = new TaskCompletionSource<object?>();
+        var applyTask = viewModel.ApplyAsync();
+        Assert.True(viewModel.IsBusy);
+
+        service.RaiseAvailabilityChanged();
+        await Task.Yield();
+
+        Assert.Equal(1, service.EnabledCalls.Count);
+        service.BrightnessGate.SetResult(null);
+        await applyTask;
+
+        Assert.False(viewModel.IsBusy);
+        Assert.Equal(2, service.EnabledCalls.Count);
+        Assert.Equal(2, service.BrightnessCalls.Count);
+        Assert.Equal((0, 55, 220, 125), service.ZoneColorCalls[^1]);
+    }
+
+    [Fact]
+    public async Task AvailabilityChanged_WhenNotAvailable_DoesNotDefer()
+    {
+        var service = new FakeLightingControlService();
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+
+        service.RaiseAvailabilityChanged();
+
+        Assert.Empty(service.BrightnessCalls);
+        Assert.Empty(service.ZoneColorCalls);
+    }
+
+    [Fact]
+    public async Task ReapplyAsync_WhileBusy_DefersAndDrainsAfterApplyCompletes()
+    {
+        var service = new FakeLightingControlService { Device = SingleZoneDevice(10) };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        viewModel.Brightness = 70;
+        viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Purple");
+        viewModel.IsEnabled = true;
+
+        service.BrightnessGate = new TaskCompletionSource<object?>();
+        var applyTask = viewModel.ApplyAsync();
+        Assert.True(viewModel.IsBusy);
+
+        await viewModel.ReapplyAsync();
+        await Task.Yield();
+
+        service.BrightnessGate.SetResult(null);
+        await applyTask;
+
+        Assert.False(viewModel.IsBusy);
+        Assert.Equal(2, service.BrightnessCalls.Count);
+        Assert.Equal(2, service.ZoneColorCalls.Count);
+        Assert.Equal(2, service.EnabledCalls.Count);
+    }
 }

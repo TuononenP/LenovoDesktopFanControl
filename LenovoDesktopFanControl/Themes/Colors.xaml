@@ -7,6 +7,7 @@
         <Color x:Key="SurfaceHoverColor">#23294B</Color>
         <Color x:Key="BorderColor">#30375F</Color>
         <Color x:Key="AccentColor">#7787FF</Color>
+        <Color x:Key="AccentDeepColor">#386EDC</Color>
         <Color x:Key="AccentHoverColor">#9A7DFF</Color>
         <Color x:Key="TextPrimaryColor">#F4F7FB</Color>
         <Color x:Key="TextOnAccentColor">#FFFFFF</Color>
@@ -26,6 +27,7 @@
         <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{DynamicResource SurfaceHoverColor}" />
         <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}" />
         <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}" />
+        <SolidColorBrush x:Key="AccentDeepBrush" Color="{DynamicResource AccentDeepColor}" />
         <SolidColorBrush x:Key="AccentHoverBrush" Color="{DynamicResource AccentHoverColor}" />
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}" />
         <SolidColorBrush x:Key="TextOnAccentBrush" Color="{DynamicResource TextOnAccentColor}" />

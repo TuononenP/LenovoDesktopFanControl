@@ -15,6 +15,16 @@ public sealed class LampArrayLightingService : ILightingControlService
     private List<LightingZoneInfo> _zones = [];
     private readonly Dictionary<int, (byte R, byte G, byte B)> _zoneColors = [];
 
+    public bool IsControlAvailable => _lampArray?.IsAvailable ?? false;
+
+    public event EventHandler? AvailabilityChanged;
+
+    private void OnLampArrayAvailabilityChanged(object? sender, object? e)
+    {
+        Log.Info($"LampArray.AvailabilityChanged: IsAvailable={(_lampArray?.IsAvailable ?? false)}");
+        AvailabilityChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public async Task<LightingDeviceInfo?> DiscoverAsync()
     {
         try
@@ -35,7 +45,10 @@ public sealed class LampArrayLightingService : ILightingControlService
                     lampArray.HardwareProductId != T7LightingProductId)
                     continue;
 
+                if (_lampArray != null)
+                    _lampArray.AvailabilityChanged -= OnLampArrayAvailabilityChanged;
                 _lampArray = lampArray;
+                _lampArray.AvailabilityChanged += OnLampArrayAvailabilityChanged;
                 _lastBrightness = lampArray.BrightnessLevel;
 
                 _zones = BuildSpatialZones(lampArray);
@@ -176,5 +189,10 @@ public sealed class LampArrayLightingService : ILightingControlService
     private LampArray GetLampArray() => _lampArray ??
         throw new InvalidOperationException("The Lenovo lighting controller is not available");
 
-    public void Dispose() => _lampArray = null;
+    public void Dispose()
+    {
+        if (_lampArray != null)
+            _lampArray.AvailabilityChanged -= OnLampArrayAvailabilityChanged;
+        _lampArray = null;
+    }
 }

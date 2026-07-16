@@ -13,6 +13,14 @@ public sealed class WmiLightingService : ILightingControlService
     private bool _isEnabled = true;
     private double _brightness = 1.0;
 
+    public bool IsControlAvailable => _zones.Count > 0;
+
+    public event EventHandler? AvailabilityChanged
+    {
+        add { }
+        remove { }
+    }
+
     public async Task<LightingDeviceInfo?> DiscoverAsync()
     {
         return await Task.Run(() =>

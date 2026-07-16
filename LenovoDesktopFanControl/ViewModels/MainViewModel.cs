@@ -225,6 +225,9 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 if (IsSupported && SelectedFanMode == SmartFanMode.Custom && !IsFullSpeed && Fans.Count > 0)
                     await ReApplyFanCurvesAsync();
+
+                Log.Info("Re-applying lighting state after system resume");
+                await Lighting.ReapplyAsync();
             }).Task.Unwrap();
         }
         catch (Exception ex)

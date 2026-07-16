@@ -5,13 +5,28 @@
              Focusable="False">
     <Viewbox Stretch="Uniform">
         <Grid Width="64" Height="64">
-            <Ellipse Stroke="{StaticResource AccentBrush}" StrokeThickness="4" />
-            <Path Data="M 32,29 L 32,11 M 35,33 L 51,42 M 29,33 L 13,42"
-                  Stroke="{StaticResource AccentBrush}"
-                  StrokeThickness="7"
-                  StrokeStartLineCap="Round"
-                  StrokeEndLineCap="Round" />
-            <Ellipse Width="13" Height="13" Fill="{StaticResource AccentBrush}" />
+            <Ellipse Stroke="{StaticResource AccentBrush}" StrokeThickness="3" />
+
+            <Grid Width="64" Height="64" RenderTransformOrigin="0.5,0.5">
+                <Path Fill="{StaticResource AccentBrush}"
+                      Data="M 33,27 L 41,23 46,15 43,7 35,5 28,9 27,18 30,24 Z" />
+                <Path Fill="{StaticResource AccentBrush}"
+                      Data="M 33,27 L 41,23 46,15 43,7 35,5 28,9 27,18 30,24 Z">
+                    <Path.RenderTransform>
+                        <RotateTransform Angle="120" CenterX="32" CenterY="32" />
+                    </Path.RenderTransform>
+                </Path>
+                <Path Fill="{StaticResource AccentBrush}"
+                      Data="M 33,27 L 41,23 46,15 43,7 35,5 28,9 27,18 30,24 Z">
+                    <Path.RenderTransform>
+                        <RotateTransform Angle="240" CenterX="32" CenterY="32" />
+                    </Path.RenderTransform>
+                </Path>
+            </Grid>
+
+            <Ellipse Width="12" Height="12" Fill="{StaticResource TextPrimaryBrush}" />
+            <Ellipse Width="12" Height="12" Stroke="{StaticResource AccentDeepBrush}" StrokeThickness="2.5" />
+            <Ellipse Width="5" Height="5" Fill="{StaticResource AccentDeepBrush}" />
         </Grid>
     </Viewbox>
 </UserControl>

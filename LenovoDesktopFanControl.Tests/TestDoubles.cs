@@ -116,14 +116,22 @@ internal sealed class FakeLightingControlService : ILightingControlService
     public List<(int ZoneIndex, byte Red, byte Green, byte Blue)> ZoneColorCalls { get; } = [];
     public bool IsDisposed { get; private set; }
 
+    public bool IsControlAvailable { get; set; } = true;
+    public event EventHandler? AvailabilityChanged;
+
+    public TaskCompletionSource<object?>? BrightnessGate { get; set; }
+
+    public void RaiseAvailabilityChanged() => AvailabilityChanged?.Invoke(this, EventArgs.Empty);
+
     public Task<LightingDeviceInfo?> DiscoverAsync() => DiscoverException == null
         ? Task.FromResult(Device)
         : Task.FromException<LightingDeviceInfo?>(DiscoverException);
 
-    public Task SetEnabledAsync(bool enabled)
+    public async Task SetEnabledAsync(bool enabled)
     {
         EnabledCalls.Add(enabled);
-        return Task.CompletedTask;
+        if (BrightnessGate != null)
+            await BrightnessGate.Task;
     }
 
     public Task SetBrightnessAsync(double brightness)

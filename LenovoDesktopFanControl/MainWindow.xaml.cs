@@ -113,36 +113,48 @@ public partial class MainWindow : Window
             using var bitmap = new Drawing.Bitmap(64, 64, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             using var graphics = Drawing.Graphics.FromImage(bitmap);
             graphics.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias;
+            graphics.PixelOffsetMode = Drawing2D.PixelOffsetMode.HighQuality;
             graphics.Clear(Drawing.Color.Transparent);
 
             using var backgroundBrush = new Drawing.SolidBrush(Drawing.Color.FromArgb(255, 18, 25, 35));
             using var accentBrush = new Drawing.SolidBrush(Drawing.Color.FromArgb(255, 91, 157, 255));
-            using var accentPen = new Drawing.Pen(accentBrush, 4)
+            using var accentDeepBrush = new Drawing.SolidBrush(Drawing.Color.FromArgb(255, 56, 110, 220));
+            using var hubBrush = new Drawing.SolidBrush(Drawing.Color.FromArgb(255, 232, 240, 255));
+            using var ringPen = new Drawing.Pen(accentBrush, 3)
             {
                 StartCap = Drawing2D.LineCap.Round,
                 EndCap = Drawing2D.LineCap.Round
             };
-            using var bladePen = new Drawing.Pen(accentBrush, 7)
-            {
-                StartCap = Drawing2D.LineCap.Round,
-                EndCap = Drawing2D.LineCap.Round
-            };
+            using var hubRingPen = new Drawing.Pen(accentDeepBrush, 2.5f);
 
             graphics.FillEllipse(backgroundBrush, 2, 2, 60, 60);
-            graphics.DrawEllipse(accentPen, 5, 5, 54, 54);
+            graphics.DrawEllipse(ringPen, 4, 4, 56, 56);
 
-            const float center = 32;
+            var bladePts = new[]
+            {
+                new Drawing.PointF(33f, 27f),
+                new Drawing.PointF(41f, 23f),
+                new Drawing.PointF(46f, 15f),
+                new Drawing.PointF(43f, 7f),
+                new Drawing.PointF(35f, 5f),
+                new Drawing.PointF(28f, 9f),
+                new Drawing.PointF(27f, 18f),
+                new Drawing.PointF(30f, 24f)
+            };
+
             for (var i = 0; i < 3; i++)
             {
-                var angle = (-90 + i * 120) * Math.PI / 180;
-                var startX = center + (float)Math.Cos(angle) * 7;
-                var startY = center + (float)Math.Sin(angle) * 7;
-                var endX = center + (float)Math.Cos(angle) * 20;
-                var endY = center + (float)Math.Sin(angle) * 20;
-                graphics.DrawLine(bladePen, startX, startY, endX, endY);
+                var state = graphics.Save();
+                graphics.TranslateTransform(32, 32, Drawing2D.MatrixOrder.Prepend);
+                graphics.RotateTransform(120 * i, Drawing2D.MatrixOrder.Prepend);
+                graphics.TranslateTransform(-32, -32, Drawing2D.MatrixOrder.Prepend);
+                graphics.FillClosedCurve(accentBrush, bladePts, Drawing2D.FillMode.Alternate, 0.6f);
+                graphics.Restore(state);
             }
 
-            graphics.FillEllipse(accentBrush, 26, 26, 12, 12);
+            graphics.FillEllipse(hubBrush, 26, 26, 12, 12);
+            graphics.DrawEllipse(hubRingPen, 26, 26, 12, 12);
+            graphics.FillEllipse(accentDeepBrush, 29.5f, 29.5f, 5, 5);
 
             var nativeIcon = bitmap.GetHicon();
             try

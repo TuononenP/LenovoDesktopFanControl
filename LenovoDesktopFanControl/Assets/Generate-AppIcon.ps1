@@ -7,6 +7,19 @@ Add-Type -AssemblyName System.Drawing
 $sizes = @(16, 20, 24, 32, 40, 48, 64, 128, 256)
 $images = [System.Collections.Generic.List[byte[]]]::new()
 
+# Swept turbine blade, defined in the 64x64 design space, pointing up (-Y)
+# and curving to the right so rotation by 120 degrees produces a fan.
+$bladePts = @(
+    (33.0, 27.0),
+    (41.0, 23.0),
+    (46.0, 15.0),
+    (43.0, 7.0),
+    (35.0, 5.0),
+    (28.0, 9.0),
+    (27.0, 18.0),
+    (30.0, 24.0)
+) | ForEach-Object { [System.Drawing.PointF]::new($_[0], $_[1]) }
+
 foreach ($size in $sizes) {
     $bitmap = [System.Drawing.Bitmap]::new(
         $size,
@@ -20,37 +33,44 @@ foreach ($size in $sizes) {
         $graphics.Clear([System.Drawing.Color]::Transparent)
 
         $scale = $size / 64.0
+        $graphics.ScaleTransform($scale, $scale)
+
         $background = [System.Drawing.SolidBrush]::new(
             [System.Drawing.Color]::FromArgb(255, 18, 25, 35))
         $accent = [System.Drawing.SolidBrush]::new(
             [System.Drawing.Color]::FromArgb(255, 91, 157, 255))
-        $ring = [System.Drawing.Pen]::new($accent, [Math]::Max(1.0, 4.0 * $scale))
-        $blade = [System.Drawing.Pen]::new($accent, [Math]::Max(1.4, 7.0 * $scale))
+        $accentDeep = [System.Drawing.SolidBrush]::new(
+            [System.Drawing.Color]::FromArgb(255, 56, 110, 220))
+        $hub = [System.Drawing.SolidBrush]::new(
+            [System.Drawing.Color]::FromArgb(255, 232, 240, 255))
+        $ring = [System.Drawing.Pen]::new($accent, 3)
+        $hubRing = [System.Drawing.Pen]::new($accentDeep, 2.5)
 
         try {
             $ring.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
             $ring.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
-            $blade.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
-            $blade.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
 
-            $graphics.FillEllipse($background, 2 * $scale, 2 * $scale, 60 * $scale, 60 * $scale)
-            $graphics.DrawEllipse($ring, 5 * $scale, 5 * $scale, 54 * $scale, 54 * $scale)
+            $graphics.FillEllipse($background, 2, 2, 60, 60)
+            $graphics.DrawEllipse($ring, 4, 4, 56, 56)
 
-            $center = 32 * $scale
             for ($i = 0; $i -lt 3; $i++) {
-                $angle = (-90 + $i * 120) * [Math]::PI / 180
-                $startX = $center + [Math]::Cos($angle) * 7 * $scale
-                $startY = $center + [Math]::Sin($angle) * 7 * $scale
-                $endX = $center + [Math]::Cos($angle) * 20 * $scale
-                $endY = $center + [Math]::Sin($angle) * 20 * $scale
-                $graphics.DrawLine($blade, $startX, $startY, $endX, $endY)
+                $state = $graphics.Save()
+                $graphics.TranslateTransform(32, 32, [System.Drawing.Drawing2D.MatrixOrder]::Prepend)
+                $graphics.RotateTransform(120 * $i, [System.Drawing.Drawing2D.MatrixOrder]::Prepend)
+                $graphics.TranslateTransform(-32, -32, [System.Drawing.Drawing2D.MatrixOrder]::Prepend)
+                $graphics.FillClosedCurve($accent, $bladePts, [System.Drawing.Drawing2D.FillMode]::Alternate, 0.6)
+                $graphics.Restore($state)
             }
 
-            $graphics.FillEllipse($accent, 26 * $scale, 26 * $scale, 12 * $scale, 12 * $scale)
+            $graphics.FillEllipse($hub, 26, 26, 12, 12)
+            $graphics.DrawEllipse($hubRing, 26, 26, 12, 12)
+            $graphics.FillEllipse($accentDeep, 29.5, 29.5, 5, 5)
         }
         finally {
-            $blade.Dispose()
+            $hubRing.Dispose()
             $ring.Dispose()
+            $hub.Dispose()
+            $accentDeep.Dispose()
             $accent.Dispose()
             $background.Dispose()
         }
