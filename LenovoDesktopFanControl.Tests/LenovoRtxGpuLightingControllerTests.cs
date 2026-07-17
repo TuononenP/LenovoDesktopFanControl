@@ -53,14 +53,16 @@ public sealed class LenovoRtxGpuLightingControllerTests
     }
 
     [Fact]
-    public void CreateI2cInfo_RoutesRequestsToTheInternalRgbPort()
+    public void CreateI2cInfo_MatchesLenovosDisplayI2cRoute()
     {
-        var info = LenovoRtxGpuLightingController.CreateI2cInfo(0x1111, 0x2222);
+        var info = LenovoRtxGpuLightingController.CreateI2cInfo(0x1111, 0x2222, 0x400);
 
-        Assert.Equal((byte)0, info.IsDdcPort);
+        Assert.Equal(0x400u, info.DisplayMask);
+        Assert.Equal((byte)1, info.IsDdcPort);
         Assert.Equal((byte)0xB6, info.I2cDeviceAddress);
         Assert.Equal((byte)1, info.PortId);
         Assert.Equal(1u, info.IsPortIdSet);
+        Assert.Equal(4u, info.I2cSpeedKhz);
         Assert.Equal((nint)0x1111, info.I2cRegisterAddress);
         Assert.Equal((nint)0x2222, info.Data);
     }
@@ -81,7 +83,8 @@ public sealed class LenovoRtxGpuLightingControllerTests
         Assert.Contains(commands, command => command.Register == 0x1A && command.Value == 145);
         Assert.Contains(commands, command => command.Register == 0x14 && command.Value == 1);
         Assert.Equal(4, commands.Count(command => command.Register == 0x50 && command.Value == 1));
-        Assert.Equal(37, commands.Count);
+        Assert.Equal(4, commands.Count(command => command.Register == 0xFF && command.Value == 0xFF));
+        Assert.Equal(41, commands.Count);
     }
 
     [Fact]
@@ -96,6 +99,7 @@ public sealed class LenovoRtxGpuLightingControllerTests
 
         Assert.DoesNotContain(commands, command => command.Register == 0x14);
         Assert.Equal(4, commands.Count(command => command.Register == 0x50 && command.Value == 0));
-        Assert.Equal(33, commands.Count);
+        Assert.Equal(4, commands.Count(command => command.Register == 0xFF && command.Value == 0xFF));
+        Assert.Equal(37, commands.Count);
     }
 }
