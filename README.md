@@ -49,6 +49,8 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 
 The application controls tower lighting through Windows LampArray. An ordinary unpackaged LampArray app only controls lighting while it is in the foreground. On Windows 11 build 23466 and later, the included sparse package identity registers the app as an ambient background-lighting controller so that its selected color can remain active while another window is in the foreground.
 
+No Lenovo application or DLL is required by this project. If the exact supported controller (`VID 17EF`, `PID C955`) is present but Windows reports zero lamps, the application checks the firmware-provided `LENOVO_GAMEZONE_DATA` WMI interface. It enables Dynamic Lighting only when the firmware reports that the feature is supported and currently disabled, then retries Windows LampArray discovery. Controllers that do not match, already expose lamps, or report no firmware support are never modified.
+
 For a local source build, publish the app and register that exact output directory:
 
 ```powershell
@@ -173,6 +175,7 @@ LenovoDesktopFanControl/
 |   |   |-- WmiFanControlService.cs          Lenovo WMI fan discovery and control
 |   |   |-- ILightingControlService.cs        Lighting abstraction
 |   |   |-- LampArrayLightingService.cs      Active Windows lighting backend
+|   |   |-- DynamicLightingFirmwareRecovery.cs Guarded standalone lighting recovery
 |   |   |-- WmiLightingService.cs            Experimental Lenovo lighting backend
 |   |   |-- FanFirmwareCompatibility.cs      Model and firmware checks
 |   |   |-- VisualTestFanControlService.cs   Simulated fan hardware
@@ -255,7 +258,8 @@ The workflow can also be started manually from the GitHub Actions page by provid
 
 - Confirm Windows Dynamic Lighting recognizes the device.
 - Close applications that may already own the lighting controller.
-- Restart the application and inspect LampArray discovery entries in `log.txt`.
+- Restart the application and inspect LampArray discovery and firmware-recovery entries in `log.txt`.
+- If the controller remains at zero lamps after recovery, reboot once so Windows can re-enumerate it with Dynamic Lighting enabled.
 
 ### Lighting changes when another app receives focus
 

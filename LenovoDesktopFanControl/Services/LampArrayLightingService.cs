@@ -7,8 +7,9 @@ namespace LenovoDesktopFanControl.Services;
 
 public sealed class LampArrayLightingService : ILightingControlService
 {
-    private const ushort LenovoVendorId = 0x17EF;
-    private const ushort T7LightingProductId = 0xC955;
+    private const int RecoveryRetryCount = 5;
+    private static readonly TimeSpan RecoveryRetryDelay = TimeSpan.FromMilliseconds(500);
+    private readonly DynamicLightingFirmwareRecovery _firmwareRecovery;
     private LampArray? _lampArray;
     private WinColor _lastColor = WinColor.FromArgb(255, 91, 157, 255);
     private double _lastBrightness = 1;
@@ -18,6 +19,16 @@ public sealed class LampArrayLightingService : ILightingControlService
     public bool IsControlAvailable => _lampArray?.IsAvailable ?? false;
 
     public event EventHandler? AvailabilityChanged;
+
+    public LampArrayLightingService()
+        : this(new WmiDynamicLightingFirmwareService())
+    {
+    }
+
+    internal LampArrayLightingService(IDynamicLightingFirmwareService firmwareService)
+    {
+        _firmwareRecovery = new DynamicLightingFirmwareRecovery(firmwareService);
+    }
 
     private void OnLampArrayAvailabilityChanged(object? sender, object? e)
     {
@@ -29,49 +40,46 @@ public sealed class LampArrayLightingService : ILightingControlService
     {
         try
         {
-            var devices = await DeviceInformation.FindAllAsync(LampArray.GetDeviceSelector());
-            foreach (var device in devices)
+            DetachLampArray();
+
+            var candidate = await FindLenovoLampArrayAsync();
+            if (candidate == null)
+                return null;
+
+            if (candidate.LampArray.LampCount == 0)
             {
-                var lampArray = await LampArray.FromIdAsync(device.Id);
-                if (lampArray == null)
-                    continue;
+                Log.Warn("Lenovo LampArray reported zero lamps; checking the firmware Dynamic Lighting state");
+                var enabled = await _firmwareRecovery.TryEnableAsync(
+                    candidate.LampArray.HardwareVendorId,
+                    candidate.LampArray.HardwareProductId,
+                    candidate.LampArray.LampCount);
 
-                Log.Info(
-                    $"LampArray discovered: name={device.Name}, lamps={lampArray.LampCount}, " +
-                    $"VID=0x{lampArray.HardwareVendorId:X4}, PID=0x{lampArray.HardwareProductId:X4}, " +
-                    $"id={device.Id}");
+                if (!enabled)
+                    return null;
 
-                if (lampArray.HardwareVendorId != LenovoVendorId ||
-                    lampArray.HardwareProductId != T7LightingProductId)
-                    continue;
-
-                if (_lampArray != null)
-                    _lampArray.AvailabilityChanged -= OnLampArrayAvailabilityChanged;
-                _lampArray = lampArray;
-                _lampArray.AvailabilityChanged += OnLampArrayAvailabilityChanged;
-                _lastBrightness = lampArray.BrightnessLevel;
-
-                _zones = BuildSpatialZones(lampArray);
-
-                for (var index = 0; index < lampArray.LampCount; index++)
+                for (var attempt = 1; attempt <= RecoveryRetryCount; attempt++)
                 {
-                    var info = lampArray.GetLampInfo(index);
-                    Log.Info(
-                        $"  lamp {index}: position=({info.Position.X:F1}, {info.Position.Y:F1}, " +
-                        $"{info.Position.Z:F1}), purposes={info.Purposes}, latency={info.UpdateLatency}");
+                    await Task.Delay(RecoveryRetryDelay);
+                    candidate = await FindLenovoLampArrayAsync();
+                    if (candidate?.LampArray.LampCount > 0)
+                    {
+                        Log.Info(
+                            $"Dynamic Lighting recovery succeeded on discovery attempt {attempt}: " +
+                            $"{candidate.LampArray.LampCount} lamps");
+                        break;
+                    }
+
+                    Log.Info($"Waiting for Lenovo LampArray re-enumeration ({attempt}/{RecoveryRetryCount})");
                 }
 
-                foreach (var zone in _zones)
-                    Log.Info($"  zone {zone.Index}: {zone.Name} ({zone.LampCount} lamps, indices=[{string.Join(",", zone.LampIndices)}])");
-
-                return new LightingDeviceInfo(
-                    string.IsNullOrWhiteSpace(device.Name) ? "Lenovo Legion Tower Lighting" : device.Name,
-                    device.Id,
-                    lampArray.LampCount,
-                    lampArray.HardwareVendorId,
-                    lampArray.HardwareProductId,
-                    _zones);
+                if (candidate == null || candidate.LampArray.LampCount <= 0)
+                {
+                    Log.Warn("Dynamic Lighting was enabled, but the Lenovo controller still reports zero lamps");
+                    return null;
+                }
             }
+
+            return AttachLampArray(candidate);
         }
         catch (Exception ex)
         {
@@ -79,6 +87,65 @@ public sealed class LampArrayLightingService : ILightingControlService
         }
 
         return null;
+    }
+
+    private static async Task<LampArrayCandidate?> FindLenovoLampArrayAsync()
+    {
+        LampArrayCandidate? zeroLampCandidate = null;
+        var devices = await DeviceInformation.FindAllAsync(LampArray.GetDeviceSelector());
+        foreach (var device in devices)
+        {
+            var lampArray = await LampArray.FromIdAsync(device.Id);
+            if (lampArray == null)
+                continue;
+
+            Log.Info(
+                $"LampArray discovered: name={device.Name}, lamps={lampArray.LampCount}, " +
+                $"VID=0x{lampArray.HardwareVendorId:X4}, PID=0x{lampArray.HardwareProductId:X4}, " +
+                $"id={device.Id}");
+
+            if (lampArray.HardwareVendorId == DynamicLightingFirmwareRecovery.LenovoVendorId &&
+                lampArray.HardwareProductId == DynamicLightingFirmwareRecovery.LenovoLightingProductId)
+            {
+                var candidate = new LampArrayCandidate(device, lampArray);
+                if (lampArray.LampCount > 0)
+                    return candidate;
+
+                zeroLampCandidate ??= candidate;
+            }
+        }
+
+        return zeroLampCandidate;
+    }
+
+    private LightingDeviceInfo AttachLampArray(LampArrayCandidate candidate)
+    {
+        var device = candidate.Device;
+        var lampArray = candidate.LampArray;
+
+        _lampArray = lampArray;
+        _lampArray.AvailabilityChanged += OnLampArrayAvailabilityChanged;
+        _lastBrightness = lampArray.BrightnessLevel;
+        _zones = BuildSpatialZones(lampArray);
+
+        for (var index = 0; index < lampArray.LampCount; index++)
+        {
+            var info = lampArray.GetLampInfo(index);
+            Log.Info(
+                $"  lamp {index}: position=({info.Position.X:F1}, {info.Position.Y:F1}, " +
+                $"{info.Position.Z:F1}), purposes={info.Purposes}, latency={info.UpdateLatency}");
+        }
+
+        foreach (var zone in _zones)
+            Log.Info($"  zone {zone.Index}: {zone.Name} ({zone.LampCount} lamps, indices=[{string.Join(",", zone.LampIndices)}])");
+
+        return new LightingDeviceInfo(
+            string.IsNullOrWhiteSpace(device.Name) ? "Lenovo Legion Tower Lighting" : device.Name,
+            device.Id,
+            lampArray.LampCount,
+            lampArray.HardwareVendorId,
+            lampArray.HardwareProductId,
+            _zones);
     }
 
     private static List<LightingZoneInfo> BuildSpatialZones(LampArray lampArray)
@@ -191,8 +258,16 @@ public sealed class LampArrayLightingService : ILightingControlService
 
     public void Dispose()
     {
+        DetachLampArray();
+    }
+
+    private void DetachLampArray()
+    {
         if (_lampArray != null)
             _lampArray.AvailabilityChanged -= OnLampArrayAvailabilityChanged;
         _lampArray = null;
+        _zones = [];
     }
+
+    private sealed record LampArrayCandidate(DeviceInformation Device, LampArray LampArray);
 }
