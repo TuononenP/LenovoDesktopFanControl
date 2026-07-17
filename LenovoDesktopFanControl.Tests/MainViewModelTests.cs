@@ -571,12 +571,15 @@ public class MainViewModelTests
 
             viewModel.MinimizeToTray = true;
             Assert.True(settings.Settings.MinimizeToTray);
+            Assert.Equal(0, settings.SaveCount);
 
             viewModel.MinimizeToTray = true;
             Assert.True(settings.Settings.MinimizeToTray);
+            Assert.Equal(0, settings.SaveCount);
 
             viewModel.MinimizeToTray = false;
             Assert.False(settings.Settings.MinimizeToTray);
+            Assert.Equal(1, settings.SaveCount);
         }
         finally
         {

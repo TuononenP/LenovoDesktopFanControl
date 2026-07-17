@@ -270,6 +270,7 @@
                               Margin="0,0,28,12"
                               Style="{StaticResource ToggleSwitchStyle}"
                               IsChecked="{Binding IsFullSpeed}"
+                              Visibility="{Binding IsFullSpeedSupported, Converter={StaticResource Bool2Vis}}"
                               IsEnabled="{Binding IsFullSpeedSupported}"
                               ToolTip="{loc:Loc TooltipFullSpeed}"
                               ToolTipService.ShowOnDisabled="True"

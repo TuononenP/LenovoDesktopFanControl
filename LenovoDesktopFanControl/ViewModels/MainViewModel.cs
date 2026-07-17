@@ -24,7 +24,7 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isFullSpeed;
     private bool _isBusy;
     private bool _startWithWindows;
-    private bool _minimizeToTray;
+    private bool _minimizeToTray = true;
     private bool _isFullSpeedSupported = true;
     private string _selectedLanguage = "en";
     private string _statusMessage = "";
@@ -103,6 +103,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (_minimizeToTray == value) return;
             _minimizeToTray = value;
             _settings.MinimizeToTray = value;
+            _settingsService.Save(_settings);
             OnPropertyChanged();
         }
     }

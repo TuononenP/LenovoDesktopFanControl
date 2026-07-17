@@ -53,6 +53,19 @@ public sealed class LenovoRtxGpuLightingControllerTests
     }
 
     [Fact]
+    public void CreateI2cInfo_RoutesRequestsToTheInternalRgbPort()
+    {
+        var info = LenovoRtxGpuLightingController.CreateI2cInfo(0x1111, 0x2222);
+
+        Assert.Equal((byte)0, info.IsDdcPort);
+        Assert.Equal((byte)0xB6, info.I2cDeviceAddress);
+        Assert.Equal((byte)1, info.PortId);
+        Assert.Equal(1u, info.IsPortIdSet);
+        Assert.Equal((nint)0x1111, info.I2cRegisterAddress);
+        Assert.Equal((nint)0x2222, info.Data);
+    }
+
+    [Fact]
     public void BuildStaticCommands_ProgramsPurpleInBgrRegisterOrder()
     {
         var commands = LenovoRtxGpuLightingController.BuildStaticCommands(

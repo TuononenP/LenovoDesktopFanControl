@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private WindowState _restoreWindowState = WindowState.Normal;
     private bool _isInitialized;
     private bool _isClosing;
+    private bool _exitRequested;
 
     public MainWindow()
     {
@@ -179,6 +180,8 @@ public partial class MainWindow : Window
             return;
 
         _isInitialized = true;
+        if (App.StartMinimized)
+            HideToTray();
         _initializationTask = InitializeViewModelAsync();
     }
 
@@ -190,7 +193,7 @@ public partial class MainWindow : Window
             if (VisualScaleVerifier.IsRequested)
             {
                 await Dispatcher.InvokeAsync(() => VisualScaleVerifier.Render(this));
-                _ = Dispatcher.BeginInvoke(Close);
+                _ = Dispatcher.BeginInvoke(RequestExit);
             }
         }
         catch (Exception ex)
@@ -229,6 +232,12 @@ public partial class MainWindow : Window
 
         if (_isClosing)
             return;
+
+        if (!_exitRequested)
+        {
+            HideToTray();
+            return;
+        }
 
         _isClosing = true;
         IsEnabled = false;
@@ -385,7 +394,7 @@ public partial class MainWindow : Window
             _trayExitItem = trayMenu.Items.Add(
                 LocalizationService.Get("TrayExit"),
                 null,
-                (_, _) => RunOnDispatcher(Close));
+                (_, _) => RunOnDispatcher(RequestExit));
             foreach (WinForms.ToolStripMenuItem item in trayMenu.Items.OfType<WinForms.ToolStripMenuItem>())
                 item.Padding = new WinForms.Padding(8, 5, 8, 5);
 
@@ -471,6 +480,24 @@ public partial class MainWindow : Window
         ShowInTaskbar = true;
         WindowState = _restoreWindowState;
         Activate();
+    }
+
+    private void HideToTray()
+    {
+        if (_isClosing)
+            return;
+
+        if (WindowState != WindowState.Minimized)
+            _restoreWindowState = WindowState;
+        ShowInTaskbar = false;
+        EnsureTrayIcon();
+        Hide();
+    }
+
+    private void RequestExit()
+    {
+        _exitRequested = true;
+        Close();
     }
 
     private void RunOnDispatcher(Action action)

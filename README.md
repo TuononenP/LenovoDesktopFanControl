@@ -37,8 +37,8 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 
 ### Desktop integration
 
-- Start with Windows
-- Minimize to the notification area
+- Start with Windows through an elevated logon task
+- Minimize or close to the notification area; use the tray menu to exit
 - Single-instance application behavior
 - English and Finnish localization
 - High-contrast palette support
@@ -64,6 +64,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Install-Backgrou
 Approve the administrator prompt, then open **Settings > Personalization > Dynamic Lighting > Background light control** and move **Lenovo Desktop Fan Control** to the top of the priority list. Registration uses a local development certificate and applies only to the specified build output. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Uninstall-BackgroundLighting.ps1` to remove the identity and certificate.
 
 Windows 10 supports foreground LampArray control only. Closing the process always releases the device, and Lenovo firmware may restore its own profile, commonly blue. Keep the registered application running or minimized in the notification area for background control.
+
+Enabling **Start with Windows** creates a per-user Task Scheduler logon task with the highest available privileges and starts the app minimized to the notification area. This avoids the delay and elevation limitations of an ordinary `Run` registry entry. The window close button keeps the lighting controller running in the tray; choose **Exit** from the tray menu to stop the process.
 
 `WmiLightingService` is experimental and is not the active runtime backend. The tested controller rejects its undocumented firmware writes, so it should not be treated as a persistent-lighting solution yet.
 

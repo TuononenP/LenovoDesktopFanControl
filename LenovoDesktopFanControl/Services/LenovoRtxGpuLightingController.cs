@@ -20,7 +20,8 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
     private const uint NvApiUnloadId = 0xD22BDD7E;
     private const uint NvApiEnumPhysicalGpusId = 0xE5AC921F;
     private const uint NvApiGetPciIdentifiersId = 0x2DDFB66E;
-    private const uint NvApiI2cWriteId = 0xE812EB07;
+    private const uint NvApiI2cWriteExId = 0x283AC65A;
+    private const uint NvApiI2cReadExId = 0x4D7B0709;
     private const uint I2cInfoVersion3 = 0x00030040;
     private const uint DisplayMask = 0x100;
     private const byte I2cDeviceAddress = 0xB6; // Lenovo uses the 8-bit form of 7-bit address 0x5B.
@@ -34,7 +35,9 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
     private nint _gpuHandle;
     private NvApiUnload? _unload;
     private NvApiI2cWrite? _i2cWrite;
+    private NvApiI2cRead? _i2cRead;
     private bool _nvApiInitialized;
+    private bool _readbackLogged;
     private bool _disposed;
 
     public bool IsAvailable => _gpuHandle != 0 && _i2cWrite != null && !_disposed;
@@ -62,7 +65,8 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
                 _unload = GetDelegate<NvApiUnload>(query, NvApiUnloadId);
                 var enumerate = GetDelegate<NvApiEnumPhysicalGpus>(query, NvApiEnumPhysicalGpusId);
                 var getPciIdentifiers = GetDelegate<NvApiGetPciIdentifiers>(query, NvApiGetPciIdentifiersId);
-                _i2cWrite = GetDelegate<NvApiI2cWrite>(query, NvApiI2cWriteId);
+                _i2cWrite = GetDelegate<NvApiI2cWrite>(query, NvApiI2cWriteExId);
+                _i2cRead = GetDelegate<NvApiI2cRead>(query, NvApiI2cReadExId);
 
                 if (initialize == null || enumerate == null || getPciIdentifiers == null || _i2cWrite == null)
                 {
@@ -152,6 +156,11 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
                 Log.Info(
                     $"Lenovo RTX lighting applied: enabled={enabled}, brightness={level}/7, " +
                     $"r={red}, g={green}, b={blue}");
+                if (!_readbackLogged)
+                {
+                    LogReadback(red, green, blue, level, enabled);
+                    _readbackLogged = true;
+                }
                 return true;
             }
             catch (Exception ex)
@@ -236,22 +245,11 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
         var dataHandle = GCHandle.Alloc(dataBytes, GCHandleType.Pinned);
         try
         {
-            var info = new NvI2cInfoV3
-            {
-                Version = I2cInfoVersion3,
-                DisplayMask = DisplayMask,
-                IsDdcPort = 1,
-                I2cDeviceAddress = I2cDeviceAddress,
-                I2cRegisterAddress = registerHandle.AddrOfPinnedObject(),
-                RegisterAddressSize = 1,
-                Data = dataHandle.AddrOfPinnedObject(),
-                Size = 1,
-                I2cSpeed = I2cSpeedDeprecated,
-                I2cSpeedKhz = I2cSpeed100Khz,
-                PortId = PortId,
-                IsPortIdSet = 1
-            };
-            return _i2cWrite!(_gpuHandle, ref info);
+            var info = CreateI2cInfo(
+                registerHandle.AddrOfPinnedObject(),
+                dataHandle.AddrOfPinnedObject());
+            uint transactionId = 0;
+            return _i2cWrite!(_gpuHandle, ref info, ref transactionId);
         }
         finally
         {
@@ -259,6 +257,76 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
             registerHandle.Free();
         }
     }
+
+    private void LogReadback(byte red, byte green, byte blue, byte brightness, bool enabled)
+    {
+        if (_i2cRead == null)
+            return;
+
+        var expected = new List<(byte Register, byte Value)>
+        {
+            (0x17, brightness),
+            (0x18, blue),
+            (0x19, green),
+            (0x1A, red),
+            (0x50, enabled ? (byte)1 : (byte)0)
+        };
+        if (enabled)
+            expected.Insert(0, (0x14, 1));
+
+        var results = new List<string>(expected.Count);
+        foreach (var item in expected)
+        {
+            var status = ReadRegister(item.Register, out var actual);
+            results.Add(status == 0
+                ? $"0x{item.Register:X2}=0x{actual:X2} (expected 0x{item.Value:X2})"
+                : $"0x{item.Register:X2}=NVAPI {status}");
+        }
+
+        Log.Info($"Lenovo RTX lighting readback: {string.Join(", ", results)}");
+    }
+
+    private int ReadRegister(byte register, out byte value)
+    {
+        var registerBytes = new[] { register };
+        var dataBytes = new byte[1];
+        var registerHandle = GCHandle.Alloc(registerBytes, GCHandleType.Pinned);
+        var dataHandle = GCHandle.Alloc(dataBytes, GCHandleType.Pinned);
+        try
+        {
+            var info = CreateI2cInfo(
+                registerHandle.AddrOfPinnedObject(),
+                dataHandle.AddrOfPinnedObject());
+            uint transactionId = 0;
+            var status = _i2cRead!(_gpuHandle, ref info, ref transactionId);
+            value = dataBytes[0];
+            return status;
+        }
+        finally
+        {
+            dataHandle.Free();
+            registerHandle.Free();
+        }
+    }
+
+    internal static NvI2cInfoV3 CreateI2cInfo(nint registerAddress, nint data) => new()
+    {
+        Version = I2cInfoVersion3,
+        DisplayMask = DisplayMask,
+        // RGB controllers use NVIDIA's internal I2C port rather than a
+        // monitor-facing DDC port. NVAPI may return success for the wrong
+        // route even though the target controller never sees the request.
+        IsDdcPort = 0,
+        I2cDeviceAddress = I2cDeviceAddress,
+        I2cRegisterAddress = registerAddress,
+        RegisterAddressSize = 1,
+        Data = data,
+        Size = 1,
+        I2cSpeed = I2cSpeedDeprecated,
+        I2cSpeedKhz = I2cSpeed100Khz,
+        PortId = PortId,
+        IsPortIdSet = 1
+    };
 
     private static T? GetDelegate<T>(NvApiQueryInterface query, uint id) where T : Delegate
     {
@@ -281,6 +349,7 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
     {
         _gpuHandle = 0;
         _i2cWrite = null;
+        _i2cRead = null;
         if (_library == 0)
             return;
 
@@ -345,5 +414,14 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
         out uint extDeviceId);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate int NvApiI2cWrite(nint gpuHandle, ref NvI2cInfoV3 info);
+    private delegate int NvApiI2cWrite(
+        nint gpuHandle,
+        ref NvI2cInfoV3 info,
+        ref uint transactionId);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int NvApiI2cRead(
+        nint gpuHandle,
+        ref NvI2cInfoV3 info,
+        ref uint transactionId);
 }

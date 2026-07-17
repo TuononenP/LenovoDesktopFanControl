@@ -6,11 +6,16 @@ using SystemColors = System.Windows.SystemColors;
 
 public partial class App : System.Windows.Application
 {
+    internal static bool StartMinimized { get; private set; }
+
     private Mutex? _singleInstanceMutex;
     private readonly Dictionary<string, System.Windows.Media.Color> _standardPalette = [];
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        StartMinimized = e.Args.Any(
+            argument => string.Equals(argument, "--minimized", StringComparison.OrdinalIgnoreCase));
+
         _singleInstanceMutex = new Mutex(
             initiallyOwned: true,
             name: @"Local\LenovoDesktopFanControl",

@@ -7,7 +7,7 @@ public class FanSettings
     public Dictionary<int, byte[]> FanCurves { get; set; } = new();
     public int PollingIntervalMs { get; set; } = 2000;
     public bool StartWithWindows { get; set; }
-    public bool MinimizeToTray { get; set; }
+    public bool MinimizeToTray { get; set; } = true;
     public string Language { get; set; } = "en";
     public bool LightingEnabled { get; set; } = true;
     public int LightingBrightness { get; set; } = 100;
