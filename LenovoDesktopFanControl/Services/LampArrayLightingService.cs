@@ -10,24 +10,31 @@ public sealed class LampArrayLightingService : ILightingControlService
     private const int RecoveryRetryCount = 5;
     private static readonly TimeSpan RecoveryRetryDelay = TimeSpan.FromMilliseconds(500);
     private readonly DynamicLightingFirmwareRecovery _firmwareRecovery;
+    private readonly ILenovoGpuLightingController _gpuLightingController;
     private LampArray? _lampArray;
     private WinColor _lastColor = WinColor.FromArgb(255, 91, 157, 255);
+    private (byte R, byte G, byte B) _gpuColor = (91, 157, 255);
     private double _lastBrightness = 1;
+    private bool _lastEnabled = true;
     private List<LightingZoneInfo> _zones = [];
     private readonly Dictionary<int, (byte R, byte G, byte B)> _zoneColors = [];
+    private int _gpuZoneIndex = -1;
 
     public bool IsControlAvailable => _lampArray?.IsAvailable ?? false;
 
     public event EventHandler? AvailabilityChanged;
 
     public LampArrayLightingService()
-        : this(new WmiDynamicLightingFirmwareService())
+        : this(new WmiDynamicLightingFirmwareService(), new LenovoRtxGpuLightingController())
     {
     }
 
-    internal LampArrayLightingService(IDynamicLightingFirmwareService firmwareService)
+    internal LampArrayLightingService(
+        IDynamicLightingFirmwareService firmwareService,
+        ILenovoGpuLightingController? gpuLightingController = null)
     {
         _firmwareRecovery = new DynamicLightingFirmwareRecovery(firmwareService);
+        _gpuLightingController = gpuLightingController ?? new LenovoRtxGpuLightingController();
     }
 
     private void OnLampArrayAvailabilityChanged(object? sender, object? e)
@@ -127,6 +134,17 @@ public sealed class LampArrayLightingService : ILightingControlService
         _lampArray.AvailabilityChanged += OnLampArrayAvailabilityChanged;
         _lastBrightness = lampArray.BrightnessLevel;
         _zones = BuildSpatialZones(lampArray);
+        _gpuZoneIndex = -1;
+        if (_gpuLightingController.TryDiscover())
+        {
+            _gpuZoneIndex = _zones.Count;
+            _zones.Add(new LightingZoneInfo(
+                _gpuZoneIndex,
+                LocalizationService.Get("ZoneGraphicsCard"),
+                LightingZoneKind.GraphicsCard,
+                0,
+                []));
+        }
 
         for (var index = 0; index < lampArray.LampCount; index++)
         {
@@ -193,6 +211,7 @@ public sealed class LampArrayLightingService : ILightingControlService
     public Task SetEnabledAsync(bool enabled)
     {
         var lampArray = GetLampArray();
+        _lastEnabled = enabled;
         Log.Info($"LampArray.SetEnabledAsync({enabled}), brightness={_lastBrightness:F2}");
         if (enabled)
         {
@@ -204,6 +223,7 @@ public sealed class LampArrayLightingService : ILightingControlService
             _lastBrightness = lampArray.BrightnessLevel > 0 ? lampArray.BrightnessLevel : _lastBrightness;
             lampArray.SetColor(WinColor.FromArgb(255, 0, 0, 0));
         }
+        ApplyGpuState(enabled);
         return Task.CompletedTask;
     }
 
@@ -213,6 +233,7 @@ public sealed class LampArrayLightingService : ILightingControlService
         _lastBrightness = Math.Clamp(brightness, 0, 1);
         Log.Info($"LampArray.SetBrightnessAsync({brightness:F2}) -> {_lastBrightness:F2}");
         lampArray.BrightnessLevel = _lastBrightness;
+        ApplyGpuState(_lastEnabled);
         return Task.CompletedTask;
     }
 
@@ -222,8 +243,10 @@ public sealed class LampArrayLightingService : ILightingControlService
         _lastColor = WinColor.FromArgb(255, red, green, blue);
         foreach (var zone in _zones)
             _zoneColors[zone.Index] = (red, green, blue);
+        _gpuColor = (red, green, blue);
         Log.Info($"LampArray.SetColorAsync(r={red}, g={green}, b={blue}) -> all {lampArray.LampCount} lamps");
         lampArray.SetColor(_lastColor);
+        ApplyGpuState(_lastEnabled);
         return Task.CompletedTask;
     }
 
@@ -234,8 +257,18 @@ public sealed class LampArrayLightingService : ILightingControlService
             throw new ArgumentOutOfRangeException(nameof(zoneIndex));
 
         var zone = _zones[zoneIndex];
-        var color = WinColor.FromArgb(255, red, green, blue);
         _zoneColors[zoneIndex] = (red, green, blue);
+        if (zoneIndex == _gpuZoneIndex)
+        {
+            _gpuColor = (red, green, blue);
+            Log.Info(
+                $"LampArray.SetZoneColorAsync(zone={zoneIndex} '{zone.Name}', " +
+                $"r={red}, g={green}, b={blue}) -> Lenovo RTX GPU");
+            ApplyGpuState(_lastEnabled);
+            return Task.CompletedTask;
+        }
+
+        var color = WinColor.FromArgb(255, red, green, blue);
         Log.Info($"LampArray.SetZoneColorAsync(zone={zoneIndex} '{zone.Name}', r={red}, g={green}, b={blue}) -> {zone.LampCount} lamps");
         lampArray.SetSingleColorForIndices(color, [.. zone.LampIndices]);
         return Task.CompletedTask;
@@ -246,11 +279,27 @@ public sealed class LampArrayLightingService : ILightingControlService
         var lampArray = GetLampArray();
         foreach (var zone in _zones)
         {
+            if (zone.Index == _gpuZoneIndex)
+                continue;
+
             var color = _zoneColors.TryGetValue(zone.Index, out var c)
                 ? WinColor.FromArgb(255, c.R, c.G, c.B)
                 : _lastColor;
             lampArray.SetSingleColorForIndices(color, [.. zone.LampIndices]);
         }
+    }
+
+    private void ApplyGpuState(bool enabled)
+    {
+        if (_gpuZoneIndex < 0)
+            return;
+
+        _gpuLightingController.TryApplyStaticColor(
+            _gpuColor.R,
+            _gpuColor.G,
+            _gpuColor.B,
+            _lastBrightness,
+            enabled);
     }
 
     private LampArray GetLampArray() => _lampArray ??
@@ -259,6 +308,7 @@ public sealed class LampArrayLightingService : ILightingControlService
     public void Dispose()
     {
         DetachLampArray();
+        _gpuLightingController.Dispose();
     }
 
     private void DetachLampArray()
@@ -267,6 +317,7 @@ public sealed class LampArrayLightingService : ILightingControlService
             _lampArray.AvailabilityChanged -= OnLampArrayAvailabilityChanged;
         _lampArray = null;
         _zones = [];
+        _gpuZoneIndex = -1;
     }
 
     private sealed record LampArrayCandidate(DeviceInformation Device, LampArray LampArray);

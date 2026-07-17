@@ -66,6 +66,7 @@
   <data name="ZoneFrontPanel" xml:space="preserve"><value>Front Panel</value></data>
   <data name="ZoneRearPanel" xml:space="preserve"><value>Rear Panel</value></data>
   <data name="ZoneSidePanel" xml:space="preserve"><value>Side Panel</value></data>
+  <data name="ZoneGraphicsCard" xml:space="preserve"><value>Graphics Card</value></data>
   <data name="ZoneFanLight" xml:space="preserve"><value>Fan Lighting</value></data>
   <data name="ZonePowerButton" xml:space="preserve"><value>Power Button</value></data>
   <data name="ZoneLogoLight" xml:space="preserve"><value>Logo Light</value></data>

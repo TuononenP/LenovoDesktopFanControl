@@ -476,6 +476,44 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_NewLightingZoneInheritsPreviouslySavedGlobalColor()
+    {
+        var lightingService = new FakeLightingControlService
+        {
+            Device = new LightingDeviceInfo(
+                "Tower", "id", 2, 0x17EF, 0xC955,
+                [
+                    new LightingZoneInfo(0, "Rear", LightingZoneKind.Accent, 1, [0]),
+                    new LightingZoneInfo(1, "Graphics Card", LightingZoneKind.GraphicsCard, 0, [])
+                ])
+        };
+        var settings = new InMemorySettingsService(new FanSettings
+        {
+            LightingZoneColors =
+            {
+                [0] = new LightingZoneColor(0, 145, 85, 255)
+            }
+        });
+        var viewModel = new MainViewModel(
+            new FakeFanControlService(), settings, new FakeAutoStartService(), lightingService);
+
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            Assert.All(viewModel.Lighting.Zones,
+                zone => Assert.Equal("Purple", zone.SelectedColor?.Name));
+            Assert.Equal(
+                [(0, (byte)145, (byte)85, (byte)255), (1, (byte)145, (byte)85, (byte)255)],
+                lightingService.ZoneColorCalls);
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
     public async Task EffectiveStatusKind_IsBusyWhileOperationIsInProgress()
     {
         var viewModel = new MainViewModel(

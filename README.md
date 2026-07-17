@@ -51,6 +51,8 @@ The application controls tower lighting through Windows LampArray. An ordinary u
 
 No Lenovo application or DLL is required by this project. If the exact supported controller (`VID 17EF`, `PID C955`) is present but Windows reports zero lamps, the application checks the firmware-provided `LENOVO_GAMEZONE_DATA` WMI interface. It enables Dynamic Lighting only when the firmware reports that the feature is supported and currently disabled, then retries Windows LampArray discovery. Controllers that do not match, already expose lamps, or report no firmware support are never modified.
 
+The Lenovo OEM GeForce RTX 5080 (`10DE:2C02`, Lenovo subsystem `17AA:C770`) is exposed as a separate **Graphics Card** zone. Its static color, brightness, and power are controlled directly through the NVAPI library included with the NVIDIA display driver. This path is guarded by the exact PCI identity and does not require Lenovo Legion Space or Lenovo DLLs.
+
 For a local source build, publish the app and register that exact output directory:
 
 ```powershell
@@ -72,6 +74,7 @@ Windows 10 supports foreground LampArray control only. Closing the process alway
 - .NET 10 SDK to build from source
 - A supported Lenovo desktop for real fan control
 - A Windows LampArray-compatible Lenovo lighting controller for lighting control
+- An NVIDIA display driver for lighting control on the supported Lenovo OEM RTX 5080
 - Administrator privileges for Lenovo WMI operations
 
 Target framework: `net10.0-windows10.0.26100.0`.
@@ -175,6 +178,7 @@ LenovoDesktopFanControl/
 |   |   |-- WmiFanControlService.cs          Lenovo WMI fan discovery and control
 |   |   |-- ILightingControlService.cs        Lighting abstraction
 |   |   |-- LampArrayLightingService.cs      Active Windows lighting backend
+|   |   |-- LenovoRtxGpuLightingController.cs Standalone Lenovo OEM RTX 5080 lighting
 |   |   |-- DynamicLightingFirmwareRecovery.cs Guarded standalone lighting recovery
 |   |   |-- WmiLightingService.cs            Experimental Lenovo lighting backend
 |   |   |-- FanFirmwareCompatibility.cs      Model and firmware checks

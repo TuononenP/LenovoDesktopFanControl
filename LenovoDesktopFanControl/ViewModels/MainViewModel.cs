@@ -669,10 +669,27 @@ public class MainViewModel : INotifyPropertyChanged
         if (_settings.LightingZoneColors.Count == 0)
             return;
 
+        var savedColors = _settings.LightingZoneColors.Values
+            .Select(color => (color.Red, color.Green, color.Blue))
+            .Distinct()
+            .ToArray();
+        var inheritedGlobalColor = savedColors.Length == 1
+            ? Lighting.Colors.FirstOrDefault(color =>
+                color.Red == savedColors[0].Red &&
+                color.Green == savedColors[0].Green &&
+                color.Blue == savedColors[0].Blue)
+            : null;
+
         foreach (var zone in Lighting.Zones)
         {
             if (!_settings.LightingZoneColors.TryGetValue(zone.Index, out var saved))
+            {
+                // A newly supported device (for example the GPU lighting zone) inherits
+                // an existing all-zones color during the first run after upgrading.
+                if (inheritedGlobalColor != null)
+                    zone.SelectedColor = inheritedGlobalColor;
                 continue;
+            }
 
             var match = Lighting.Colors.FirstOrDefault(c =>
                 c.Red == saved.Red && c.Green == saved.Green && c.Blue == saved.Blue);

@@ -66,6 +66,7 @@
   <data name="ZoneFrontPanel" xml:space="preserve"><value>Etupaneeli</value></data>
   <data name="ZoneRearPanel" xml:space="preserve"><value>Takapaneeli</value></data>
   <data name="ZoneSidePanel" xml:space="preserve"><value>Sivupaneeli</value></data>
+  <data name="ZoneGraphicsCard" xml:space="preserve"><value>Näytönohjain</value></data>
   <data name="ZoneFanLight" xml:space="preserve"><value>Tuuletinvalaistus</value></data>
   <data name="ZonePowerButton" xml:space="preserve"><value>Virtapainike</value></data>
   <data name="ZoneLogoLight" xml:space="preserve"><value>Logovalo</value></data>

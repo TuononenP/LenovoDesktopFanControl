@@ -24,6 +24,7 @@ public enum LightingZoneKind
     Status,
     Illumination,
     Presentation,
+    GraphicsCard,
     Mixed
 }
 
