@@ -32,7 +32,8 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 - Lighting power and brightness controls
 - Global color selection
 - Independent color selection for detected lighting zones
-- Saved lighting preferences restored at startup and when the window regains focus
+- Saved lighting preferences restored at startup and when Windows grants lighting control
+- Windows 11 ambient background-lighting registration
 
 ### Desktop integration
 
@@ -44,11 +45,21 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 - Administrator elevation through the application manifest
 - Conflict detection for other fan-control applications
 
-## Lighting Behavior and Limitation
+## Lighting Behavior
 
-The application currently controls tower lighting through Windows LampArray. LampArray control belongs to the running process. When the application closes, Windows releases the lighting device and Lenovo firmware may restore its own profile, commonly blue.
+The application controls tower lighting through Windows LampArray. An ordinary unpackaged LampArray app only controls lighting while it is in the foreground. On Windows 11 build 23466 and later, the included sparse package identity registers the app as an ambient background-lighting controller so that its selected color can remain active while another window is in the foreground.
 
-The application saves the selected power state, brightness, and per-zone colors and reapplies them the next time it starts or becomes active. It cannot currently guarantee that a selected color remains active while the process is closed. Keeping the application minimized in the notification area retains LampArray control.
+For a local source build, publish the app and register that exact output directory:
+
+```powershell
+dotnet publish LenovoDesktopFanControl -c Release -r win-x64 --self-contained false -o artifacts/background-lighting
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Install-BackgroundLighting.ps1 -ExternalLocation .\artifacts\background-lighting
+.\artifacts\background-lighting\LenovoDesktopFanControl.exe
+```
+
+Approve the administrator prompt, then open **Settings > Personalization > Dynamic Lighting > Background light control** and move **Lenovo Desktop Fan Control** to the top of the priority list. Registration uses a local development certificate and applies only to the specified build output. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Uninstall-BackgroundLighting.ps1` to remove the identity and certificate.
+
+Windows 10 supports foreground LampArray control only. Closing the process always releases the device, and Lenovo firmware may restore its own profile, commonly blue. Keep the registered application running or minimized in the notification area for background control.
 
 `WmiLightingService` is experimental and is not the active runtime backend. The tested controller rejects its undocumented firmware writes, so it should not be treated as a persistent-lighting solution yet.
 
@@ -89,7 +100,7 @@ dotnet test -c Release
 2. For manual control, select Custom mode, adjust a fan’s target speed, and choose **Apply Speed**.
 3. Use **Edit Curve** to configure and apply a ten-point curve for an individual fan zone.
 4. In Tower Lighting, enable the lights, select brightness and colors, then choose **Apply Lighting**.
-5. Enable **Minimize to tray** if lighting should remain under application control after the main window is closed or minimized.
+5. On supported Windows 11 builds, register and prioritize the app for background lighting if the selected color should remain active while another app is in the foreground.
 
 Applying custom fan control changes firmware behavior. Monitor temperatures and use conservative curves appropriate for the installed hardware.
 
@@ -147,7 +158,7 @@ LenovoDesktopFanControl/
 |-- LenovoDesktopFanControl/                 WPF application
 |   |-- App.xaml(.cs)                        Startup, single instance, accessibility
 |   |-- MainWindow.xaml(.cs)                 Dashboard, tray, and window lifecycle
-|   |-- app.manifest                         Administrator elevation
+|   |-- app.manifest                         Elevation and sparse-package identity
 |   |-- Assets/                              Application icon and generation script
 |   |-- Models/
 |   |   |-- ApplicationStatusKind.cs         UI connection and error states
@@ -185,6 +196,11 @@ LenovoDesktopFanControl/
 |   |   `-- TrayMenuRenderer.cs              Notification-area menu rendering
 |   |-- Themes/                              Colors, controls, and typography
 |   `-- Resources/                           English and Finnish strings
+|-- Packaging/
+|   `-- AppxManifest.xml                     Ambient background-lighting extension
+|-- tools/
+|   |-- Install-BackgroundLighting.ps1       Local identity registration
+|   `-- Uninstall-BackgroundLighting.ps1     Local identity removal
 `-- LenovoDesktopFanControl.Tests/           xUnit test project
     |-- MainViewModelTests.cs                App orchestration and persistence
     |-- FanViewModelTests.cs                 Fan-zone behavior and commands
@@ -241,9 +257,13 @@ The workflow can also be started manually from the GitHub Actions page by provid
 - Close applications that may already own the lighting controller.
 - Restart the application and inspect LampArray discovery entries in `log.txt`.
 
+### Lighting changes when another app receives focus
+
+On Windows 11 build 23466 or later, register the package identity, keep the application running, and prioritize **Lenovo Desktop Fan Control** under **Settings > Personalization > Dynamic Lighting > Background light control**. On Windows 10, LampArray control is foreground-only.
+
 ### Lighting changes after exit
 
-This is the LampArray lifecycle limitation described above. Enable minimize-to-tray and leave the application running if the selected profile must remain active.
+LampArray control ends when the process exits. Enable minimize-to-tray and leave the application running if the selected profile must remain active.
 
 ### Settings behave unexpectedly
 

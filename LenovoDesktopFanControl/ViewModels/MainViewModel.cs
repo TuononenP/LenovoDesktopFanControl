@@ -258,6 +258,8 @@ public class MainViewModel : INotifyPropertyChanged
             Lighting.Brightness = _settings.LightingBrightness;
             await Lighting.InitializeAsync();
             ApplySavedLightingZoneColors();
+            Log.Info("Applying saved lighting state after startup initialization");
+            await Lighting.ReapplyAsync();
 
             IsSupported = await _service.IsSupportedAsync();
             if (!IsSupported)
@@ -676,6 +678,14 @@ public class MainViewModel : INotifyPropertyChanged
                 c.Red == saved.Red && c.Green == saved.Green && c.Blue == saved.Blue);
             zone.SelectedColor = match;
         }
+
+        var firstColor = Lighting.Zones.FirstOrDefault()?.SelectedColor;
+        var hasSingleGlobalColor = firstColor != null && Lighting.Zones.All(zone =>
+            zone.SelectedColor is { } color &&
+            color.Red == firstColor.Red &&
+            color.Green == firstColor.Green &&
+            color.Blue == firstColor.Blue);
+        Lighting.RestoreGlobalColorSelection(hasSingleGlobalColor ? firstColor : null);
     }
 
     private void SaveLightingSettings()

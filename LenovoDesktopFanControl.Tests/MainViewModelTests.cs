@@ -431,6 +431,51 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_RestoresAndAppliesSavedGlobalLightingState()
+    {
+        var lightingService = new FakeLightingControlService
+        {
+            Device = new LightingDeviceInfo(
+                "Tower", "id", 2, 0x17EF, 0xC955,
+                [
+                    new LightingZoneInfo(0, "Rear", LightingZoneKind.Accent, 1, [0]),
+                    new LightingZoneInfo(1, "Front", LightingZoneKind.Accent, 1, [1])
+                ])
+        };
+        var settings = new InMemorySettingsService(new FanSettings
+        {
+            LightingEnabled = false,
+            LightingBrightness = 42,
+            LightingZoneColors =
+            {
+                [0] = new LightingZoneColor(0, 145, 85, 255),
+                [1] = new LightingZoneColor(1, 145, 85, 255)
+            }
+        });
+        var viewModel = new MainViewModel(
+            new FakeFanControlService(), settings, new FakeAutoStartService(), lightingService);
+
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            Assert.Equal("Purple", viewModel.Lighting.GlobalColor?.Name);
+            Assert.All(viewModel.Lighting.Zones,
+                zone => Assert.Equal("Purple", zone.SelectedColor?.Name));
+            Assert.Equal(0.42, Assert.Single(lightingService.BrightnessCalls), 3);
+            Assert.Empty(lightingService.ColorCalls);
+            Assert.Equal(
+                [(0, (byte)145, (byte)85, (byte)255), (1, (byte)145, (byte)85, (byte)255)],
+                lightingService.ZoneColorCalls);
+            Assert.False(Assert.Single(lightingService.EnabledCalls));
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
     public async Task EffectiveStatusKind_IsBusyWhileOperationIsInProgress()
     {
         var viewModel = new MainViewModel(

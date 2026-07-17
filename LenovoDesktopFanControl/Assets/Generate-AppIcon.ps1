@@ -1,5 +1,6 @@
 param(
-    [string]$OutputPath = (Join-Path $PSScriptRoot 'AppIcon.ico')
+    [string]$OutputPath = (Join-Path $PSScriptRoot 'AppIcon.ico'),
+    [string]$PngOutputPath = (Join-Path $PSScriptRoot 'AppIcon.png')
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -123,4 +124,9 @@ finally {
     $stream.Dispose()
 }
 
+$pngDirectory = Split-Path -Parent $PngOutputPath
+[System.IO.Directory]::CreateDirectory($pngDirectory) | Out-Null
+[System.IO.File]::WriteAllBytes($PngOutputPath, $images[$images.Count - 1])
+
 Write-Output "Generated $OutputPath with $($sizes.Count) image sizes."
+Write-Output "Generated $PngOutputPath at 256x256."

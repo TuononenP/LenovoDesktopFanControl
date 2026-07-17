@@ -57,12 +57,29 @@ public class LightingViewModelTests
     }
 
     [Fact]
+    public async Task Brightness_ImmediatelyUpdatesControllerAndRaisesApplied()
+    {
+        var service = new FakeLightingControlService { Device = SingleZoneDevice(10) };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var appliedCount = 0;
+        viewModel.Applied += (_, _) => appliedCount++;
+
+        viewModel.Brightness = 35;
+
+        Assert.Equal(0.35, Assert.Single(service.BrightnessCalls), 3);
+        Assert.Equal(1, appliedCount);
+        Assert.Equal("Brightness set to 35%", viewModel.Status);
+    }
+
+    [Fact]
     public async Task ApplyAsync_SendsBrightnessColorAndPowerStateForSingleZone()
     {
         var service = new FakeLightingControlService { Device = SingleZoneDevice(10) };
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 65;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Cyan");
         viewModel.IsEnabled = true;
 
@@ -81,6 +98,7 @@ public class LightingViewModelTests
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 80;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Red");
         viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(c => c.Name == "Cyan");
         viewModel.IsEnabled = true;
@@ -128,6 +146,7 @@ public class LightingViewModelTests
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 45;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Green");
         viewModel.IsEnabled = true;
 
@@ -146,6 +165,7 @@ public class LightingViewModelTests
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 70;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Purple");
         viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(c => c.Name == "Orange");
         viewModel.IsEnabled = true;
@@ -183,6 +203,7 @@ public class LightingViewModelTests
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 50;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Red");
         viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(c => c.Name == "Cyan");
         viewModel.IsEnabled = true;
@@ -204,6 +225,7 @@ public class LightingViewModelTests
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 60;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Green");
         viewModel.IsEnabled = true;
 
@@ -244,6 +266,7 @@ public class LightingViewModelTests
         using var viewModel = new LightingViewModel(service);
         await viewModel.InitializeAsync();
         viewModel.Brightness = 70;
+        service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Purple");
         viewModel.IsEnabled = true;
 

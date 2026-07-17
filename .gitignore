@@ -34,6 +34,7 @@ project.assets.json
 TestResults/
 *.trx
 *.xml
+!Packaging/AppxManifest.xml
 
 ## User/Environment Settings & Logs
 *.log

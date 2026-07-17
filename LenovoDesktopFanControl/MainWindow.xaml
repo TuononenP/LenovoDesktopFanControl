@@ -185,7 +185,7 @@
                                 <Slider Margin="0,4,0,0"
                                         Minimum="0" Maximum="100"
                                         TickFrequency="5"
-                                        Value="{Binding Lighting.Brightness}" />
+                                        Value="{Binding Lighting.Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="6" VerticalAlignment="Center">

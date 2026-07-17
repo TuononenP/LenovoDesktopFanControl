@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 uap10 rescap">
+  <Identity
+    Name="PetriTuononen.LenovoDesktopFanControl"
+    Publisher="CN=LenovoDesktopFanControl"
+    Version="1.0.0.0"
+    ProcessorArchitecture="neutral" />
+  <Properties>
+    <DisplayName>Lenovo Desktop Fan Control</DisplayName>
+    <PublisherDisplayName>Petri Tuononen</PublisherDisplayName>
+    <Logo>Assets\AppIcon.png</Logo>
+    <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Desktop"
+      MinVersion="10.0.19041.0"
+      MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Applications>
+    <Application
+      Id="LenovoDesktopFanControl"
+      Executable="LenovoDesktopFanControl.exe"
+      uap10:TrustLevel="mediumIL"
+      uap10:RuntimeBehavior="win32App">
+      <uap:VisualElements
+        AppListEntry="none"
+        DisplayName="Lenovo Desktop Fan Control"
+        Description="Lenovo desktop fan and tower lighting control"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\AppIcon.png"
+        Square44x44Logo="Assets\AppIcon.png" />
+      <Extensions>
+        <uap3:Extension Category="windows.appExtension">
+          <uap3:AppExtension
+            Name="com.microsoft.windows.lighting"
+            Id="LenovoDesktopFanControl.Lighting"
+            PublicFolder="public"
+            DisplayName="Lenovo Desktop Fan Control" />
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+    <rescap:Capability Name="allowElevation" />
+  </Capabilities>
+</Package>

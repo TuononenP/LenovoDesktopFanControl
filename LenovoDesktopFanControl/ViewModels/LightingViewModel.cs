@@ -85,7 +85,18 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
     public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; OnPropertyChanged(); } }
-    public int Brightness { get => _brightness; set { _brightness = Math.Clamp(value, 0, 100); OnPropertyChanged(); } }
+    public int Brightness
+    {
+        get => _brightness;
+        set
+        {
+            var brightness = Math.Clamp(value, 0, 100);
+            if (_brightness == brightness) return;
+            _brightness = brightness;
+            OnPropertyChanged();
+            ApplyBrightness(brightness);
+        }
+    }
     public LightingColorOption? GlobalColor
     {
         get => _globalColor;
@@ -98,6 +109,14 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
                 ApplyGlobalColor(value);
         }
     }
+
+    internal void RestoreGlobalColorSelection(LightingColorOption? color)
+    {
+        if (_globalColor == color) return;
+        _globalColor = color;
+        OnPropertyChanged(nameof(GlobalColor));
+    }
+
     public string DeviceSummary { get => _deviceSummary; private set { _deviceSummary = value; OnPropertyChanged(); } }
     public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
 
@@ -260,6 +279,28 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         {
             Status = ex.Message;
             Log.Warn($"Failed to apply global color: {ex.Message}");
+        }
+    }
+
+    private async void ApplyBrightness(int brightness)
+    {
+        if (_service == null || !IsAvailable)
+        {
+            Log.Info($"ApplyBrightness skipped: service={_service != null}, available={IsAvailable}");
+            return;
+        }
+
+        try
+        {
+            await _service.SetBrightnessAsync(brightness / 100d);
+            Status = $"Brightness set to {brightness}%";
+            Log.Info($"ApplyBrightness succeeded: {brightness}%");
+            Applied?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+            Log.Warn($"Failed to apply brightness: {ex.Message}");
         }
     }
 
