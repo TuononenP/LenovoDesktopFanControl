@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 using LenovoDesktopFanControl.Models;
+using WpfBrush = System.Windows.Media.Brush;
 
 namespace LenovoDesktopFanControl.Views.Converters;
 
@@ -29,6 +30,41 @@ public class TempToStringConverter : IValueConverter
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+}
+
+public class TemperatureToBrushConverter : IValueConverter
+{
+    public WpfBrush? CoolBrush { get; set; }
+    public WpfBrush? ElevatedBrush { get; set; }
+    public WpfBrush? HotBrush { get; set; }
+    public WpfBrush? CriticalBrush { get; set; }
+    public WpfBrush? UnavailableBrush { get; set; }
+
+    public object? Convert(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        if (value is not int temperature || temperature < 0)
+            return UnavailableBrush;
+        if (temperature < 50)
+            return CoolBrush;
+        if (temperature < 70)
+            return ElevatedBrush;
+        if (temperature < 85)
+            return HotBrush;
+        return CriticalBrush;
+    }
+
+    public object ConvertBack(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
     {
         throw new NotSupportedException();
     }

@@ -404,12 +404,16 @@ public sealed class LampArrayLightingService : ILightingControlService
         if (_gpuZoneIndex < 0)
             return;
 
-        _gpuLightingController.TryApplyStaticColor(
-            _gpuColor.R,
-            _gpuColor.G,
-            _gpuColor.B,
-            _lastBrightness * GetZoneBrightness(_gpuZoneIndex),
-            enabled && IsZoneEnabled(_gpuZoneIndex));
+        if (!_gpuLightingController.TryApplyStaticColor(
+                _gpuColor.R,
+                _gpuColor.G,
+                _gpuColor.B,
+                _lastBrightness * GetZoneBrightness(_gpuZoneIndex),
+                enabled && IsZoneEnabled(_gpuZoneIndex)))
+        {
+            throw new InvalidOperationException(
+                "The Lenovo RTX GPU lighting controller did not accept the color change");
+        }
     }
 
     private double GetZoneBrightness(int zoneIndex) =>

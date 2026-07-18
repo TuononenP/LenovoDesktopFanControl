@@ -16,6 +16,17 @@ public class LightingViewModelTests
             new LightingZoneInfo(1, "Accent Lights", LightingZoneKind.Accent, 6, new[] { 4, 5, 6, 7, 8, 9 })
         ]);
 
+    private static LightingDeviceInfo GpuZoneDevice() =>
+        new("Tower", "id", 10, 0x17EF, 0xC955,
+        [
+            new LightingZoneInfo(
+                0,
+                "GPU",
+                LightingZoneKind.GraphicsCard,
+                0,
+                [])
+        ]);
+
     [Fact]
     public async Task InitializeAsync_ExposesDetectedControllerDetails()
     {
@@ -65,6 +76,19 @@ public class LightingViewModelTests
 
         Assert.Equal("Legion Banner", zone.Name);
         Assert.Equal(2, settingsChangedCount);
+    }
+
+    [Fact]
+    public async Task EditNameCommand_ActivatesInlineZoneNameEditor()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var zone = viewModel.Zones[0];
+
+        zone.EditNameCommand.Execute(null);
+
+        Assert.True(zone.IsEditingName);
     }
 
     [Fact]
@@ -123,6 +147,7 @@ public class LightingViewModelTests
         viewModel.Brightness = 65;
         service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Cyan");
+        service.ZoneColorCalls.Clear();
         viewModel.IsEnabled = true;
 
         await viewModel.ApplyAsync();
@@ -143,6 +168,7 @@ public class LightingViewModelTests
         service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Red");
         viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(c => c.Name == "Cyan");
+        service.ZoneColorCalls.Clear();
         viewModel.IsEnabled = true;
 
         await viewModel.ApplyAsync();
@@ -195,6 +221,68 @@ public class LightingViewModelTests
         Assert.Equal(0.35, call.Brightness, 3);
         Assert.Equal(1, appliedCount);
         Assert.Equal("Accent Lights brightness set to 35%", viewModel.Status);
+    }
+
+    [Fact]
+    public async Task ZoneColor_ImmediatelyUpdatesOnlySelectedZone()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var appliedCount = 0;
+        viewModel.Applied += (_, _) => appliedCount++;
+
+        viewModel.Zones[1].SelectedColor =
+            viewModel.Colors.Single(color => color.Name == "Cyan");
+
+        Assert.Equal((1, 0, 211, 254), Assert.Single(service.ZoneColorCalls));
+        Assert.Equal(1, appliedCount);
+        Assert.Equal("Accent Lights color set to Cyan", viewModel.Status);
+        Assert.Null(viewModel.GlobalColor);
+    }
+
+    [Fact]
+    public async Task MatchingZoneColors_RestoreGlobalColorSelection()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var cyan = viewModel.Colors.Single(color => color.Name == "Cyan");
+
+        viewModel.Zones[0].SelectedColor = cyan;
+        Assert.Null(viewModel.GlobalColor);
+
+        viewModel.Zones[1].SelectedColor = cyan;
+        Assert.Same(cyan, viewModel.GlobalColor);
+    }
+
+    [Fact]
+    public async Task GpuColorChange_DebouncesAndDisablesSelectionUntilWriteCompletes()
+    {
+        var service = new FakeLightingControlService
+        {
+            Device = GpuZoneDevice(),
+            ZoneColorGate = new TaskCompletionSource<object?>()
+        };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var gpu = Assert.Single(viewModel.Zones);
+
+        gpu.SelectedColor = viewModel.Colors.Single(color => color.Name == "Cyan");
+
+        Assert.True(gpu.IsColorApplying);
+        Assert.False(gpu.CanChangeColor);
+        Assert.Empty(service.ZoneColorCalls);
+
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        Assert.Single(service.ZoneColorCalls);
+        Assert.True(gpu.IsColorApplying);
+
+        service.ZoneColorGate.SetResult(null);
+        await Task.Delay(20, TestContext.Current.CancellationToken);
+
+        Assert.False(gpu.IsColorApplying);
+        Assert.True(gpu.CanChangeColor);
     }
 
     [Fact]
@@ -263,6 +351,7 @@ public class LightingViewModelTests
         viewModel.Brightness = 45;
         service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Green");
+        service.ZoneColorCalls.Clear();
         viewModel.IsEnabled = true;
 
         await viewModel.ReapplyAsync();
@@ -283,6 +372,7 @@ public class LightingViewModelTests
         service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Purple");
         viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(c => c.Name == "Orange");
+        service.ZoneColorCalls.Clear();
         viewModel.IsEnabled = true;
 
         await viewModel.ReapplyAsync();
@@ -322,6 +412,7 @@ public class LightingViewModelTests
         service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Red");
         viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(c => c.Name == "Cyan");
+        service.ZoneColorCalls.Clear();
         viewModel.IsEnabled = true;
         var statusBefore = viewModel.Status;
 
@@ -384,6 +475,7 @@ public class LightingViewModelTests
         viewModel.Brightness = 70;
         service.BrightnessCalls.Clear();
         viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(c => c.Name == "Purple");
+        service.ZoneColorCalls.Clear();
         viewModel.IsEnabled = true;
 
         service.BrightnessGate = new TaskCompletionSource<object?>();

@@ -82,7 +82,7 @@ public sealed class LenovoRtxGpuLightingControllerTests
     }
 
     [Fact]
-    public void BuildStaticCommands_ProgramsPurpleInBgrRegisterOrder()
+    public void BuildStaticCommands_ProgramsPurpleInRgbRegisterOrder()
     {
         var commands = LenovoRtxGpuLightingController.BuildStaticCommands(
             red: 145,
@@ -92,16 +92,16 @@ public sealed class LenovoRtxGpuLightingControllerTests
             enabled: true);
 
         Assert.Contains(commands, command => command.Register == 0x17 && command.Value == 6);
-        Assert.Contains(commands, command => command.Register == 0x18 && command.Value == 255);
+        Assert.Contains(commands, command => command.Register == 0x18 && command.Value == 145);
         Assert.Contains(commands, command => command.Register == 0x19 && command.Value == 85);
-        Assert.Contains(commands, command => command.Register == 0x1A && command.Value == 145);
+        Assert.Contains(commands, command => command.Register == 0x1A && command.Value == 255);
         Assert.Contains(commands, command => command.Register == 0x14 && command.Value == 1);
         Assert.Equal(4, commands.Count(command => command.Register == 0x50 && command.Value == 1));
         Assert.DoesNotContain(commands, command => command.Register == 0xFF);
         Assert.Equal(4, commands.Count(command =>
             command.Register == 0x32 &&
             command.Value == 0xB2 &&
-            command.DelayAfterMilliseconds == 1));
+            command.DelayAfterMilliseconds == 5));
         Assert.Equal(37, commands.Count);
     }
 
@@ -121,7 +121,7 @@ public sealed class LenovoRtxGpuLightingControllerTests
         Assert.Equal(4, commands.Count(command =>
             command.Register == 0x32 &&
             command.Value == 0xB2 &&
-            command.DelayAfterMilliseconds == 1));
+            command.DelayAfterMilliseconds == 5));
         Assert.Equal(37, commands.Count);
     }
 }

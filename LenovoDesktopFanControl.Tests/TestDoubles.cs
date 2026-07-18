@@ -123,6 +123,7 @@ internal sealed class FakeLightingControlService : ILightingControlService
     public event EventHandler? AvailabilityChanged;
 
     public TaskCompletionSource<object?>? BrightnessGate { get; set; }
+    public TaskCompletionSource<object?>? ZoneColorGate { get; set; }
 
     public void RaiseAvailabilityChanged() => AvailabilityChanged?.Invoke(this, EventArgs.Empty);
 
@@ -149,10 +150,11 @@ internal sealed class FakeLightingControlService : ILightingControlService
         return Task.CompletedTask;
     }
 
-    public Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue)
+    public async Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue)
     {
         ZoneColorCalls.Add((zoneIndex, red, green, blue));
-        return Task.CompletedTask;
+        if (ZoneColorGate != null)
+            await ZoneColorGate.Task;
     }
 
     public Task SetZoneBrightnessAsync(int zoneIndex, double brightness)

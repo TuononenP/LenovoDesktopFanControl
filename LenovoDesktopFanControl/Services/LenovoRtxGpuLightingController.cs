@@ -31,6 +31,8 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
     private const uint LenovoI2cSpeedKhz = 4;
     private const byte PortId = 1;
     private const int MaxPhysicalGpus = 64;
+    private const int ApplyAttemptCount = 3;
+    private const int ApplyRetryDelayMilliseconds = 20;
 
     private readonly object _sync = new();
     private nint _library;
@@ -165,32 +167,64 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
             var level = MapBrightness(brightness);
             try
             {
-                foreach (var command in BuildStaticCommands(red, green, blue, level, enabled))
+                var commands = BuildStaticCommands(red, green, blue, level, enabled);
+                for (var attempt = 1; attempt <= ApplyAttemptCount; attempt++)
                 {
-                    var status = WriteRegister(command.Register, command.Value);
-                    if (status != 0)
+                    if (TryWriteCommands(commands, out var failedCommand, out var status))
+                    {
+                        Log.Info(
+                            $"Lenovo RTX lighting writes accepted: enabled={enabled}, " +
+                            $"brightness={level}/7, r={red}, g={green}, b={blue}, " +
+                            $"attempt={attempt}");
+                        return true;
+                    }
+
+                    if (attempt == ApplyAttemptCount)
                     {
                         Log.Warn(
-                            $"Lenovo RTX lighting write failed at register 0x{command.Register:X2}: " +
-                            $"NVAPI status {status}");
+                            $"Lenovo RTX lighting write failed at register " +
+                            $"0x{failedCommand.Register:X2}: NVAPI status {status} " +
+                            $"after {attempt} attempts");
                         return false;
                     }
 
-                    if (command.DelayAfterMilliseconds > 0)
-                        Thread.Sleep(command.DelayAfterMilliseconds);
+                    Log.Warn(
+                        $"Lenovo RTX lighting transient write failure at register " +
+                        $"0x{failedCommand.Register:X2}: NVAPI status {status}; " +
+                        $"retrying full sequence ({attempt + 1}/{ApplyAttemptCount})");
+                    Thread.Sleep(ApplyRetryDelayMilliseconds);
                 }
-
-                Log.Info(
-                    $"Lenovo RTX lighting writes accepted: enabled={enabled}, brightness={level}/7, " +
-                    $"r={red}, g={green}, b={blue}");
-                return true;
             }
             catch (Exception ex)
             {
                 Log.Warn($"Lenovo RTX lighting apply failed: {ex.Message}");
+            }
+
+            return false;
+        }
+    }
+
+    private bool TryWriteCommands(
+        IReadOnlyList<GpuI2cCommand> commands,
+        out GpuI2cCommand failedCommand,
+        out int failureStatus)
+    {
+        foreach (var command in commands)
+        {
+            failureStatus = WriteRegister(command.Register, command.Value);
+            if (failureStatus != 0)
+            {
+                failedCommand = command;
                 return false;
             }
+
+            if (command.DelayAfterMilliseconds > 0)
+                Thread.Sleep(command.DelayAfterMilliseconds);
         }
+
+        failedCommand = default;
+        failureStatus = 0;
+        return true;
     }
 
     internal static bool IsSupportedPciDevice(uint deviceId, uint subsystemId)
@@ -225,9 +259,9 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
             new(0x15, 0x01),
             new(0x16, 0x00),
             new(0x17, (byte)Math.Min(brightness, (byte)7)),
-            new(0x18, blue),
+            new(0x18, red),
             new(0x19, green),
-            new(0x1A, red),
+            new(0x1A, blue),
             new(0x1B, 0x00),
             new(0x1C, 0xC8),
             new(0x1D, 0xFF),
@@ -253,7 +287,7 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
             commands.Add(new(0x50, enabled ? (byte)1 : (byte)0));
             commands.Add(new(0x31, 0xB1));
             // Lenovo's queue uses FF FF as a delay marker, not an I2C write.
-            commands.Add(new(0x32, 0xB2, 1));
+            commands.Add(new(0x32, 0xB2, 5));
         }
 
         return commands;

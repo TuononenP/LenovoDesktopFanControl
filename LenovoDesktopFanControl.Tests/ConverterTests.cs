@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Data;
 using LenovoDesktopFanControl.Models;
 using LenovoDesktopFanControl.Views.Converters;
+using WpfBrush = System.Windows.Media.Brush;
 
 namespace LenovoDesktopFanControl.Tests;
 
@@ -21,6 +23,58 @@ public class ConverterTests
         Assert.Equal("— RPM", rpm.Convert("1234", typeof(string), null, Culture));
         Assert.Equal("42 °C", temperature.Convert(42, typeof(string), null, Culture));
         Assert.Equal("— °C", temperature.Convert(null, typeof(string), null, Culture));
+    }
+
+    [Theory]
+    [InlineData(32, "cool")]
+    [InlineData(49, "cool")]
+    [InlineData(50, "elevated")]
+    [InlineData(69, "elevated")]
+    [InlineData(70, "hot")]
+    [InlineData(84, "hot")]
+    [InlineData(85, "critical")]
+    [InlineData(100, "critical")]
+    public void TemperatureToBrushConverter_UsesTemperatureThresholds(
+        int temperature,
+        string expected)
+    {
+        var brushes = new Dictionary<string, WpfBrush>
+        {
+            ["cool"] = new SolidColorBrush(Colors.Green),
+            ["elevated"] = new SolidColorBrush(Colors.Yellow),
+            ["hot"] = new SolidColorBrush(Colors.Orange),
+            ["critical"] = new SolidColorBrush(Colors.Red),
+            ["unavailable"] = new SolidColorBrush(Colors.Gray)
+        };
+        var converter = new TemperatureToBrushConverter
+        {
+            CoolBrush = brushes["cool"],
+            ElevatedBrush = brushes["elevated"],
+            HotBrush = brushes["hot"],
+            CriticalBrush = brushes["critical"],
+            UnavailableBrush = brushes["unavailable"]
+        };
+
+        Assert.Same(
+            brushes[expected],
+            converter.Convert(temperature, typeof(WpfBrush), null, Culture));
+    }
+
+    [Fact]
+    public void TemperatureToBrushConverter_UsesMutedBrushWhenUnavailable()
+    {
+        var unavailable = new SolidColorBrush(Colors.Gray);
+        var converter = new TemperatureToBrushConverter
+        {
+            UnavailableBrush = unavailable
+        };
+
+        Assert.Same(
+            unavailable,
+            converter.Convert(null, typeof(WpfBrush), null, Culture));
+        Assert.Same(
+            unavailable,
+            converter.Convert(-1, typeof(WpfBrush), null, Culture));
     }
 
     [Fact]

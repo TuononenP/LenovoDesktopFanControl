@@ -14,6 +14,8 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
 
     private LightingColorOption? _selectedColor;
     private bool _isEnabled = true;
+    private bool _isEditingName;
+    private bool _isColorApplying;
     private int _brightness = 100;
     private string _name;
 
@@ -27,6 +29,7 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
         Kind = info.Kind;
         LampCount = info.LampCount;
         SelectedColor = defaultColor;
+        EditNameCommand = new RelayCommand(() => IsEditingName = true);
     }
 
     public int Index { get; }
@@ -55,7 +58,19 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
         }
     }
     public LightingZoneKind Kind { get; }
+    public bool IsGraphicsCard => Kind == LightingZoneKind.GraphicsCard;
     public int LampCount { get; }
+    public bool IsEditingName
+    {
+        get => _isEditingName;
+        set
+        {
+            if (_isEditingName == value) return;
+            _isEditingName = value;
+            OnPropertyChanged();
+        }
+    }
+    public ICommand EditNameCommand { get; }
 
     public int Brightness
     {
@@ -77,8 +92,23 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
             if (_isEnabled == value) return;
             _isEnabled = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CanChangeColor));
         }
     }
+
+    public bool IsColorApplying
+    {
+        get => _isColorApplying;
+        internal set
+        {
+            if (_isColorApplying == value) return;
+            _isColorApplying = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanChangeColor));
+        }
+    }
+
+    public bool CanChangeColor => IsEnabled && !IsColorApplying;
 
     public LightingColorOption? SelectedColor
     {
@@ -98,6 +128,7 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
 
 public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 {
+    private const int GpuColorDebounceMilliseconds = 100;
     private readonly ILightingControlService? _service;
     private readonly Dispatcher _dispatcher;
     private bool _isAvailable;
@@ -110,6 +141,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     private bool _pendingReapply;
     private bool _restoringZoneNames;
     private bool _restoringZoneBrightness;
+    private bool _restoringZoneState;
 
     public ObservableCollection<LightingColorOption> Colors { get; } =
     [
@@ -178,7 +210,6 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasZones => Zones.Count >= 1;
 
-    public ICommand ApplyCommand { get; }
     public ICommand ToggleCommand { get; }
     public ICommand ToggleZoneCommand { get; }
 
@@ -190,7 +221,6 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         _service = service;
         _dispatcher = Dispatcher.CurrentDispatcher;
         _globalColor = Colors[0];
-        ApplyCommand = new RelayCommand(async () => await ApplyAsync());
         ToggleCommand = new RelayCommand(async () => await ToggleAsync());
         ToggleZoneCommand = new RelayCommand<LightingZoneViewModel>(
             zone => _ = ToggleZoneAsync(zone),
@@ -294,8 +324,24 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    internal void RestoreZoneState(Action restore)
+    {
+        _restoringZoneState = true;
+        try
+        {
+            restore();
+        }
+        finally
+        {
+            _restoringZoneState = false;
+        }
+    }
+
     private void OnZonePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_restoringZoneState)
+            return;
+
         if (!_restoringZoneNames &&
             e.PropertyName == nameof(LightingZoneViewModel.Name))
             SettingsChanged?.Invoke(this, EventArgs.Empty);
@@ -304,6 +350,35 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             e.PropertyName == nameof(LightingZoneViewModel.Brightness) &&
             sender is LightingZoneViewModel zone)
             _ = ApplyZoneBrightnessAsync(zone);
+
+        if (e.PropertyName == nameof(LightingZoneViewModel.SelectedColor) &&
+            sender is LightingZoneViewModel colorZone &&
+            colorZone.SelectedColor is { } color)
+        {
+            RefreshGlobalColorSelection();
+            _ = ApplyZoneColorAsync(colorZone, color);
+        }
+    }
+
+    private void RefreshGlobalColorSelection()
+    {
+        var firstColor = Zones.FirstOrDefault()?.SelectedColor;
+        var uniformColor = firstColor != null && Zones.All(zone =>
+            zone.SelectedColor is { } color &&
+            color.Red == firstColor.Red &&
+            color.Green == firstColor.Green &&
+            color.Blue == firstColor.Blue)
+            ? Colors.FirstOrDefault(color =>
+                color.Red == firstColor.Red &&
+                color.Green == firstColor.Green &&
+                color.Blue == firstColor.Blue)
+            : null;
+
+        if (_globalColor == uniformColor)
+            return;
+
+        _globalColor = uniformColor;
+        OnPropertyChanged(nameof(GlobalColor));
     }
 
     public async Task ReapplyAsync()
@@ -380,8 +455,11 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
 
         Log.Info($"ApplyGlobalColor: {color.Name} (r={color.Red}, g={color.Green}, b={color.Blue}) to all {Zones.Count} zones");
-        foreach (var zone in Zones)
-            zone.SelectedColor = color;
+        RestoreZoneState(() =>
+        {
+            foreach (var zone in Zones)
+                zone.SelectedColor = color;
+        });
 
         try
         {
@@ -434,6 +512,42 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         {
             Status = ex.Message;
             Log.Warn($"Failed to set lighting zone {zone.Index} brightness: {ex.Message}");
+        }
+    }
+
+    private async Task ApplyZoneColorAsync(
+        LightingZoneViewModel zone,
+        LightingColorOption color)
+    {
+        if (_service == null || !IsAvailable)
+            return;
+
+        var showPendingState = zone.IsGraphicsCard;
+        if (showPendingState)
+            zone.IsColorApplying = true;
+
+        try
+        {
+            if (showPendingState)
+                await Task.Delay(GpuColorDebounceMilliseconds);
+
+            await _service.SetZoneColorAsync(
+                zone.Index,
+                color.Red,
+                color.Green,
+                color.Blue);
+            Status = $"{zone.Name} color set to {color.Name}";
+            Applied?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+            Log.Warn($"Failed to set lighting zone {zone.Index} color: {ex.Message}");
+        }
+        finally
+        {
+            if (showPendingState)
+                zone.IsColorApplying = false;
         }
     }
 

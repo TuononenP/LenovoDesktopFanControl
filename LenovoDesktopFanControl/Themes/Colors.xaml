@@ -14,6 +14,8 @@
         <Color x:Key="TextSecondaryColor">#B8BFDA</Color>
         <Color x:Key="TextMutedColor">#858EAF</Color>
         <Color x:Key="SuccessColor">#55D6A0</Color>
+        <Color x:Key="TemperatureYellowColor">#F5D95B</Color>
+        <Color x:Key="TemperatureOrangeColor">#FF9F43</Color>
         <Color x:Key="WarningColor">#F5B942</Color>
         <Color x:Key="DangerColor">#FF6B7A</Color>
         <Color x:Key="UnsupportedColor">#B78CFF</Color>
@@ -34,6 +36,8 @@
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}" />
         <SolidColorBrush x:Key="TextMutedBrush" Color="{DynamicResource TextMutedColor}" />
         <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource SuccessColor}" />
+        <SolidColorBrush x:Key="TemperatureYellowBrush" Color="{DynamicResource TemperatureYellowColor}" />
+        <SolidColorBrush x:Key="TemperatureOrangeBrush" Color="{DynamicResource TemperatureOrangeColor}" />
         <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource WarningColor}" />
         <SolidColorBrush x:Key="DangerBrush" Color="{DynamicResource DangerColor}" />
         <SolidColorBrush x:Key="UnsupportedBrush" Color="{DynamicResource UnsupportedColor}" />
