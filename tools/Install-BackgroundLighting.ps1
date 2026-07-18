@@ -110,6 +110,16 @@ if ($null -eq $certificate) {
         -NotAfter (Get-Date).AddYears(2)
 }
 
+$applicationBinaries = @(
+    $executablePath
+    (Join-Path $externalPath 'LenovoDesktopFanControl.dll')
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+
+& $signTool.FullName sign /fd SHA256 /sha1 $certificate.Thumbprint /s My $applicationBinaries
+if ($LASTEXITCODE -ne 0) {
+    throw "Signing the application binaries failed with exit code $LASTEXITCODE."
+}
+
 $trustedUserCertificate = Get-ChildItem Cert:\CurrentUser\TrustedPeople |
     Where-Object { $_.Thumbprint -eq $certificate.Thumbprint } |
     Select-Object -First 1

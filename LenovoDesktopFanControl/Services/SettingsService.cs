@@ -12,11 +12,8 @@ public interface ISettingsService
 
 public class SettingsService : ISettingsService
 {
-    private static readonly string SettingsDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LenovoDesktopFanControl");
-
-    private static readonly string SettingsFile = Path.Combine(SettingsDir, "settings.json");
+    private readonly string _settingsDir;
+    private readonly string _settingsFile;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -24,14 +21,27 @@ public class SettingsService : ISettingsService
         Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
     };
 
+    public SettingsService()
+        : this(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LenovoDesktopFanControl"))
+    {
+    }
+
+    internal SettingsService(string settingsDir)
+    {
+        _settingsDir = settingsDir;
+        _settingsFile = Path.Combine(settingsDir, "settings.json");
+    }
+
     public FanSettings Load()
     {
         try
         {
-            if (!File.Exists(SettingsFile))
+            if (!File.Exists(_settingsFile))
                 return new FanSettings();
 
-            var json = File.ReadAllText(SettingsFile);
+            var json = File.ReadAllText(_settingsFile);
             return JsonSerializer.Deserialize<FanSettings>(json, JsonOptions) ?? new FanSettings();
         }
         catch
@@ -44,9 +54,9 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            Directory.CreateDirectory(SettingsDir);
+            Directory.CreateDirectory(_settingsDir);
             var json = JsonSerializer.Serialize(settings, JsonOptions);
-            File.WriteAllText(SettingsFile, json);
+            File.WriteAllText(_settingsFile, json);
         }
         catch
         {

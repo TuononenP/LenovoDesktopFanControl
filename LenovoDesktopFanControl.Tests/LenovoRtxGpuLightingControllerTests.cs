@@ -59,12 +59,26 @@ public sealed class LenovoRtxGpuLightingControllerTests
 
         Assert.Equal(0x400u, info.DisplayMask);
         Assert.Equal((byte)1, info.IsDdcPort);
-        Assert.Equal((byte)0xB6, info.I2cDeviceAddress);
+        Assert.Equal((byte)0x92, info.I2cDeviceAddress);
         Assert.Equal((byte)1, info.PortId);
         Assert.Equal(1u, info.IsPortIdSet);
         Assert.Equal(4u, info.I2cSpeedKhz);
         Assert.Equal((nint)0x1111, info.I2cRegisterAddress);
         Assert.Equal((nint)0x2222, info.Data);
+    }
+
+    [Fact]
+    public void NvGpuDisplayId_HasTheLayoutExpectedByNvapi()
+    {
+        Assert.Equal(16, Marshal.SizeOf<LenovoRtxGpuLightingController.NvGpuDisplayId>());
+        Assert.Equal(
+            4,
+            Marshal.OffsetOf<LenovoRtxGpuLightingController.NvGpuDisplayId>(
+                nameof(LenovoRtxGpuLightingController.NvGpuDisplayId.ConnectorType)).ToInt32());
+        Assert.Equal(
+            8,
+            Marshal.OffsetOf<LenovoRtxGpuLightingController.NvGpuDisplayId>(
+                nameof(LenovoRtxGpuLightingController.NvGpuDisplayId.DisplayId)).ToInt32());
     }
 
     [Fact]
@@ -83,8 +97,12 @@ public sealed class LenovoRtxGpuLightingControllerTests
         Assert.Contains(commands, command => command.Register == 0x1A && command.Value == 145);
         Assert.Contains(commands, command => command.Register == 0x14 && command.Value == 1);
         Assert.Equal(4, commands.Count(command => command.Register == 0x50 && command.Value == 1));
-        Assert.Equal(4, commands.Count(command => command.Register == 0xFF && command.Value == 0xFF));
-        Assert.Equal(41, commands.Count);
+        Assert.DoesNotContain(commands, command => command.Register == 0xFF);
+        Assert.Equal(4, commands.Count(command =>
+            command.Register == 0x32 &&
+            command.Value == 0xB2 &&
+            command.DelayAfterMilliseconds == 1));
+        Assert.Equal(37, commands.Count);
     }
 
     [Fact]
@@ -97,9 +115,13 @@ public sealed class LenovoRtxGpuLightingControllerTests
             brightness: 6,
             enabled: false);
 
-        Assert.DoesNotContain(commands, command => command.Register == 0x14);
+        Assert.Contains(commands, command => command.Register == 0x14 && command.Value == 1);
         Assert.Equal(4, commands.Count(command => command.Register == 0x50 && command.Value == 0));
-        Assert.Equal(4, commands.Count(command => command.Register == 0xFF && command.Value == 0xFF));
+        Assert.DoesNotContain(commands, command => command.Register == 0xFF);
+        Assert.Equal(4, commands.Count(command =>
+            command.Register == 0x32 &&
+            command.Value == 0xB2 &&
+            command.DelayAfterMilliseconds == 1));
         Assert.Equal(37, commands.Count);
     }
 }

@@ -51,6 +51,8 @@
   <data name="FullSpeed" xml:space="preserve"><value>Täysi nopeus</value></data>
   <data name="TowerLighting" xml:space="preserve"><value>Tornin valaistus</value></data>
   <data name="LightingEnabled" xml:space="preserve"><value>Valot</value></data>
+  <data name="ZoneEnabled" xml:space="preserve"><value>Päällä</value></data>
+  <data name="LightName" xml:space="preserve"><value>Valon nimi</value></data>
   <data name="Brightness" xml:space="preserve"><value>Kirkkaus</value></data>
   <data name="ApplyLighting" xml:space="preserve"><value>Käytä valaistusta</value></data>
   <data name="GlobalColor" xml:space="preserve"><value>Kaikki valot</value></data>
@@ -66,15 +68,22 @@
   <data name="ZoneFrontPanel" xml:space="preserve"><value>Etupaneeli</value></data>
   <data name="ZoneRearPanel" xml:space="preserve"><value>Takapaneeli</value></data>
   <data name="ZoneSidePanel" xml:space="preserve"><value>Sivupaneeli</value></data>
-  <data name="ZoneGraphicsCard" xml:space="preserve"><value>Näytönohjain</value></data>
+  <data name="ZoneGraphicsCard" xml:space="preserve"><value>GPU</value></data>
   <data name="ZoneFanLight" xml:space="preserve"><value>Tuuletinvalaistus</value></data>
   <data name="ZonePowerButton" xml:space="preserve"><value>Virtapainike</value></data>
   <data name="ZoneLogoLight" xml:space="preserve"><value>Logovalo</value></data>
   <data name="ZoneLightingSync" xml:space="preserve"><value>Valaistuksen synkronointi</value></data>
   <data name="ZoneGeneric" xml:space="preserve"><value>Vyöhyke</value></data>
+  <data name="ZoneLightGroup" xml:space="preserve"><value>Valoryhmä</value></data>
+  <data name="ZoneCaseFrontFans" xml:space="preserve"><value>Kotelon etutuulettimet</value></data>
+  <data name="ZoneCaseTopFans" xml:space="preserve"><value>Kotelon ylätuulettimet</value></data>
+  <data name="ZoneCpuWatercooler" xml:space="preserve"><value>Suorittimen nestejäähdytin</value></data>
+  <data name="ZoneLegionLogo" xml:space="preserve"><value>Legion-logo</value></data>
+  <data name="ZoneBackFan" xml:space="preserve"><value>Takatuuletin</value></data>
 
   <!-- Options -->
   <data name="Options" xml:space="preserve"><value>Asetukset</value></data>
+  <data name="ApplicationSettings" xml:space="preserve"><value>Sovellusasetukset</value></data>
   <data name="StartWithWindows" xml:space="preserve"><value>Käynnistä Windowsin kanssa</value></data>
   <data name="MinimizeToTray" xml:space="preserve"><value>Pienennä ilmaisinalueelle</value></data>
   <data name="Language" xml:space="preserve"><value>Kieli</value></data>
@@ -152,6 +161,7 @@
   <data name="TooltipFullSpeed" xml:space="preserve"><value>Käyttää tuettuja tuulettimia enimmäisnopeudella. Tämä lisää melua ja sitä tulisi käyttää vain, kun tarvitaan suurinta jäähdytystehoa. Saatavuus riippuu Lenovon laiteohjelmistosta ja ajureista.</value></data>
   <data name="TooltipManualSpeed" xml:space="preserve"><value>Asettaa yhden yleisen käyrän kaikille laiteohjelmiston tuuletinvyöhykkeille. Lenovon turvallinen vähimmäiskäyrä varmistetaan.</value></data>
   <data name="TooltipEditCurve" xml:space="preserve"><value>Muokkaa kaikkien tuuletinvyöhykkeiden käyttämää yleistä käyrää. Käyrä ei saa koskaan laskea.</value></data>
+  <data name="TooltipEditLightName" xml:space="preserve"><value>Muokkaa tämän valon näyttönimeä. Tyhjennä kenttä palauttaaksesi oletusnimen.</value></data>
   <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Pysäyttää vahvistuksen jälkeen havaitut Lenovo Vantage- ja Gaming AI -prosessit ja palvelut.</value></data>
 
   <!-- Accessibility -->

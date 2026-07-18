@@ -12,6 +12,9 @@ public class FanSettings
     public bool LightingEnabled { get; set; } = true;
     public int LightingBrightness { get; set; } = 100;
     public Dictionary<int, LightingZoneColor> LightingZoneColors { get; set; } = new();
+    public Dictionary<int, int> LightingZoneBrightness { get; set; } = new();
+    public Dictionary<int, bool> LightingZoneEnabled { get; set; } = new();
+    public Dictionary<int, string> LightingZoneNames { get; set; } = new();
 
     public byte[] GetOrDefaultCurve(int fanId)
     {

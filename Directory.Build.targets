@@ -1,0 +1,14 @@
+<Project>
+    <Target
+        Name="SignLocalDevelopmentOutput"
+        AfterTargets="Build"
+        Condition="'$(OS)' == 'Windows_NT'
+                   and '$(DesignTimeBuild)' != 'true'
+                   and '$(TargetFramework)' != ''
+                   and Exists('$(MSBuildThisFileDirectory)tools\Sign-DevelopmentBuild.ps1')">
+        <Exec
+            Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)tools\Sign-DevelopmentBuild.ps1&quot; -TargetPath &quot;$(TargetPath)&quot;"
+            ConsoleToMSBuild="true"
+            StandardOutputImportance="Low" />
+    </Target>
+</Project>

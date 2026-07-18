@@ -114,7 +114,10 @@ internal sealed class FakeLightingControlService : ILightingControlService
     public List<double> BrightnessCalls { get; } = [];
     public List<(byte Red, byte Green, byte Blue)> ColorCalls { get; } = [];
     public List<(int ZoneIndex, byte Red, byte Green, byte Blue)> ZoneColorCalls { get; } = [];
+    public List<(int ZoneIndex, double Brightness)> ZoneBrightnessCalls { get; } = [];
+    public List<(int ZoneIndex, bool Enabled)> ZoneEnabledCalls { get; } = [];
     public bool IsDisposed { get; private set; }
+    public int PersistStateCount { get; private set; }
 
     public bool IsControlAvailable { get; set; } = true;
     public event EventHandler? AvailabilityChanged;
@@ -149,6 +152,24 @@ internal sealed class FakeLightingControlService : ILightingControlService
     public Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue)
     {
         ZoneColorCalls.Add((zoneIndex, red, green, blue));
+        return Task.CompletedTask;
+    }
+
+    public Task SetZoneBrightnessAsync(int zoneIndex, double brightness)
+    {
+        ZoneBrightnessCalls.Add((zoneIndex, brightness));
+        return Task.CompletedTask;
+    }
+
+    public Task SetZoneEnabledAsync(int zoneIndex, bool enabled)
+    {
+        ZoneEnabledCalls.Add((zoneIndex, enabled));
+        return Task.CompletedTask;
+    }
+
+    public Task PersistStateAsync()
+    {
+        PersistStateCount++;
         return Task.CompletedTask;
     }
 

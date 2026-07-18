@@ -51,6 +51,8 @@
   <data name="FullSpeed" xml:space="preserve"><value>Full Speed</value></data>
   <data name="TowerLighting" xml:space="preserve"><value>Tower Lighting</value></data>
   <data name="LightingEnabled" xml:space="preserve"><value>Lights</value></data>
+  <data name="ZoneEnabled" xml:space="preserve"><value>On</value></data>
+  <data name="LightName" xml:space="preserve"><value>Light name</value></data>
   <data name="Brightness" xml:space="preserve"><value>Brightness</value></data>
   <data name="ApplyLighting" xml:space="preserve"><value>Apply Lighting</value></data>
   <data name="GlobalColor" xml:space="preserve"><value>All Lights</value></data>
@@ -66,15 +68,22 @@
   <data name="ZoneFrontPanel" xml:space="preserve"><value>Front Panel</value></data>
   <data name="ZoneRearPanel" xml:space="preserve"><value>Rear Panel</value></data>
   <data name="ZoneSidePanel" xml:space="preserve"><value>Side Panel</value></data>
-  <data name="ZoneGraphicsCard" xml:space="preserve"><value>Graphics Card</value></data>
+  <data name="ZoneGraphicsCard" xml:space="preserve"><value>GPU</value></data>
   <data name="ZoneFanLight" xml:space="preserve"><value>Fan Lighting</value></data>
   <data name="ZonePowerButton" xml:space="preserve"><value>Power Button</value></data>
   <data name="ZoneLogoLight" xml:space="preserve"><value>Logo Light</value></data>
   <data name="ZoneLightingSync" xml:space="preserve"><value>Lighting Sync</value></data>
   <data name="ZoneGeneric" xml:space="preserve"><value>Zone</value></data>
+  <data name="ZoneLightGroup" xml:space="preserve"><value>Light Group</value></data>
+  <data name="ZoneCaseFrontFans" xml:space="preserve"><value>Case front fans</value></data>
+  <data name="ZoneCaseTopFans" xml:space="preserve"><value>Case top fans</value></data>
+  <data name="ZoneCpuWatercooler" xml:space="preserve"><value>CPU watercooler</value></data>
+  <data name="ZoneLegionLogo" xml:space="preserve"><value>Legion logo</value></data>
+  <data name="ZoneBackFan" xml:space="preserve"><value>Back fan</value></data>
 
   <!-- Options -->
   <data name="Options" xml:space="preserve"><value>Options</value></data>
+  <data name="ApplicationSettings" xml:space="preserve"><value>Application Settings</value></data>
   <data name="StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="MinimizeToTray" xml:space="preserve"><value>Minimize to tray</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
@@ -152,6 +161,7 @@
   <data name="TooltipFullSpeed" xml:space="preserve"><value>Runs supported fans at maximum speed. This increases noise and should be used only when maximum cooling is required. Availability depends on Lenovo firmware and drivers.</value></data>
   <data name="TooltipManualSpeed" xml:space="preserve"><value>Applies one global curve to every firmware fan zone. Lenovo's safe minimum is enforced.</value></data>
   <data name="TooltipEditCurve" xml:space="preserve"><value>Edit the single global curve used by every firmware fan zone. The curve must never decrease.</value></data>
+  <data name="TooltipEditLightName" xml:space="preserve"><value>Edit this light's display name. Clear it to restore the default name.</value></data>
   <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Stops detected Lenovo Vantage and Gaming AI processes and services after confirmation.</value></data>
 
   <!-- Accessibility -->

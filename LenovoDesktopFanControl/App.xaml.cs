@@ -13,6 +13,17 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (Services.LenovoTowerLightingPersistence.TryParseDeferredPersistenceRequest(
+                e.Args,
+                out var persistenceRequest))
+        {
+            StartupUri = null;
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            base.OnStartup(e);
+            _ = RunDeferredLightingPersistenceAsync(persistenceRequest);
+            return;
+        }
+
         StartMinimized = e.Args.Any(
             argument => string.Equals(argument, "--minimized", StringComparison.OrdinalIgnoreCase));
 
@@ -40,6 +51,53 @@ public partial class App : System.Windows.Application
 
         ApplySystemContrastPalette();
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
+    }
+
+    private async Task RunDeferredLightingPersistenceAsync(
+        Services.LenovoTowerLightingPersistence.DeferredLightingPersistenceRequest request)
+    {
+        try
+        {
+            try
+            {
+                using var parent = System.Diagnostics.Process.GetProcessById(request.ParentProcessId);
+                if (!parent.HasExited)
+                    await parent.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+            }
+            catch (ArgumentException)
+            {
+                // The main process exited before the helper opened its process handle.
+            }
+
+            // Allow Windows to finish releasing LampArray ownership before making
+            // the firmware profile the final lighting write.
+            await Task.Delay(500);
+            await Task.Run(() =>
+            {
+                var persistence = new Services.LenovoTowerLightingPersistence();
+                if (!persistence.TrySaveStaticColor(
+                        request.Red,
+                        request.Green,
+                        request.Blue,
+                        request.Brightness,
+                        request.Enabled))
+                {
+                    Services.Log.Warn("Post-exit tower lighting persistence failed");
+                }
+            });
+        }
+        catch (TimeoutException)
+        {
+            Services.Log.Warn("Post-exit tower lighting persistence timed out waiting for the main process");
+        }
+        catch (Exception ex)
+        {
+            Services.Log.Error("Post-exit tower lighting persistence failed", ex);
+        }
+        finally
+        {
+            Shutdown();
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

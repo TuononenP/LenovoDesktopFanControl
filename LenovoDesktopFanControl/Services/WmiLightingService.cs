@@ -10,6 +10,7 @@ public sealed class WmiLightingService : ILightingControlService
     private const string LightingInfoListQuery = "SELECT * FROM LENOVO_LIGHTING_INFO_LIST";
 
     private List<WmiLightingZone> _zones = [];
+    private readonly Dictionary<int, bool> _zoneEnabled = [];
     private bool _isEnabled = true;
     private double _brightness = 1.0;
 
@@ -35,6 +36,7 @@ public sealed class WmiLightingService : ILightingControlService
                 }
 
                 _zones = BuildZones(infoRecords);
+                _zoneEnabled.Clear();
                 if (_zones.Count == 0)
                 {
                     Log.Warn("No addressable RGB lighting zones found");
@@ -43,6 +45,7 @@ public sealed class WmiLightingService : ILightingControlService
 
                 foreach (var zone in _zones)
                 {
+                    _zoneEnabled[zone.Index] = true;
                     zone.CurrentData = BuildLightingPayload(zone, zone.Red, zone.Green, zone.Blue);
                     Log.Info(
                         $"  WMI lighting zone {zone.Index}: id={zone.ZoneId}, panel={zone.PanelId}, " +
@@ -237,13 +240,14 @@ public sealed class WmiLightingService : ILightingControlService
         {
             zone.Brightness = (int)Math.Round(_brightness * 10);
         }
+        ApplyAllZones();
         return Task.CompletedTask;
     }
 
     public Task SetColorAsync(byte red, byte green, byte blue)
     {
         foreach (var zone in _zones)
-            SetZoneColorInternal(zone, red, green, blue);
+            SetZoneColor(zone, red, green, blue);
         return Task.CompletedTask;
     }
 
@@ -251,28 +255,68 @@ public sealed class WmiLightingService : ILightingControlService
     {
         if (zoneIndex < 0 || zoneIndex >= _zones.Count)
             throw new ArgumentOutOfRangeException(nameof(zoneIndex));
-        SetZoneColorInternal(_zones[zoneIndex], red, green, blue);
+        SetZoneColor(_zones[zoneIndex], red, green, blue);
         return Task.CompletedTask;
     }
 
-    private void SetZoneColorInternal(WmiLightingZone zone, byte red, byte green, byte blue)
+    public Task SetZoneBrightnessAsync(int zoneIndex, double brightness)
     {
-        var data = BuildLightingPayload(zone, red, green, blue);
-        SetLightingData(zone, data);
+        if (zoneIndex < 0 || zoneIndex >= _zones.Count)
+            throw new ArgumentOutOfRangeException(nameof(zoneIndex));
+
+        _zones[zoneIndex].RelativeBrightness = Math.Clamp(brightness, 0, 1);
+        ApplyZone(_zones[zoneIndex]);
+        return Task.CompletedTask;
+    }
+
+    public Task SetZoneEnabledAsync(int zoneIndex, bool enabled)
+    {
+        if (zoneIndex < 0 || zoneIndex >= _zones.Count)
+            throw new ArgumentOutOfRangeException(nameof(zoneIndex));
+
+        _zoneEnabled[zoneIndex] = enabled;
+        ApplyZone(_zones[zoneIndex]);
+        return Task.CompletedTask;
+    }
+
+    public Task PersistStateAsync() => Task.CompletedTask;
+
+    private void SetZoneColor(WmiLightingZone zone, byte red, byte green, byte blue)
+    {
         zone.Red = red;
         zone.Green = green;
         zone.Blue = blue;
-        zone.CurrentData = data;
+        zone.CurrentData = BuildLightingPayload(zone, red, green, blue);
+        ApplyZone(zone);
     }
 
     private void ApplyAllZones()
     {
         foreach (var zone in _zones)
-        {
-            var data = BuildLightingPayload(zone, zone.Red, zone.Green, zone.Blue);
-            SetLightingData(zone, data);
-        }
+            ApplyZone(zone);
     }
+
+    private void ApplyZone(WmiLightingZone zone)
+    {
+        var enabled = _isEnabled &&
+                      (!_zoneEnabled.TryGetValue(zone.Index, out var zoneEnabled) || zoneEnabled);
+        var brightness = _brightness * zone.RelativeBrightness;
+        var data = enabled
+            ? BuildLightingPayload(
+                zone,
+                ScaleChannel(zone.Red, brightness),
+                ScaleChannel(zone.Green, brightness),
+                ScaleChannel(zone.Blue, brightness))
+            : BuildLightingPayload(zone, 0, 0, 0);
+        SetLightingData(zone, data);
+    }
+
+    private static byte ScaleChannel(byte channel, double brightness) =>
+        (byte)Math.Clamp(
+            (int)Math.Round(channel * Math.Clamp(brightness, 0, 1),
+                MidpointRounding.AwayFromZero),
+            0,
+            255);
 
     private static void SetLightingData(WmiLightingZone zone, byte[] data)
     {
@@ -382,6 +426,7 @@ public sealed class WmiLightingService : ILightingControlService
         public byte Red { get; set; }
         public byte Green { get; set; }
         public byte Blue { get; set; }
+        public double RelativeBrightness { get; set; } = 1;
         public byte[]? CurrentData { get; set; }
     }
 }

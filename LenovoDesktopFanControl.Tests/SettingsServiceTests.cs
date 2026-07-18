@@ -7,19 +7,24 @@ namespace LenovoDesktopFanControl.Tests;
 
 public class SettingsServiceTests : IDisposable
 {
-    private readonly string _originalLocalAppData = Environment.GetFolderPath(
-        Environment.SpecialFolder.LocalApplicationData);
+    private readonly string _testDirectory = Path.Combine(
+        Path.GetTempPath(),
+        "LenovoDesktopFanControl.Tests",
+        Guid.NewGuid().ToString("N"));
+    private readonly SettingsService _service;
+
+    public SettingsServiceTests()
+    {
+        _service = new SettingsService(_testDirectory);
+    }
 
     public void Dispose()
     {
-        var testDir = Path.Combine(_originalLocalAppData, "LenovoDesktopFanControl");
-        if (Directory.Exists(testDir))
+        if (Directory.Exists(_testDirectory))
         {
             try
             {
-                var settingsFile = Path.Combine(testDir, "settings.json");
-                if (File.Exists(settingsFile))
-                    File.Delete(settingsFile);
+                Directory.Delete(_testDirectory, recursive: true);
             }
             catch
             {
@@ -30,8 +35,7 @@ public class SettingsServiceTests : IDisposable
     [Fact]
     public void Load_ReturnsDefaultSettingsWhenFileDoesNotExist()
     {
-        var service = new SettingsService();
-        var settings = service.Load();
+        var settings = _service.Load();
 
         Assert.Equal(SmartFanMode.Balanced, settings.Mode);
         Assert.Null(settings.GlobalFanCurve);
@@ -42,36 +46,41 @@ public class SettingsServiceTests : IDisposable
     [Fact]
     public void Save_PersistsSettingsAsJsonFile()
     {
-        var service = new SettingsService();
         var settings = new FanSettings
         {
             Mode = SmartFanMode.Custom,
             MinimizeToTray = true,
             GlobalFanCurve = [1, 1, 2, 2, 3, 3, 4, 5, 6, 7],
-            Language = "fi-FI"
+            Language = "fi-FI",
+            LightingZoneNames =
+            {
+                [2] = "Desk glow"
+            },
+            LightingZoneBrightness =
+            {
+                [2] = 35
+            }
         };
 
-        service.Save(settings);
-        var loaded = service.Load();
+        _service.Save(settings);
+        var loaded = _service.Load();
 
         Assert.Equal(SmartFanMode.Custom, loaded.Mode);
         Assert.True(loaded.MinimizeToTray);
         Assert.Equal(settings.GlobalFanCurve, loaded.GlobalFanCurve);
         Assert.Equal("fi-FI", loaded.Language);
+        Assert.Equal("Desk glow", loaded.LightingZoneNames[2]);
+        Assert.Equal(35, loaded.LightingZoneBrightness[2]);
     }
 
     [Fact]
     public void Save_PersistsEnumValuesAsStrings()
     {
-        var service = new SettingsService();
         var settings = new FanSettings { Mode = SmartFanMode.Performance };
 
-        service.Save(settings);
+        _service.Save(settings);
 
-        var settingsDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "LenovoDesktopFanControl");
-        var settingsFile = Path.Combine(settingsDir, "settings.json");
+        var settingsFile = Path.Combine(_testDirectory, "settings.json");
         var json = File.ReadAllText(settingsFile);
 
         Assert.Contains("\"Performance\"", json);
@@ -80,15 +89,11 @@ public class SettingsServiceTests : IDisposable
     [Fact]
     public void Load_ReturnsDefaultSettingsForCorruptFile()
     {
-        var settingsDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "LenovoDesktopFanControl");
-        Directory.CreateDirectory(settingsDir);
-        var settingsFile = Path.Combine(settingsDir, "settings.json");
+        Directory.CreateDirectory(_testDirectory);
+        var settingsFile = Path.Combine(_testDirectory, "settings.json");
         File.WriteAllText(settingsFile, "{ this is not valid json");
 
-        var service = new SettingsService();
-        var settings = service.Load();
+        var settings = _service.Load();
 
         Assert.Equal(SmartFanMode.Balanced, settings.Mode);
     }
