@@ -6,6 +6,8 @@ Lenovo Desktop Fan Control is a Windows desktop application for monitoring and c
 
 ![System Fan Curve Editor](docs/images/fan-curve-editor.png)
 
+![Temperature history](docs/images/temperature-history.png)
+
 ## Disclaimer
 
 This is an unofficial, community-developed project and is not affiliated with, endorsed by, or supported by Lenovo. Lenovo and Legion are trademarks of Lenovo Group Limited.
