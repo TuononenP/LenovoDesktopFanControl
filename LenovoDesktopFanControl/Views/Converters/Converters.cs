@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Windows.Data;
 using LenovoDesktopFanControl.Models;
 using WpfBrush = System.Windows.Media.Brush;
+using WpfColor = System.Windows.Media.Color;
+using WpfSolidColorBrush = System.Windows.Media.SolidColorBrush;
 
 namespace LenovoDesktopFanControl.Views.Converters;
 
@@ -68,6 +70,17 @@ public class TemperatureToBrushConverter : IValueConverter
     {
         throw new NotSupportedException();
     }
+}
+
+public class LightingColorToBrushConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is LightingColorOption color
+            ? new WpfSolidColorBrush(WpfColor.FromRgb(color.Red, color.Green, color.Blue))
+            : System.Windows.Data.Binding.DoNothing;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
 }
 
 public class BoolToVisibilityConverter : IValueConverter

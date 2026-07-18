@@ -560,6 +560,41 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_RestoresSavedCustomLightingColor()
+    {
+        var lightingService = new FakeLightingControlService
+        {
+            Device = new LightingDeviceInfo(
+                "Tower", "id", 1, 0x17EF, 0xC955,
+                [new LightingZoneInfo(0, "Rear", LightingZoneKind.Accent, 1, [0])])
+        };
+        var settings = new InMemorySettingsService(new FanSettings
+        {
+            LightingZoneColors =
+            {
+                [0] = new LightingZoneColor(0, 17, 34, 51)
+            }
+        });
+        var viewModel = new MainViewModel(
+            new FakeFanControlService(), settings, new FakeAutoStartService(), lightingService);
+
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            var color = Assert.Single(viewModel.Lighting.Colors, color =>
+                color.Red == 17 && color.Green == 34 && color.Blue == 51);
+            Assert.Equal("Custom (#112233)", color.Name);
+            Assert.Same(color, viewModel.Lighting.GlobalColor);
+            Assert.Same(color, Assert.Single(viewModel.Lighting.Zones).SelectedColor);
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
     public async Task InitializeAsync_NewLightingZoneInheritsPreviouslySavedGlobalColor()
     {
         var lightingService = new FakeLightingControlService

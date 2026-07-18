@@ -185,3 +185,21 @@ internal sealed class FakeLightingControlService : ILightingControlService
 
     public void Dispose() => IsDisposed = true;
 }
+
+internal sealed class FakeLightingColorPicker(params LightingColorOption?[] selections) : ILightingColorPicker
+{
+    private readonly Queue<LightingColorOption?> _selections = new(selections);
+
+    public List<LightingColorOption> InitialColors { get; } = [];
+    public List<LightingColorOption> PreviewColors { get; } = [];
+
+    public LightingColorOption? Pick(
+        LightingColorOption initialColor,
+        Action<LightingColorOption>? previewColor = null)
+    {
+        InitialColors.Add(initialColor);
+        foreach (var color in PreviewColors)
+            previewColor?.Invoke(color);
+        return _selections.Count > 0 ? _selections.Dequeue() : null;
+    }
+}

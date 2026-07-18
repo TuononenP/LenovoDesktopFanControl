@@ -838,10 +838,10 @@ public class MainViewModel : INotifyPropertyChanged
                 .Distinct()
                 .ToArray();
             var inheritedGlobalColor = savedColors.Length == 1
-                ? Lighting.Colors.FirstOrDefault(color =>
-                    color.Red == savedColors[0].Red &&
-                    color.Green == savedColors[0].Green &&
-                    color.Blue == savedColors[0].Blue)
+                ? Lighting.FindOrAddColor(
+                    savedColors[0].Red,
+                    savedColors[0].Green,
+                    savedColors[0].Blue)
                 : null;
 
             foreach (var zone in Lighting.Zones)
@@ -855,9 +855,7 @@ public class MainViewModel : INotifyPropertyChanged
                     continue;
                 }
 
-                var match = Lighting.Colors.FirstOrDefault(c =>
-                    c.Red == saved.Red && c.Green == saved.Green && c.Blue == saved.Blue);
-                zone.SelectedColor = match;
+                zone.SelectedColor = Lighting.FindOrAddColor(saved.Red, saved.Green, saved.Blue);
             }
 
             var firstColor = Lighting.Zones.FirstOrDefault()?.SelectedColor;

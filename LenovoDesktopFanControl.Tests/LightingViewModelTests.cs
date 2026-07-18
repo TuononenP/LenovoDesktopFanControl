@@ -123,7 +123,7 @@ public class LightingViewModelTests
     }
 
     [Fact]
-    public async Task Brightness_ImmediatelyUpdatesControllerAndRaisesApplied()
+    public async Task Brightness_DebouncesControllerUpdateAndRaisesApplied()
     {
         var service = new FakeLightingControlService { Device = SingleZoneDevice(10) };
         using var viewModel = new LightingViewModel(service);
@@ -131,8 +131,11 @@ public class LightingViewModelTests
         var appliedCount = 0;
         viewModel.Applied += (_, _) => appliedCount++;
 
+        viewModel.Brightness = 25;
         viewModel.Brightness = 35;
 
+        Assert.Empty(service.BrightnessCalls);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
         Assert.Equal(0.35, Assert.Single(service.BrightnessCalls), 3);
         Assert.Equal(1, appliedCount);
         Assert.Equal("Brightness set to 35%", viewModel.Status);
@@ -204,7 +207,7 @@ public class LightingViewModelTests
     }
 
     [Fact]
-    public async Task ZoneBrightness_ImmediatelyUpdatesOnlySelectedZone()
+    public async Task ZoneBrightness_DebouncesUpdateForOnlyTheSelectedZone()
     {
         var service = new FakeLightingControlService { Device = MultiZoneDevice() };
         using var viewModel = new LightingViewModel(service);
@@ -212,10 +215,13 @@ public class LightingViewModelTests
         var appliedCount = 0;
         viewModel.Applied += (_, _) => appliedCount++;
 
+        viewModel.Zones[1].Brightness = 25;
         viewModel.Zones[1].Brightness = 35;
 
         Assert.Equal(100, viewModel.Zones[0].Brightness);
         Assert.Equal(35, viewModel.Zones[1].Brightness);
+        Assert.Empty(service.ZoneBrightnessCalls);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
         var call = Assert.Single(service.ZoneBrightnessCalls);
         Assert.Equal(1, call.ZoneIndex);
         Assert.Equal(0.35, call.Brightness, 3);
@@ -239,6 +245,120 @@ public class LightingViewModelTests
         Assert.Equal(1, appliedCount);
         Assert.Equal("Accent Lights color set to Cyan", viewModel.Status);
         Assert.Null(viewModel.GlobalColor);
+    }
+
+    [Fact]
+    public async Task PickGlobalColorCommand_AddsCustomColorAndAppliesItToEveryZone()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        var picker = new FakeLightingColorPicker(new LightingColorOption("", 17, 34, 51));
+        using var viewModel = new LightingViewModel(service, picker);
+        await viewModel.InitializeAsync();
+        service.ZoneColorCalls.Clear();
+
+        viewModel.PickGlobalColorCommand.Execute(null);
+
+        var color = Assert.Single(viewModel.Colors, color =>
+            color.Red == 17 && color.Green == 34 && color.Blue == 51);
+        Assert.Same(color, viewModel.GlobalColor);
+        Assert.All(viewModel.Zones, zone => Assert.Same(color, zone.SelectedColor));
+        Assert.Equal([(0, 17, 34, 51), (1, 17, 34, 51)], service.ZoneColorCalls);
+        Assert.Equal("Legion Blue", Assert.Single(picker.InitialColors).Name);
+    }
+
+    [Fact]
+    public async Task PickZoneColorCommand_OnlyChangesTheRequestedZone()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        var picker = new FakeLightingColorPicker(new LightingColorOption("", 90, 80, 70));
+        using var viewModel = new LightingViewModel(service, picker);
+        await viewModel.InitializeAsync();
+        service.ZoneColorCalls.Clear();
+
+        viewModel.PickZoneColorCommand.Execute(viewModel.Zones[1]);
+
+        var selected = viewModel.Zones[1].SelectedColor;
+        Assert.NotNull(selected);
+        Assert.Equal((byte)90, selected.Red);
+        Assert.Equal((byte)80, selected.Green);
+        Assert.Equal((byte)70, selected.Blue);
+        Assert.Same(viewModel.Colors[0], viewModel.Zones[0].SelectedColor);
+        Assert.Equal((1, 90, 80, 70), Assert.Single(service.ZoneColorCalls));
+    }
+
+    [Fact]
+    public async Task PickZoneColorCommand_PreviewsChangesAndRestoresTheOriginalColorOnCancel()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        var picker = new FakeLightingColorPicker((LightingColorOption?)null);
+        picker.PreviewColors.Add(new LightingColorOption("", 90, 80, 70));
+        using var viewModel = new LightingViewModel(service, picker);
+        await viewModel.InitializeAsync();
+        var originalColor = viewModel.Zones[1].SelectedColor;
+        service.ZoneColorCalls.Clear();
+
+        viewModel.PickZoneColorCommand.Execute(viewModel.Zones[1]);
+
+        Assert.Same(originalColor, viewModel.Zones[1].SelectedColor);
+        Assert.Equal([(1, 90, 80, 70), (1, 91, 157, 255)], service.ZoneColorCalls);
+    }
+
+    [Fact]
+    public async Task PickZoneColorCommand_CommitsWithoutWaitingForThePreviewToFinish()
+    {
+        var service = new FakeLightingControlService
+        {
+            Device = MultiZoneDevice(),
+            ZoneColorGate = new TaskCompletionSource<object?>()
+        };
+        var picker = new FakeLightingColorPicker(new LightingColorOption("", 17, 34, 51));
+        picker.PreviewColors.Add(new LightingColorOption("", 90, 80, 70));
+        using var viewModel = new LightingViewModel(service, picker);
+        await viewModel.InitializeAsync();
+
+        viewModel.PickZoneColorCommand.Execute(viewModel.Zones[1]);
+
+        var selected = viewModel.Zones[1].SelectedColor;
+        Assert.NotNull(selected);
+        Assert.Equal((byte)17, selected.Red);
+        Assert.Equal((byte)34, selected.Green);
+        Assert.Equal((byte)51, selected.Blue);
+        service.ZoneColorGate.SetResult(null);
+    }
+
+    [Fact]
+    public async Task PickGlobalColorCommand_RestoresEveryOriginalZoneColorOnCancel()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        var picker = new FakeLightingColorPicker((LightingColorOption?)null);
+        picker.PreviewColors.Add(new LightingColorOption("", 90, 80, 70));
+        using var viewModel = new LightingViewModel(service, picker);
+        await viewModel.InitializeAsync();
+        viewModel.Zones[0].SelectedColor = viewModel.Colors.Single(color => color.Name == "Red");
+        viewModel.Zones[1].SelectedColor = viewModel.Colors.Single(color => color.Name == "Cyan");
+        service.ZoneColorCalls.Clear();
+
+        viewModel.PickGlobalColorCommand.Execute(null);
+
+        Assert.Equal("Red", viewModel.Zones[0].SelectedColor?.Name);
+        Assert.Equal("Cyan", viewModel.Zones[1].SelectedColor?.Name);
+        Assert.Equal(
+            [(0, 90, 80, 70), (1, 90, 80, 70), (0, 255, 55, 75), (1, 0, 211, 254)],
+            service.ZoneColorCalls);
+    }
+
+    [Fact]
+    public void FindOrAddColor_ReusesMatchingColorAndNamesNewCustomColor()
+    {
+        using var viewModel = new LightingViewModel(service: null);
+
+        var preset = viewModel.FindOrAddColor(0, 211, 254);
+        var custom = viewModel.FindOrAddColor(17, 34, 51);
+        var duplicate = viewModel.FindOrAddColor(17, 34, 51);
+
+        Assert.Equal("Cyan", preset.Name);
+        Assert.Equal("Custom (#112233)", custom.Name);
+        Assert.Same(custom, duplicate);
     }
 
     [Fact]

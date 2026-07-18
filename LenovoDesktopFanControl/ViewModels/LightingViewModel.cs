@@ -129,8 +129,12 @@ public sealed class LightingZoneViewModel : INotifyPropertyChanged
 public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 {
     private const int GpuColorDebounceMilliseconds = 100;
+    private const int BrightnessDebounceMilliseconds = 200;
     private readonly ILightingControlService? _service;
+    private readonly ILightingColorPicker _colorPicker;
     private readonly Dispatcher _dispatcher;
+    private readonly DispatcherTimer _brightnessTimer;
+    private readonly Dictionary<LightingZoneViewModel, DispatcherTimer> _zoneBrightnessTimers = [];
     private bool _isAvailable;
     private bool _isEnabled = true;
     private bool _isBusy;
@@ -182,7 +186,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             if (_brightness == brightness) return;
             _brightness = brightness;
             OnPropertyChanged();
-            ApplyBrightness(brightness);
+            QueueBrightnessApply();
         }
     }
     public LightingColorOption? GlobalColor
@@ -205,6 +209,23 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(GlobalColor));
     }
 
+    internal LightingColorOption FindOrAddColor(byte red, byte green, byte blue)
+    {
+        var existing = Colors.FirstOrDefault(color =>
+            color.Red == red && color.Green == green && color.Blue == blue);
+        if (existing != null)
+            return existing;
+
+        var hex = $"#{red:X2}{green:X2}{blue:X2}";
+        var custom = new LightingColorOption(
+            LocalizationService.Get("ColorCustomValue", hex),
+            red,
+            green,
+            blue);
+        Colors.Add(custom);
+        return custom;
+    }
+
     public string DeviceSummary { get => _deviceSummary; private set { _deviceSummary = value; OnPropertyChanged(); } }
     public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
 
@@ -212,19 +233,38 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand ToggleCommand { get; }
     public ICommand ToggleZoneCommand { get; }
+    public ICommand PickGlobalColorCommand { get; }
+    public ICommand PickZoneColorCommand { get; }
 
     public event EventHandler? Applied;
     public event EventHandler? SettingsChanged;
 
-    public LightingViewModel(ILightingControlService? service)
+    public LightingViewModel(
+        ILightingControlService? service,
+        ILightingColorPicker? colorPicker = null)
     {
         _service = service;
+        _colorPicker = colorPicker ?? new CustomLightingColorPicker();
         _dispatcher = Dispatcher.CurrentDispatcher;
+        _brightnessTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(BrightnessDebounceMilliseconds),
+            DispatcherPriority.Background,
+            (sender, _) =>
+            {
+                if (sender is DispatcherTimer timer)
+                    timer.Stop();
+                ApplyBrightness(_brightness);
+            },
+            _dispatcher);
         _globalColor = Colors[0];
         ToggleCommand = new RelayCommand(async () => await ToggleAsync());
         ToggleZoneCommand = new RelayCommand<LightingZoneViewModel>(
             zone => _ = ToggleZoneAsync(zone),
             zone => zone != null);
+        PickGlobalColorCommand = new RelayCommand(PickGlobalColor);
+        PickZoneColorCommand = new RelayCommand<LightingZoneViewModel>(
+            PickZoneColor,
+            zone => zone is { CanChangeColor: true });
 
         if (_service != null)
             _service.AvailabilityChanged += OnServiceAvailabilityChanged;
@@ -271,6 +311,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
                 : $"{device.LampCount} addressable lights · VID {device.VendorId:X4} · PID {device.ProductId:X4}";
             Status = device == null ? "Lenovo tower lighting was not detected" : "";
 
+            ClearZoneBrightnessTimers();
             Zones.Clear();
             if (device != null)
             {
@@ -349,7 +390,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         if (!_restoringZoneBrightness &&
             e.PropertyName == nameof(LightingZoneViewModel.Brightness) &&
             sender is LightingZoneViewModel zone)
-            _ = ApplyZoneBrightnessAsync(zone);
+            QueueZoneBrightnessApply(zone);
 
         if (e.PropertyName == nameof(LightingZoneViewModel.SelectedColor) &&
             sender is LightingZoneViewModel colorZone &&
@@ -391,6 +432,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             _pendingReapply = true;
             return;
         }
+        CancelPendingBrightnessApplies();
         Log.Info($"ReapplyAsync: brightness={Brightness}%, zones={Zones.Count}, enabled={IsEnabled}");
         try
         {
@@ -420,6 +462,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             Log.Info($"ApplyAsync skipped: service={_service != null}, available={IsAvailable}, busy={IsBusy}");
             return;
         }
+        CancelPendingBrightnessApplies();
         IsBusy = true;
         Log.Info($"ApplyAsync: brightness={Brightness}%, zones={Zones.Count}, enabled={IsEnabled}");
         try
@@ -479,6 +522,96 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private void PickGlobalColor()
+    {
+        var originalColors = Zones
+            .Select(zone => (Zone: zone, Color: zone.SelectedColor))
+            .ToList();
+        var previewChain = Task.CompletedTask;
+        var previewIsActive = 1;
+        var selected = _colorPicker.Pick(
+            GlobalColor ?? Zones.FirstOrDefault()?.SelectedColor ?? Colors[0],
+            color => previewChain = QueuePreview(previewChain, () =>
+                Volatile.Read(ref previewIsActive) == 1
+                    ? PreviewZoneColorsAsync(Zones, color)
+                    : Task.CompletedTask));
+
+        Interlocked.Exchange(ref previewIsActive, 0);
+
+        if (selected == null)
+        {
+            foreach (var (zone, color) in originalColors)
+            {
+                if (color != null)
+                    _ = PreviewZoneColorsAsync([zone], color);
+            }
+            return;
+        }
+
+        GlobalColor = FindOrAddColor(selected.Red, selected.Green, selected.Blue);
+    }
+
+    private void PickZoneColor(LightingZoneViewModel? zone)
+    {
+        if (zone is not { CanChangeColor: true })
+            return;
+
+        var originalColor = zone.SelectedColor;
+        var previewChain = Task.CompletedTask;
+        var previewIsActive = 1;
+        var selected = _colorPicker.Pick(
+            originalColor ?? Colors[0],
+            color => previewChain = QueuePreview(previewChain, () =>
+                Volatile.Read(ref previewIsActive) == 1
+                    ? PreviewZoneColorsAsync([zone], color)
+                    : Task.CompletedTask));
+
+        Interlocked.Exchange(ref previewIsActive, 0);
+
+        if (selected == null)
+        {
+            if (originalColor != null)
+                _ = PreviewZoneColorsAsync([zone], originalColor);
+            return;
+        }
+
+        zone.SelectedColor = FindOrAddColor(selected.Red, selected.Green, selected.Blue);
+    }
+
+    private async Task PreviewZoneColorsAsync(
+        IEnumerable<LightingZoneViewModel> zones,
+        LightingColorOption color)
+    {
+        if (_service == null || !IsAvailable)
+            return;
+
+        try
+        {
+            foreach (var zone in zones)
+            {
+                await _service.SetZoneColorAsync(
+                    zone.Index,
+                    color.Red,
+                    color.Green,
+                    color.Blue);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Failed to preview lighting color: {ex.Message}");
+        }
+    }
+
+    private static Task QueuePreview(Task previous, Func<Task> operation) =>
+        previous.IsCompletedSuccessfully
+            ? operation()
+            : previous.ContinueWith(
+                    _ => operation(),
+                    CancellationToken.None,
+                    TaskContinuationOptions.None,
+                    TaskScheduler.Default)
+                .Unwrap();
+
     private async Task ToggleZoneAsync(LightingZoneViewModel? zone)
     {
         if (zone == null || _service == null || !IsAvailable || IsBusy)
@@ -516,6 +649,46 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             Status = ex.Message;
             Log.Warn($"Failed to set lighting zone {zone.Index} brightness: {ex.Message}");
         }
+    }
+
+    private void QueueBrightnessApply()
+    {
+        _brightnessTimer.Stop();
+        _brightnessTimer.Start();
+    }
+
+    private void QueueZoneBrightnessApply(LightingZoneViewModel zone)
+    {
+        if (!_zoneBrightnessTimers.TryGetValue(zone, out var timer))
+        {
+            timer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
+            {
+                Interval = TimeSpan.FromMilliseconds(BrightnessDebounceMilliseconds)
+            };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                _ = ApplyZoneBrightnessAsync(zone);
+            };
+            _zoneBrightnessTimers.Add(zone, timer);
+        }
+
+        timer.Stop();
+        timer.Start();
+    }
+
+    private void CancelPendingBrightnessApplies()
+    {
+        _brightnessTimer.Stop();
+        foreach (var timer in _zoneBrightnessTimers.Values)
+            timer.Stop();
+    }
+
+    private void ClearZoneBrightnessTimers()
+    {
+        foreach (var timer in _zoneBrightnessTimers.Values)
+            timer.Stop();
+        _zoneBrightnessTimers.Clear();
     }
 
     private async Task ApplyZoneColorAsync(
@@ -615,6 +788,8 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        CancelPendingBrightnessApplies();
+        ClearZoneBrightnessTimers();
         foreach (var zone in Zones)
             zone.PropertyChanged -= OnZonePropertyChanged;
         if (_service != null)

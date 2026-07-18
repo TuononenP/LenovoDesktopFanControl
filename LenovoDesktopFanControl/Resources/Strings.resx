@@ -58,6 +58,12 @@
   <data name="ApplyLighting" xml:space="preserve"><value>Apply Lighting</value></data>
   <data name="GlobalColor" xml:space="preserve"><value>All Lights</value></data>
   <data name="ColorCustom" xml:space="preserve"><value>Custom</value></data>
+  <data name="ColorCustomValue" xml:space="preserve"><value>Custom ({0})</value></data>
+  <data name="PickCustomColor" xml:space="preserve"><value>Pick custom color</value></data>
+  <data name="TooltipPickCustomColor" xml:space="preserve"><value>Choose any RGB color</value></data>
+  <data name="ColorPickerTitle" xml:space="preserve"><value>Custom color</value></data>
+  <data name="ColorPickerPreview" xml:space="preserve"><value>Preview</value></data>
+  <data name="ColorPickerHex" xml:space="preserve"><value>Hex color</value></data>
   <data name="MaxRpm" xml:space="preserve"><value>Max RPM</value></data>
   <data name="ZoneBranding" xml:space="preserve"><value>Legion Banner</value></data>
   <data name="ZoneAccent" xml:space="preserve"><value>Accent Lights</value></data>

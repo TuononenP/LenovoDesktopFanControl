@@ -58,6 +58,12 @@
   <data name="ApplyLighting" xml:space="preserve"><value>Käytä valaistusta</value></data>
   <data name="GlobalColor" xml:space="preserve"><value>Kaikki valot</value></data>
   <data name="ColorCustom" xml:space="preserve"><value>Mukautettu</value></data>
+  <data name="ColorCustomValue" xml:space="preserve"><value>Mukautettu ({0})</value></data>
+  <data name="PickCustomColor" xml:space="preserve"><value>Valitse mukautettu väri</value></data>
+  <data name="TooltipPickCustomColor" xml:space="preserve"><value>Valitse mikä tahansa RGB-väri</value></data>
+  <data name="ColorPickerTitle" xml:space="preserve"><value>Mukautettu väri</value></data>
+  <data name="ColorPickerPreview" xml:space="preserve"><value>Esikatselu</value></data>
+  <data name="ColorPickerHex" xml:space="preserve"><value>Heksaväri</value></data>
   <data name="MaxRpm" xml:space="preserve"><value>Maksimikierrokset</value></data>
   <data name="ZoneBranding" xml:space="preserve"><value>Legion-logo</value></data>
   <data name="ZoneAccent" xml:space="preserve"><value>Korostusvalot</value></data>
