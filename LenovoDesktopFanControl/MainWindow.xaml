@@ -24,6 +24,12 @@
         <conv:LocFormatConverter x:Key="LocFmt" />
         <conv:WidthToColumnCountConverter x:Key="WidthToColumns" />
         <conv:LightingColorToBrushConverter x:Key="LightingColorBrush" />
+        <conv:TemperatureToBrushConverter x:Key="TemperatureBrushConverter"
+                                          CoolBrush="{StaticResource SuccessBrush}"
+                                          ElevatedBrush="{StaticResource TemperatureYellowBrush}"
+                                          HotBrush="{StaticResource TemperatureOrangeBrush}"
+                                          CriticalBrush="{StaticResource DangerBrush}"
+                                          UnavailableBrush="{StaticResource TextMutedBrush}" />
 
         <Style x:Key="PanelCardStyle" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource SurfaceGradientBrush}" />
@@ -556,7 +562,11 @@
                                         </Button.Template>
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock Text="{Binding TemperatureText}" Margin="0,4,0,0" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding TemperatureText}"
+                                                       Margin="0,4,0,0"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{Binding Temperature, Converter={StaticResource TemperatureBrushConverter}}" />
                                             <TextBlock Text="{Binding Detail}" Margin="0,4,0,0" FontSize="9.5" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" />
                                         </StackPanel>
                                     </Button>

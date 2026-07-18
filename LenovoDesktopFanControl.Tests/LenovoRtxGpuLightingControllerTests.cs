@@ -124,4 +124,21 @@ public sealed class LenovoRtxGpuLightingControllerTests
             command.DelayAfterMilliseconds == 5));
         Assert.Equal(37, commands.Count);
     }
+
+    [Fact]
+    public void BuildStaticCommands_WhenDisabled_CanClearTheStaticFrame()
+    {
+        var commands = LenovoRtxGpuLightingController.BuildStaticCommands(
+            red: 0,
+            green: 0,
+            blue: 0,
+            brightness: 0,
+            enabled: false);
+
+        Assert.Contains(commands, command => command.Register == 0x17 && command.Value == 0);
+        Assert.Contains(commands, command => command.Register == 0x18 && command.Value == 0);
+        Assert.Contains(commands, command => command.Register == 0x19 && command.Value == 0);
+        Assert.Contains(commands, command => command.Register == 0x1A && command.Value == 0);
+        Assert.Equal(4, commands.Count(command => command.Register == 0x50 && command.Value == 0));
+    }
 }

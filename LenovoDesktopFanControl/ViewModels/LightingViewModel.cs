@@ -133,8 +133,10 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     private readonly ILightingControlService? _service;
     private readonly ILightingColorPicker _colorPicker;
     private readonly Dispatcher _dispatcher;
-    private readonly DispatcherTimer _brightnessTimer;
-    private readonly Dictionary<LightingZoneViewModel, DispatcherTimer> _zoneBrightnessTimers = [];
+    private readonly object _zoneBrightnessApplySync = new();
+    private CancellationTokenSource? _brightnessApplyCancellation;
+    private readonly Dictionary<LightingZoneViewModel, CancellationTokenSource>
+        _zoneBrightnessApplyCancellations = [];
     private bool _isAvailable;
     private bool _isEnabled = true;
     private bool _isBusy;
@@ -246,16 +248,6 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         _service = service;
         _colorPicker = colorPicker ?? new CustomLightingColorPicker();
         _dispatcher = Dispatcher.CurrentDispatcher;
-        _brightnessTimer = new DispatcherTimer(
-            TimeSpan.FromMilliseconds(BrightnessDebounceMilliseconds),
-            DispatcherPriority.Background,
-            (sender, _) =>
-            {
-                if (sender is DispatcherTimer timer)
-                    timer.Stop();
-                ApplyBrightness(_brightness);
-            },
-            _dispatcher);
         _globalColor = Colors[0];
         ToggleCommand = new RelayCommand(async () => await ToggleAsync());
         ToggleZoneCommand = new RelayCommand<LightingZoneViewModel>(
@@ -311,7 +303,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
                 : $"{device.LampCount} addressable lights · VID {device.VendorId:X4} · PID {device.ProductId:X4}";
             Status = device == null ? "Lenovo tower lighting was not detected" : "";
 
-            ClearZoneBrightnessTimers();
+            CancelPendingBrightnessApplies();
             Zones.Clear();
             if (device != null)
             {
@@ -653,42 +645,96 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
     private void QueueBrightnessApply()
     {
-        _brightnessTimer.Stop();
-        _brightnessTimer.Start();
+        var cancellation = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _brightnessApplyCancellation, cancellation);
+        previous?.Cancel();
+        _ = ApplyBrightnessAfterDelayAsync(_brightness, cancellation);
     }
 
     private void QueueZoneBrightnessApply(LightingZoneViewModel zone)
     {
-        if (!_zoneBrightnessTimers.TryGetValue(zone, out var timer))
+        var cancellation = new CancellationTokenSource();
+        CancellationTokenSource? previous;
+        lock (_zoneBrightnessApplySync)
         {
-            timer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
-            {
-                Interval = TimeSpan.FromMilliseconds(BrightnessDebounceMilliseconds)
-            };
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                _ = ApplyZoneBrightnessAsync(zone);
-            };
-            _zoneBrightnessTimers.Add(zone, timer);
+            _zoneBrightnessApplyCancellations.Remove(zone, out previous);
+            _zoneBrightnessApplyCancellations.Add(zone, cancellation);
         }
 
-        timer.Stop();
-        timer.Start();
+        previous?.Cancel();
+        _ = ApplyZoneBrightnessAfterDelayAsync(zone, cancellation);
     }
 
     private void CancelPendingBrightnessApplies()
     {
-        _brightnessTimer.Stop();
-        foreach (var timer in _zoneBrightnessTimers.Values)
-            timer.Stop();
+        Interlocked.Exchange(ref _brightnessApplyCancellation, null)?.Cancel();
+        CancellationTokenSource[] cancellations;
+        lock (_zoneBrightnessApplySync)
+        {
+            cancellations = [.. _zoneBrightnessApplyCancellations.Values];
+            _zoneBrightnessApplyCancellations.Clear();
+        }
+
+        foreach (var cancellation in cancellations)
+            cancellation.Cancel();
     }
 
-    private void ClearZoneBrightnessTimers()
+    private async Task ApplyBrightnessAfterDelayAsync(
+        int brightness,
+        CancellationTokenSource cancellation)
     {
-        foreach (var timer in _zoneBrightnessTimers.Values)
-            timer.Stop();
-        _zoneBrightnessTimers.Clear();
+        try
+        {
+            await Task.Delay(BrightnessDebounceMilliseconds, cancellation.Token).ConfigureAwait(false);
+            if (!ReferenceEquals(Volatile.Read(ref _brightnessApplyCancellation), cancellation))
+                return;
+
+            await ApplyBrightnessAsync(brightness);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer slider value or an explicit Apply superseded this one.
+        }
+        finally
+        {
+            Interlocked.CompareExchange(ref _brightnessApplyCancellation, null, cancellation);
+            cancellation.Dispose();
+        }
+    }
+
+    private async Task ApplyZoneBrightnessAfterDelayAsync(
+        LightingZoneViewModel zone,
+        CancellationTokenSource cancellation)
+    {
+        try
+        {
+            await Task.Delay(BrightnessDebounceMilliseconds, cancellation.Token).ConfigureAwait(false);
+            lock (_zoneBrightnessApplySync)
+            {
+                if (!_zoneBrightnessApplyCancellations.TryGetValue(zone, out var active) ||
+                    !ReferenceEquals(active, cancellation))
+                    return;
+            }
+
+            await ApplyZoneBrightnessAsync(zone);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer slider value or an explicit Apply superseded this one.
+        }
+        finally
+        {
+            lock (_zoneBrightnessApplySync)
+            {
+                if (_zoneBrightnessApplyCancellations.TryGetValue(zone, out var active) &&
+                    ReferenceEquals(active, cancellation))
+                {
+                    _zoneBrightnessApplyCancellations.Remove(zone);
+                }
+            }
+
+            cancellation.Dispose();
+        }
     }
 
     private async Task ApplyZoneColorAsync(
@@ -727,7 +773,7 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private async void ApplyBrightness(int brightness)
+    private async Task ApplyBrightnessAsync(int brightness)
     {
         if (_service == null || !IsAvailable)
         {
@@ -789,7 +835,6 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     public void Dispose()
     {
         CancelPendingBrightnessApplies();
-        ClearZoneBrightnessTimers();
         foreach (var zone in Zones)
             zone.PropertyChanged -= OnZonePropertyChanged;
         if (_service != null)

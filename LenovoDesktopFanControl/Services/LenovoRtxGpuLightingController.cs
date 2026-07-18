@@ -164,17 +164,31 @@ internal sealed class LenovoRtxGpuLightingController : ILenovoGpuLightingControl
             if (!IsAvailable)
                 return false;
 
-            var level = MapBrightness(brightness);
+            // Turning the master switch off must not rely only on the output
+            // latch. The RTX card has more than one visible diffuser, and a
+            // retained static frame can leave one illuminated if it misses an
+            // output-latch transition. Clear the complete controller frame
+            // first; the saved color remains in the service and is restored
+            // on the next enabled write.
+            var appliedRed = enabled ? red : (byte)0;
+            var appliedGreen = enabled ? green : (byte)0;
+            var appliedBlue = enabled ? blue : (byte)0;
+            var level = enabled ? MapBrightness(brightness) : (byte)0;
             try
             {
-                var commands = BuildStaticCommands(red, green, blue, level, enabled);
+                var commands = BuildStaticCommands(
+                    appliedRed,
+                    appliedGreen,
+                    appliedBlue,
+                    level,
+                    enabled);
                 for (var attempt = 1; attempt <= ApplyAttemptCount; attempt++)
                 {
                     if (TryWriteCommands(commands, out var failedCommand, out var status))
                     {
                         Log.Info(
                             $"Lenovo RTX lighting writes accepted: enabled={enabled}, " +
-                            $"brightness={level}/7, r={red}, g={green}, b={blue}, " +
+                            $"brightness={level}/7, r={appliedRed}, g={appliedGreen}, b={appliedBlue}, " +
                             $"attempt={attempt}");
                         return true;
                     }

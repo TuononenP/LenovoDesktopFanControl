@@ -255,7 +255,15 @@ public sealed class LampArrayLightingService : ILightingControlService
         else
         {
             _lastBrightness = lampArray.BrightnessLevel > 0 ? lampArray.BrightnessLevel : _lastBrightness;
-            lampArray.SetColor(WinColor.FromArgb(255, 0, 0, 0));
+            var black = WinColor.FromArgb(255, 0, 0, 0);
+            // SetColor is controller-wide, but Lenovo's firmware can retain a
+            // previously addressed component while switching profiles. Write
+            // the complete physical lamp range as well so lower case strips
+            // and any other separately addressed component are explicitly off.
+            lampArray.SetColor(black);
+            lampArray.SetSingleColorForIndices(
+                black,
+                Enumerable.Range(0, lampArray.LampCount).ToArray());
             // Some Lenovo firmware effects continue rendering after a black
             // color write. Zero brightness is the controller-wide hard-off.
             lampArray.BrightnessLevel = 0;
