@@ -233,16 +233,20 @@ public partial class MainWindow : Window
         if (_isClosing)
             return;
 
-        if (!_exitRequested)
+        if (ShouldHideOnClose(_exitRequested, _viewModel.MinimizeToTray))
         {
             HideToTray();
             return;
         }
 
+        _exitRequested = true;
         _isClosing = true;
         IsEnabled = false;
         _ = ShutdownAndCloseAsync();
     }
+
+    internal static bool ShouldHideOnClose(bool exitRequested, bool minimizeToTray) =>
+        !exitRequested && minimizeToTray;
 
     private async Task ShutdownAndCloseAsync()
     {

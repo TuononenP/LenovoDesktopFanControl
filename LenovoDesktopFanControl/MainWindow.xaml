@@ -69,11 +69,13 @@
         </Grid>
 
         <!-- Control center -->
-        <Border Grid.Row="1"
-                Margin="28,0,28,18"
-                Padding="20"
-                Style="{StaticResource PanelCardStyle}">
-            <StackPanel>
+        <StackPanel Grid.Row="1"
+                    Margin="28,0,28,18">
+            <!-- Fan mode settings -->
+            <Border Margin="0,0,0,12"
+                    Padding="20"
+                    Style="{StaticResource PanelCardStyle}">
+                <StackPanel>
                 <WrapPanel>
                     <StackPanel Margin="0,0,24,12">
                         <TextBlock Text="{loc:Loc SmartFanMode}"
@@ -131,15 +133,26 @@
                     </StackPanel>
                 </WrapPanel>
 
-                <Border Height="1" Margin="0,6,0,18" Background="{StaticResource BorderBrush}" />
+                    <CheckBox Content="{loc:Loc FullSpeed}"
+                              Margin="2,2,0,0"
+                              HorizontalAlignment="Left"
+                              Style="{StaticResource ToggleSwitchStyle}"
+                              IsChecked="{Binding IsFullSpeed}"
+                              Visibility="{Binding IsFullSpeedSupported, Converter={StaticResource Bool2Vis}}"
+                              IsEnabled="{Binding IsFullSpeedSupported}"
+                              ToolTip="{loc:Loc TooltipFullSpeed}"
+                              ToolTipService.ShowOnDisabled="True"
+                              AutomationProperties.HelpText="{loc:Loc TooltipFullSpeed}"
+                              Command="{Binding FullSpeedCommand}"
+                              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
+                </StackPanel>
+            </Border>
 
-                <Border Margin="0,0,0,14"
-                        Padding="14"
-                        Background="{StaticResource SurfaceGradientBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Visibility="{Binding Lighting.IsAvailable, Converter={StaticResource Bool2Vis}}">
+            <!-- Lighting settings -->
+            <Border Margin="0,0,0,12"
+                    Padding="20"
+                    Style="{StaticResource PanelCardStyle}"
+                    Visibility="{Binding Lighting.IsAvailable, Converter={StaticResource Bool2Vis}}">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -154,15 +167,11 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="{loc:Loc TowerLighting}"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                <TextBlock Text="{Binding Lighting.DeviceSummary}"
-                                           Margin="0,2,0,0"
-                                           FontSize="10.5"
-                                           Foreground="{StaticResource TextMutedBrush}" />
-                            </StackPanel>
+                            <TextBlock Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Text="{loc:Loc TowerLighting}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
 
                             <CheckBox Grid.Column="2"
                                       Content="{loc:Loc LightingEnabled}"
@@ -185,6 +194,7 @@
                                 <Slider Margin="0,4,0,0"
                                         Minimum="0" Maximum="100"
                                         TickFrequency="5"
+                                        Style="{StaticResource HorizontalSliderStyle}"
                                         Value="{Binding Lighting.Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
 
@@ -236,19 +246,37 @@
                                             BorderThickness="1"
                                             CornerRadius="8">
                                     <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="12" />
                                             <ColumnDefinition Width="140" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding Name}"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="12"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" />
-                                        <ComboBox Grid.Column="2"
+                                        <TextBox Grid.Column="0"
+                                                 MinWidth="100"
+                                                 MaxLength="48"
+                                                 Padding="6,3"
+                                                 VerticalAlignment="Center"
+                                                 Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                 ToolTip="{loc:Loc TooltipEditLightName}"
+                                                 AutomationProperties.Name="{loc:Loc LightName}"
+                                                 AutomationProperties.HelpText="{loc:Loc TooltipEditLightName}" />
+                                        <CheckBox Grid.Column="2"
+                                                  Content="{loc:Loc ZoneEnabled}"
+                                                  VerticalAlignment="Center"
+                                                  Style="{StaticResource ToggleSwitchStyle}"
+                                                  IsChecked="{Binding IsEnabled}"
+                                                  Command="{Binding DataContext.Lighting.ToggleZoneCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  CommandParameter="{Binding}" />
+                                        <ComboBox Grid.Column="4"
                                                   MinWidth="130"
                                                   VerticalAlignment="Center"
+                                                  IsEnabled="{Binding IsEnabled}"
                                                   ItemsSource="{Binding DataContext.Lighting.Colors, RelativeSource={RelativeSource AncestorType=Window}}"
                                                   SelectedItem="{Binding SelectedColor, Mode=TwoWay}">
                                             <ComboBox.ItemTemplate>
@@ -257,26 +285,51 @@
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
+                                        <Grid Grid.Row="1"
+                                              Grid.ColumnSpan="5"
+                                              Margin="0,9,0,0"
+                                              IsEnabled="{Binding IsEnabled}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="10" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="10" />
+                                                <ColumnDefinition Width="38" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{loc:Loc Brightness}"
+                                                       FontSize="10.5"
+                                                       Foreground="{StaticResource TextMutedBrush}" />
+                                            <Slider Grid.Column="2"
+                                                    Minimum="0"
+                                                    Maximum="100"
+                                                    TickFrequency="5"
+                                                    Style="{StaticResource HorizontalSliderStyle}"
+                                                    Value="{Binding Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBlock Grid.Column="4"
+                                                       HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="10.5"
+                                                       Foreground="{StaticResource AccentBrush}">
+                                                <Run Text="{Binding Brightness}" /><Run Text="%" />
+                                            </TextBlock>
+                                        </Grid>
                                     </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
-                </Border>
+            </Border>
 
+            <!-- Application settings -->
+            <Border Padding="20"
+                    Style="{StaticResource PanelCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc ApplicationSettings}"
+                               Style="{StaticResource EyebrowTextStyle}"
+                               Margin="2,0,0,12" />
                 <WrapPanel>
-                    <CheckBox Content="{loc:Loc FullSpeed}"
-                              Margin="0,0,28,12"
-                              Style="{StaticResource ToggleSwitchStyle}"
-                              IsChecked="{Binding IsFullSpeed}"
-                              Visibility="{Binding IsFullSpeedSupported, Converter={StaticResource Bool2Vis}}"
-                              IsEnabled="{Binding IsFullSpeedSupported}"
-                              ToolTip="{loc:Loc TooltipFullSpeed}"
-                              ToolTipService.ShowOnDisabled="True"
-                              AutomationProperties.HelpText="{loc:Loc TooltipFullSpeed}"
-                              Command="{Binding FullSpeedCommand}"
-                              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
                     <CheckBox Content="{loc:Loc StartWithWindows}"
                               Margin="0,0,28,12"
                               IsChecked="{Binding StartWithWindows}"
@@ -299,8 +352,9 @@
                                   MinWidth="124" />
                     </StackPanel>
                 </WrapPanel>
-            </StackPanel>
-        </Border>
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
         <!-- Dashboard content -->
         <ScrollViewer Grid.Row="2"

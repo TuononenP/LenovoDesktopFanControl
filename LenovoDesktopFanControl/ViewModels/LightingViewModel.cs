@@ -10,21 +10,75 @@ namespace LenovoDesktopFanControl.ViewModels;
 
 public sealed class LightingZoneViewModel : INotifyPropertyChanged
 {
+    internal const int MaxNameLength = 48;
+
     private LightingColorOption? _selectedColor;
+    private bool _isEnabled = true;
+    private int _brightness = 100;
+    private string _name;
 
     public LightingZoneViewModel(LightingZoneInfo info, LightingColorOption? defaultColor = null)
     {
         Index = info.Index;
-        Name = info.Name;
+        DefaultName = string.IsNullOrWhiteSpace(info.Name)
+            ? $"Light {info.Index + 1}"
+            : info.Name.Trim();
+        _name = DefaultName;
         Kind = info.Kind;
         LampCount = info.LampCount;
         SelectedColor = defaultColor;
     }
 
     public int Index { get; }
-    public string Name { get; }
+    public string DefaultName { get; }
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            var normalized = string.IsNullOrWhiteSpace(value)
+                ? DefaultName
+                : value.Trim();
+            if (normalized.Length > MaxNameLength)
+                normalized = normalized[..MaxNameLength];
+
+            if (_name == normalized)
+            {
+                // Refresh an editor that was cleared or contained only extra whitespace.
+                if (!string.Equals(value, normalized, StringComparison.Ordinal))
+                    OnPropertyChanged();
+                return;
+            }
+
+            _name = normalized;
+            OnPropertyChanged();
+        }
+    }
     public LightingZoneKind Kind { get; }
     public int LampCount { get; }
+
+    public int Brightness
+    {
+        get => _brightness;
+        set
+        {
+            var brightness = Math.Clamp(value, 0, 100);
+            if (_brightness == brightness) return;
+            _brightness = brightness;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set
+        {
+            if (_isEnabled == value) return;
+            _isEnabled = value;
+            OnPropertyChanged();
+        }
+    }
 
     public LightingColorOption? SelectedColor
     {
@@ -54,6 +108,8 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
     private string _deviceSummary = "";
     private string _status = "";
     private bool _pendingReapply;
+    private bool _restoringZoneNames;
+    private bool _restoringZoneBrightness;
 
     public ObservableCollection<LightingColorOption> Colors { get; } =
     [
@@ -124,8 +180,10 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand ApplyCommand { get; }
     public ICommand ToggleCommand { get; }
+    public ICommand ToggleZoneCommand { get; }
 
     public event EventHandler? Applied;
+    public event EventHandler? SettingsChanged;
 
     public LightingViewModel(ILightingControlService? service)
     {
@@ -134,6 +192,9 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         _globalColor = Colors[0];
         ApplyCommand = new RelayCommand(async () => await ApplyAsync());
         ToggleCommand = new RelayCommand(async () => await ToggleAsync());
+        ToggleZoneCommand = new RelayCommand<LightingZoneViewModel>(
+            zone => _ = ToggleZoneAsync(zone),
+            zone => zone != null);
 
         if (_service != null)
             _service.AvailabilityChanged += OnServiceAvailabilityChanged;
@@ -178,13 +239,17 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             DeviceSummary = device == null
                 ? ""
                 : $"{device.LampCount} addressable lights · VID {device.VendorId:X4} · PID {device.ProductId:X4}";
-            Status = device == null ? "Lenovo tower lighting was not detected" : "Lighting controller ready";
+            Status = device == null ? "Lenovo tower lighting was not detected" : "";
 
             Zones.Clear();
             if (device != null)
             {
                 foreach (var zone in device.Zones)
-                    Zones.Add(new LightingZoneViewModel(zone, Colors[0]));
+                {
+                    var zoneViewModel = new LightingZoneViewModel(zone, Colors[0]);
+                    zoneViewModel.PropertyChanged += OnZonePropertyChanged;
+                    Zones.Add(zoneViewModel);
+                }
                 OnPropertyChanged(nameof(HasZones));
             }
         }
@@ -193,6 +258,52 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             Status = ex.Message;
             Log.Warn($"Lighting initialization failed: {ex.Message}");
         }
+    }
+
+    internal void RestoreZoneNames(IReadOnlyDictionary<int, string> names)
+    {
+        _restoringZoneNames = true;
+        try
+        {
+            foreach (var zone in Zones)
+            {
+                if (names.TryGetValue(zone.Index, out var name) &&
+                    !string.IsNullOrWhiteSpace(name))
+                    zone.Name = name;
+            }
+        }
+        finally
+        {
+            _restoringZoneNames = false;
+        }
+    }
+
+    internal void RestoreZoneBrightness(IReadOnlyDictionary<int, int> brightnessByZone)
+    {
+        _restoringZoneBrightness = true;
+        try
+        {
+            foreach (var zone in Zones)
+                zone.Brightness = brightnessByZone.TryGetValue(zone.Index, out var brightness)
+                    ? brightness
+                    : 100;
+        }
+        finally
+        {
+            _restoringZoneBrightness = false;
+        }
+    }
+
+    private void OnZonePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!_restoringZoneNames &&
+            e.PropertyName == nameof(LightingZoneViewModel.Name))
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+
+        if (!_restoringZoneBrightness &&
+            e.PropertyName == nameof(LightingZoneViewModel.Brightness) &&
+            sender is LightingZoneViewModel zone)
+            _ = ApplyZoneBrightnessAsync(zone);
     }
 
     public async Task ReapplyAsync()
@@ -211,6 +322,8 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             await _service.SetBrightnessAsync(Brightness / 100d);
             foreach (var zone in Zones)
             {
+                await _service.SetZoneEnabledAsync(zone.Index, zone.IsEnabled);
+                await _service.SetZoneBrightnessAsync(zone.Index, zone.Brightness / 100d);
                 if (zone.SelectedColor == null) continue;
                 await _service.SetZoneColorAsync(zone.Index, zone.SelectedColor.Red, zone.SelectedColor.Green, zone.SelectedColor.Blue);
             }
@@ -236,8 +349,10 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
             await _service.SetBrightnessAsync(Brightness / 100d);
             foreach (var zone in Zones)
             {
+                await _service.SetZoneEnabledAsync(zone.Index, zone.IsEnabled);
+                await _service.SetZoneBrightnessAsync(zone.Index, zone.Brightness / 100d);
                 if (zone.SelectedColor == null) continue;
-                Log.Info($"  zone {zone.Index} '{zone.Name}': {zone.SelectedColor.Name} (r={zone.SelectedColor.Red}, g={zone.SelectedColor.Green}, b={zone.SelectedColor.Blue})");
+                Log.Info($"  zone {zone.Index} '{zone.Name}': enabled={zone.IsEnabled}, brightness={zone.Brightness}%, {zone.SelectedColor.Name} (r={zone.SelectedColor.Red}, g={zone.SelectedColor.Green}, b={zone.SelectedColor.Blue})");
                 await _service.SetZoneColorAsync(zone.Index, zone.SelectedColor.Red, zone.SelectedColor.Green, zone.SelectedColor.Blue);
             }
             await _service.SetEnabledAsync(IsEnabled);
@@ -270,7 +385,8 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            await _service.SetColorAsync(color.Red, color.Green, color.Blue);
+            foreach (var zone in Zones)
+                await _service.SetZoneColorAsync(zone.Index, color.Red, color.Green, color.Blue);
             Status = $"Applied {color.Name} to all lights";
             Log.Info($"ApplyGlobalColor succeeded");
             Applied?.Invoke(this, EventArgs.Empty);
@@ -279,6 +395,45 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         {
             Status = ex.Message;
             Log.Warn($"Failed to apply global color: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleZoneAsync(LightingZoneViewModel? zone)
+    {
+        if (zone == null || _service == null || !IsAvailable || IsBusy)
+            return;
+
+        try
+        {
+            await _service.SetZoneEnabledAsync(zone.Index, zone.IsEnabled);
+            Status = zone.IsEnabled
+                ? $"{zone.Name} enabled"
+                : $"{zone.Name} disabled";
+            Applied?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            zone.IsEnabled = !zone.IsEnabled;
+            Status = ex.Message;
+            Log.Warn($"Failed to toggle lighting zone {zone.Index}: {ex.Message}");
+        }
+    }
+
+    private async Task ApplyZoneBrightnessAsync(LightingZoneViewModel zone)
+    {
+        if (_service == null || !IsAvailable)
+            return;
+
+        try
+        {
+            await _service.SetZoneBrightnessAsync(zone.Index, zone.Brightness / 100d);
+            Status = $"{zone.Name} brightness set to {zone.Brightness}%";
+            Applied?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+            Log.Warn($"Failed to set lighting zone {zone.Index} brightness: {ex.Message}");
         }
     }
 
@@ -326,8 +481,25 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    internal async Task PersistStateAsync()
+    {
+        if (_service == null || !IsAvailable)
+            return;
+
+        try
+        {
+            await _service.PersistStateAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Failed to persist lighting state on exit: {ex.Message}");
+        }
+    }
+
     public void Dispose()
     {
+        foreach (var zone in Zones)
+            zone.PropertyChanged -= OnZonePropertyChanged;
         if (_service != null)
             _service.AvailabilityChanged -= OnServiceAvailabilityChanged;
         _service?.Dispose();

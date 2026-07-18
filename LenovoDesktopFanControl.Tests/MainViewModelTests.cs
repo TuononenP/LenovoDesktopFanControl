@@ -416,6 +416,7 @@ public class MainViewModelTests
         await viewModel.InitializeAsync();
         viewModel.Lighting.IsEnabled = false;
         viewModel.Lighting.Brightness = 37;
+        viewModel.Lighting.Zones[0].Brightness = 63;
         viewModel.Lighting.Zones[0].SelectedColor =
             viewModel.Lighting.Colors.Single(color => color.Name == "Purple");
 
@@ -423,11 +424,13 @@ public class MainViewModelTests
 
         Assert.False(settings.Settings.LightingEnabled);
         Assert.Equal(37, settings.Settings.LightingBrightness);
+        Assert.Equal(63, settings.Settings.LightingZoneBrightness[7]);
         var savedColor = Assert.Single(settings.Settings.LightingZoneColors).Value;
         Assert.Equal(7, savedColor.ZoneIndex);
         Assert.Equal((byte)145, savedColor.Red);
         Assert.Equal((byte)85, savedColor.Green);
         Assert.Equal((byte)255, savedColor.Blue);
+        Assert.Equal(1, lightingService.PersistStateCount);
     }
 
     [Fact]
@@ -446,6 +449,11 @@ public class MainViewModelTests
         {
             LightingEnabled = false,
             LightingBrightness = 42,
+            LightingZoneBrightness =
+            {
+                [0] = 25,
+                [1] = 80
+            },
             LightingZoneColors =
             {
                 [0] = new LightingZoneColor(0, 145, 85, 255),
@@ -462,7 +470,9 @@ public class MainViewModelTests
             Assert.Equal("Purple", viewModel.Lighting.GlobalColor?.Name);
             Assert.All(viewModel.Lighting.Zones,
                 zone => Assert.Equal("Purple", zone.SelectedColor?.Name));
+            Assert.Equal([25, 80], viewModel.Lighting.Zones.Select(zone => zone.Brightness));
             Assert.Equal(0.42, Assert.Single(lightingService.BrightnessCalls), 3);
+            Assert.Equal([(0, 0.25), (1, 0.8)], lightingService.ZoneBrightnessCalls);
             Assert.Empty(lightingService.ColorCalls);
             Assert.Equal(
                 [(0, (byte)145, (byte)85, (byte)255), (1, (byte)145, (byte)85, (byte)255)],
@@ -506,6 +516,97 @@ public class MainViewModelTests
             Assert.Equal(
                 [(0, (byte)145, (byte)85, (byte)255), (1, (byte)145, (byte)85, (byte)255)],
                 lightingService.ZoneColorCalls);
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
+    public async Task InitializeAsync_RestoresAndPersistsIndependentLightingZoneState()
+    {
+        var lightingService = new FakeLightingControlService
+        {
+            Device = new LightingDeviceInfo(
+                "Tower", "id", 2, 0x17EF, 0xC955,
+                [
+                    new LightingZoneInfo(0, "Rear", LightingZoneKind.Accent, 1, [0]),
+                    new LightingZoneInfo(1, "Graphics Card", LightingZoneKind.GraphicsCard, 0, [])
+                ])
+        };
+        var settings = new InMemorySettingsService(new FanSettings
+        {
+            LightingZoneEnabled =
+            {
+                [0] = true,
+                [1] = false
+            }
+        });
+        var viewModel = new MainViewModel(
+            new FakeFanControlService(), settings, new FakeAutoStartService(), lightingService);
+
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            Assert.True(viewModel.Lighting.Zones[0].IsEnabled);
+            Assert.False(viewModel.Lighting.Zones[1].IsEnabled);
+            Assert.Equal([(0, true), (1, false)], lightingService.ZoneEnabledCalls);
+
+            var gpuZone = viewModel.Lighting.Zones[1];
+            gpuZone.IsEnabled = true;
+            viewModel.Lighting.ToggleZoneCommand.Execute(gpuZone);
+
+            Assert.True(settings.Settings.LightingZoneEnabled[0]);
+            Assert.True(settings.Settings.LightingZoneEnabled[1]);
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
+    public async Task InitializeAsync_RestoresAndPersistsCustomLightingZoneNames()
+    {
+        var lightingService = new FakeLightingControlService
+        {
+            Device = new LightingDeviceInfo(
+                "Tower", "id", 2, 0x17EF, 0xC955,
+                [
+                    new LightingZoneInfo(0, "Rear", LightingZoneKind.Accent, 1, [0]),
+                    new LightingZoneInfo(1, "Graphics Card", LightingZoneKind.GraphicsCard, 0, [])
+                ])
+        };
+        var settings = new InMemorySettingsService(new FanSettings
+        {
+            LightingZoneNames =
+            {
+                [1] = "GPU glow"
+            }
+        });
+        var viewModel = new MainViewModel(
+            new FakeFanControlService(), settings, new FakeAutoStartService(), lightingService);
+
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            Assert.Equal("Rear", viewModel.Lighting.Zones[0].Name);
+            Assert.Equal("GPU glow", viewModel.Lighting.Zones[1].Name);
+
+            var saveCount = settings.SaveCount;
+            viewModel.Lighting.Zones[0].Name = "Desk light";
+
+            Assert.True(settings.SaveCount > saveCount);
+            Assert.Equal("Desk light", settings.Settings.LightingZoneNames[0]);
+            Assert.Equal("GPU glow", settings.Settings.LightingZoneNames[1]);
+
+            viewModel.Lighting.Zones[1].Name = "";
+
+            Assert.Equal("Graphics Card", viewModel.Lighting.Zones[1].Name);
+            Assert.False(settings.Settings.LightingZoneNames.ContainsKey(1));
         }
         finally
         {
@@ -600,7 +701,7 @@ public class MainViewModelTests
         {
             viewModel.ToggleAutoStart();
 
-            Assert.Equal(1, autoStart.EnabledPaths.Count);
+            Assert.Single(autoStart.EnabledPaths);
             Assert.True(autoStart.Enabled);
             Assert.True(settings.Settings.StartWithWindows);
             Assert.True(settings.SaveCount > 0);

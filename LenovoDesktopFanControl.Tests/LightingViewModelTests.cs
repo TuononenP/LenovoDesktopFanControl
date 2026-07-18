@@ -28,6 +28,7 @@ public class LightingViewModelTests
         Assert.Contains("42 addressable lights", viewModel.DeviceSummary);
         Assert.Contains("17EF", viewModel.DeviceSummary);
         Assert.Contains("C955", viewModel.DeviceSummary);
+        Assert.Empty(viewModel.Status);
     }
 
     [Fact]
@@ -42,6 +43,47 @@ public class LightingViewModelTests
         Assert.Equal(2, viewModel.Zones.Count);
         Assert.Equal("Legion Banner", viewModel.Zones[0].Name);
         Assert.Equal("Accent Lights", viewModel.Zones[1].Name);
+    }
+
+    [Fact]
+    public async Task ZoneName_CanBeCustomizedAndClearedToRestoreDefault()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var settingsChangedCount = 0;
+        viewModel.SettingsChanged += (_, _) => settingsChangedCount++;
+
+        var zone = viewModel.Zones[0];
+        zone.Name = "  Desk glow  ";
+
+        Assert.Equal("Desk glow", zone.Name);
+        Assert.Equal("Legion Banner", zone.DefaultName);
+        Assert.Equal(1, settingsChangedCount);
+
+        zone.Name = "";
+
+        Assert.Equal("Legion Banner", zone.Name);
+        Assert.Equal(2, settingsChangedCount);
+    }
+
+    [Fact]
+    public async Task RestoreZoneNames_DoesNotRaiseSettingsChanged()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var settingsChangedCount = 0;
+        viewModel.SettingsChanged += (_, _) => settingsChangedCount++;
+
+        viewModel.RestoreZoneNames(new Dictionary<int, string>
+        {
+            [0] = "Desk glow",
+            [1] = "Wall wash"
+        });
+
+        Assert.Equal(["Desk glow", "Wall wash"], viewModel.Zones.Select(zone => zone.Name));
+        Assert.Equal(0, settingsChangedCount);
     }
 
     [Fact]
@@ -106,11 +148,84 @@ public class LightingViewModelTests
         await viewModel.ApplyAsync();
 
         Assert.Equal(0.8, Assert.Single(service.BrightnessCalls), 3);
+        Assert.Equal([(0, 1d), (1, 1d)], service.ZoneBrightnessCalls);
         Assert.Empty(service.ColorCalls);
         Assert.Equal(2, service.ZoneColorCalls.Count);
         Assert.Equal((0, 255, 55, 75), service.ZoneColorCalls[0]);
         Assert.Equal((1, 0, 211, 254), service.ZoneColorCalls[1]);
         Assert.True(Assert.Single(service.EnabledCalls));
+    }
+
+    [Fact]
+    public async Task ToggleZoneCommand_DisablesOnlySelectedZone()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var appliedCount = 0;
+        viewModel.Applied += (_, _) => appliedCount++;
+
+        var zone = viewModel.Zones[1];
+        zone.IsEnabled = false;
+        viewModel.ToggleZoneCommand.Execute(zone);
+
+        Assert.True(viewModel.Zones[0].IsEnabled);
+        Assert.False(zone.IsEnabled);
+        Assert.Equal((1, false), Assert.Single(service.ZoneEnabledCalls));
+        Assert.Empty(service.EnabledCalls);
+        Assert.Equal(1, appliedCount);
+        Assert.Equal("Accent Lights disabled", viewModel.Status);
+    }
+
+    [Fact]
+    public async Task ZoneBrightness_ImmediatelyUpdatesOnlySelectedZone()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        var appliedCount = 0;
+        viewModel.Applied += (_, _) => appliedCount++;
+
+        viewModel.Zones[1].Brightness = 35;
+
+        Assert.Equal(100, viewModel.Zones[0].Brightness);
+        Assert.Equal(35, viewModel.Zones[1].Brightness);
+        var call = Assert.Single(service.ZoneBrightnessCalls);
+        Assert.Equal(1, call.ZoneIndex);
+        Assert.Equal(0.35, call.Brightness, 3);
+        Assert.Equal(1, appliedCount);
+        Assert.Equal("Accent Lights brightness set to 35%", viewModel.Status);
+    }
+
+    [Fact]
+    public async Task ApplyAsync_RestoresEnabledStateForEveryZone()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        viewModel.Zones[1].IsEnabled = false;
+
+        await viewModel.ApplyAsync();
+
+        Assert.Equal([(0, true), (1, false)], service.ZoneEnabledCalls);
+        Assert.Equal(2, service.ZoneColorCalls.Count);
+        Assert.True(Assert.Single(service.EnabledCalls));
+    }
+
+    [Fact]
+    public async Task GlobalColorChange_PreservesIndividualZonePowerState()
+    {
+        var service = new FakeLightingControlService { Device = MultiZoneDevice() };
+        using var viewModel = new LightingViewModel(service);
+        await viewModel.InitializeAsync();
+        viewModel.Zones[1].IsEnabled = false;
+
+        viewModel.GlobalColor = viewModel.Colors.Single(color => color.Name == "Red");
+
+        Assert.All(viewModel.Zones, zone => Assert.Equal("Red", zone.SelectedColor?.Name));
+        Assert.False(viewModel.Zones[1].IsEnabled);
+        Assert.Empty(service.ColorCalls);
+        Assert.Equal(2, service.ZoneColorCalls.Count);
     }
 
     [Fact]
@@ -173,6 +288,7 @@ public class LightingViewModelTests
         await viewModel.ReapplyAsync();
 
         Assert.Equal(0.7, Assert.Single(service.BrightnessCalls), 3);
+        Assert.Equal([(0, 1d), (1, 1d)], service.ZoneBrightnessCalls);
         Assert.Empty(service.ColorCalls);
         Assert.Equal(2, service.ZoneColorCalls.Count);
         Assert.Equal((0, 145, 85, 255), service.ZoneColorCalls[0]);
@@ -236,7 +352,7 @@ public class LightingViewModelTests
         service.RaiseAvailabilityChanged();
         await Task.Yield();
 
-        Assert.Equal(1, service.EnabledCalls.Count);
+        Assert.Single(service.EnabledCalls);
         service.BrightnessGate.SetResult(null);
         await applyTask;
 

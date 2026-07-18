@@ -153,6 +153,7 @@ public class MainViewModel : INotifyPropertyChanged
         _settings = new FanSettings();
         Lighting = new LightingViewModel(lightingControlService);
         Lighting.Applied += OnLightingApplied;
+        Lighting.SettingsChanged += OnLightingSettingsChanged;
 
         _timer = new DispatcherTimer
         {
@@ -648,6 +649,7 @@ public class MainViewModel : INotifyPropertyChanged
             }
         }
 
+        await Lighting.PersistStateAsync();
         SaveLightingSettings();
         _settingsService.Save(_settings);
     }
@@ -665,8 +667,20 @@ public class MainViewModel : INotifyPropertyChanged
         _settingsService.Save(_settings);
     }
 
+    private void OnLightingSettingsChanged(object? sender, EventArgs e)
+    {
+        SaveLightingSettings();
+        _settingsService.Save(_settings);
+    }
+
     private void ApplySavedLightingZoneColors()
     {
+        Lighting.RestoreZoneNames(_settings.LightingZoneNames);
+        Lighting.RestoreZoneBrightness(_settings.LightingZoneBrightness);
+
+        foreach (var zone in Lighting.Zones)
+            zone.IsEnabled = !_settings.LightingZoneEnabled.TryGetValue(zone.Index, out var enabled) || enabled;
+
         if (_settings.LightingZoneColors.Count == 0)
             return;
 
@@ -711,8 +725,15 @@ public class MainViewModel : INotifyPropertyChanged
         _settings.LightingEnabled = Lighting.IsEnabled;
         _settings.LightingBrightness = Lighting.Brightness;
         _settings.LightingZoneColors.Clear();
+        _settings.LightingZoneBrightness.Clear();
+        _settings.LightingZoneEnabled.Clear();
+        _settings.LightingZoneNames.Clear();
         foreach (var zone in Lighting.Zones)
         {
+            _settings.LightingZoneBrightness[zone.Index] = zone.Brightness;
+            _settings.LightingZoneEnabled[zone.Index] = zone.IsEnabled;
+            if (!string.Equals(zone.Name, zone.DefaultName, StringComparison.Ordinal))
+                _settings.LightingZoneNames[zone.Index] = zone.Name;
             if (zone.SelectedColor == null) continue;
             _settings.LightingZoneColors[zone.Index] =
                 new LightingZoneColor(zone.Index, zone.SelectedColor.Red, zone.SelectedColor.Green, zone.SelectedColor.Blue);
