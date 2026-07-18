@@ -49,6 +49,7 @@ public class FanViewModel : INotifyPropertyChanged
         ? LocalizationService.Get("FirmwareRpmRange", MinRpm, MaxRpm)
         : LocalizationService.Get("FirmwareMaxRpm", MaxRpm);
     public ObservableCollection<FanChannelViewModel> Channels { get; } = [];
+    public TemperatureHistory TemperatureHistory { get; } = new();
     public bool HasMultipleChannels => Channels.Count > 1;
 
     public int? CurrentRpm
@@ -89,6 +90,7 @@ public class FanViewModel : INotifyPropertyChanged
     public ICommand EditCurveCommand { get; }
     public ICommand ApplyCurveCommand { get; }
     public ICommand EditNameCommand { get; }
+    public ICommand OpenTemperatureChartCommand { get; }
 
     public FanViewModel(IWmiFanControlService service, MainViewModel parent, FanInfo info)
         : this(service, parent, [info])
@@ -132,6 +134,7 @@ public class FanViewModel : INotifyPropertyChanged
         EditCurveCommand = new RelayCommand(() => _parent.OpenCurveEditor(this));
         ApplyCurveCommand = new RelayCommand(async () => await ApplyCurveAsync());
         EditNameCommand = new RelayCommand(() => IsEditingName = true);
+        OpenTemperatureChartCommand = new RelayCommand(() => _parent.OpenTemperatureChart(this));
     }
 
     public void RefreshSummary()
@@ -160,6 +163,14 @@ public class FanViewModel : INotifyPropertyChanged
     }
 
     internal void RestoreFanName(string name) => SetFanName(name, notifyChange: false);
+
+    internal void RestoreTemperatureHistory(TemperatureHistory history)
+    {
+        TemperatureHistory.Samples = [.. history.Samples];
+        TemperatureHistory.Compact(DateTime.UtcNow);
+    }
+
+    public void RecordTemperature(int temperature) => TemperatureHistory.Add(DateTime.UtcNow, temperature);
 
     private void SetFanName(string? value, bool notifyChange)
     {

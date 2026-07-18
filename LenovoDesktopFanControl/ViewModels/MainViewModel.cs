@@ -11,8 +11,13 @@ namespace LenovoDesktopFanControl.ViewModels;
 
 public class MainViewModel : INotifyPropertyChanged
 {
+    // The RTX lighting controller can acknowledge I²C writes while it is still
+    // starting up. Apply the saved state once more after that short window so
+    // the persisted GPU color wins over the card's power-on profile.
+    private static readonly TimeSpan GpuLightingStartupSettleDelay = TimeSpan.FromMilliseconds(900);
     private int _shutdownStarted;
     private int _refreshInProgress;
+    private DateTime _lastTemperatureHistorySaveUtc;
     private readonly IWmiFanControlService _service;
     private readonly ISettingsService _settingsService;
     private readonly IAutoStartService _autoStartService;
@@ -262,6 +267,9 @@ public class MainViewModel : INotifyPropertyChanged
             ApplySavedLightingZoneColors();
             Log.Info("Applying saved lighting state after startup initialization");
             await Lighting.ReapplyAsync();
+            await Task.Delay(GpuLightingStartupSettleDelay);
+            Log.Info("Re-applying saved GPU lighting state after controller startup settle");
+            await Lighting.ReapplyGpuStateAsync();
 
             IsSupported = await _service.IsSupportedAsync();
             if (!IsSupported)
@@ -286,6 +294,8 @@ public class MainViewModel : INotifyPropertyChanged
                 if (_settings.FanNames.TryGetValue(vm.FanId, out var savedName) &&
                     !string.IsNullOrWhiteSpace(savedName))
                     vm.RestoreFanName(savedName);
+                if (_settings.TemperatureHistory.TryGetValue(vm.FanId, out var savedHistory))
+                    vm.RestoreTemperatureHistory(savedHistory);
                 vm.FanNameChanged += OnFanNameChanged;
                 var zoneCurve = _settings.GetOrDefaultCurve(zone.Key);
                 vm.TargetSpeedPercentage = zoneCurve[^1] * 10;
@@ -382,6 +392,15 @@ public class MainViewModel : INotifyPropertyChanged
                     }
                 }
                 fan.RefreshSummary();
+                if (fan.Temperature is int currentTemperature)
+                    fan.RecordTemperature(currentTemperature);
+            }
+
+            if (DateTime.UtcNow - _lastTemperatureHistorySaveUtc >= TimeSpan.FromMinutes(5))
+            {
+                SaveTemperatureHistory();
+                _settingsService.Save(_settings);
+                _lastTemperatureHistorySaveUtc = DateTime.UtcNow;
             }
         }
         catch (Exception ex)
@@ -430,6 +449,15 @@ public class MainViewModel : INotifyPropertyChanged
         {
             IsBusy = false;
         }
+    }
+
+    public void OpenTemperatureChart(FanViewModel fan)
+    {
+        var chart = new TemperatureChartWindow(fan)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        chart.ShowDialog();
     }
 
     public async Task ApplyModeAsync()
@@ -633,6 +661,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         _timer.Stop();
         SaveLightingSettings();
+        SaveTemperatureHistory();
         _settingsService.Save(_settings);
         Lighting.Dispose();
     }
@@ -660,6 +689,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         await Lighting.PersistStateAsync();
         SaveLightingSettings();
+        SaveTemperatureHistory();
         _settingsService.Save(_settings);
     }
 
@@ -761,6 +791,17 @@ public class MainViewModel : INotifyPropertyChanged
             if (zone.SelectedColor == null) continue;
             _settings.LightingZoneColors[zone.Index] =
                 new LightingZoneColor(zone.Index, zone.SelectedColor.Red, zone.SelectedColor.Green, zone.SelectedColor.Blue);
+        }
+    }
+
+    private void SaveTemperatureHistory()
+    {
+        _settings.TemperatureHistory.Clear();
+        foreach (var fan in Fans)
+        {
+            fan.TemperatureHistory.Compact(DateTime.UtcNow);
+            if (fan.TemperatureHistory.Samples.Count > 0)
+                _settings.TemperatureHistory[fan.FanId] = fan.TemperatureHistory;
         }
     }
 }

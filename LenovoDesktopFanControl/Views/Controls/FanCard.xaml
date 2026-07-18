@@ -161,14 +161,34 @@
                     </ItemsControl>
                 </StackPanel>
 
-                <Border Grid.Column="1"
+                <Button Grid.Column="1"
                         MinWidth="86"
                         Padding="12,9"
                         VerticalAlignment="Top"
+                        Command="{Binding OpenTemperatureChartCommand}"
+                        ToolTip="Click to view temperature history"
+                        Cursor="Hand"
                         Background="{StaticResource SurfaceElevatedBrush}"
                         BorderBrush="{StaticResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="9">
+                        BorderThickness="1">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="TemperatureCard"
+                                    Padding="{TemplateBinding Padding}"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="9">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="TemperatureCard" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                    <Setter TargetName="TemperatureCard" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Temperature}"
                                    HorizontalAlignment="Center"
@@ -181,7 +201,7 @@
                                    FontWeight="SemiBold"
                                    Foreground="{Binding Temperature, Converter={StaticResource TemperatureBrushConverter}}" />
                     </StackPanel>
-                </Border>
+                </Button>
             </Grid>
 
             <!-- Current output -->
