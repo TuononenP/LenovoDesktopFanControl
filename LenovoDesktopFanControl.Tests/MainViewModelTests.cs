@@ -450,6 +450,7 @@ public class MainViewModelTests
 
             Assert.Equal(1, autoStart.DisableCount);
             Assert.False(settings.Settings.StartWithWindows);
+            Assert.Null(settings.Settings.KeepLightingActiveInBackground);
             Assert.True(settings.SaveCount > 0);
         }
         finally
@@ -772,7 +773,7 @@ public class MainViewModelTests
     [Fact]
     public async Task MinimizeToTray_PersistsToSettingsWithoutDuplicates()
     {
-        var settings = new InMemorySettingsService();
+        var settings = new InMemorySettingsService(new FanSettings { Language = "en" });
         var viewModel = new MainViewModel(
             new FakeFanControlService(), settings, new FakeAutoStartService());
         try
@@ -813,6 +814,7 @@ public class MainViewModelTests
             Assert.Single(autoStart.EnabledPaths);
             Assert.True(autoStart.Enabled);
             Assert.True(settings.Settings.StartWithWindows);
+            Assert.Null(settings.Settings.KeepLightingActiveInBackground);
             Assert.True(settings.SaveCount > 0);
         }
         finally

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>联想台式机风扇控制</value></data>
+  <data name="AppSubtitle" xml:space="preserve"><value>精准散热控制和实时系统监控</value></data>
+  <data name="CurveEditorTitle" xml:space="preserve"><value>风扇曲线编辑器</value></data>
+  <data name="Loading" xml:space="preserve"><value>正在加载...</value></data>
+  <data name="SmartFanMode" xml:space="preserve"><value>智能风扇模式</value></data>
+  <data name="ModeQuiet" xml:space="preserve"><value>安静</value></data>
+  <data name="ModeBalanced" xml:space="preserve"><value>均衡</value></data>
+  <data name="ModePerformance" xml:space="preserve"><value>性能</value></data>
+  <data name="ModeCustom" xml:space="preserve"><value>自定义</value></data>
+  <data name="FullSpeed" xml:space="preserve"><value>全速</value></data>
+  <data name="TowerLighting" xml:space="preserve"><value>机箱灯光</value></data>
+  <data name="LightingEnabled" xml:space="preserve"><value>灯光</value></data>
+  <data name="ZoneEnabled" xml:space="preserve"><value>开启</value></data>
+  <data name="LightName" xml:space="preserve"><value>灯光名称</value></data>
+  <data name="Rename" xml:space="preserve"><value>重命名</value></data>
+  <data name="Brightness" xml:space="preserve"><value>亮度</value></data>
+  <data name="ApplyLighting" xml:space="preserve"><value>应用灯光</value></data>
+  <data name="GlobalColor" xml:space="preserve"><value>所有灯光</value></data>
+  <data name="ColorCustom" xml:space="preserve"><value>自定义</value></data>
+  <data name="ColorCustomValue" xml:space="preserve"><value>自定义 ({0})</value></data>
+  <data name="PickCustomColor" xml:space="preserve"><value>选择自定义颜色</value></data>
+  <data name="TooltipPickCustomColor" xml:space="preserve"><value>选择任意 RGB 颜色</value></data>
+  <data name="ColorPickerTitle" xml:space="preserve"><value>自定义颜色</value></data>
+  <data name="ColorPickerPreview" xml:space="preserve"><value>预览</value></data>
+  <data name="ColorPickerHex" xml:space="preserve"><value>十六进制颜色</value></data>
+  <data name="MaxRpm" xml:space="preserve"><value>最高 RPM</value></data>
+  <data name="ZoneBranding" xml:space="preserve"><value>Legion 横幅</value></data>
+  <data name="ZoneAccent" xml:space="preserve"><value>装饰灯</value></data>
+  <data name="ZoneIllumination" xml:space="preserve"><value>照明</value></data>
+  <data name="ZoneStatus" xml:space="preserve"><value>状态灯</value></data>
+  <data name="ZonePresentation" xml:space="preserve"><value>展示</value></data>
+  <data name="ZoneControl" xml:space="preserve"><value>控制灯</value></data>
+  <data name="ZoneMixed" xml:space="preserve"><value>混合灯光</value></data>
+  <data name="ZoneUndefined" xml:space="preserve"><value>常规灯光</value></data>
+  <data name="ZoneFrontPanel" xml:space="preserve"><value>前面板</value></data>
+  <data name="ZoneRearPanel" xml:space="preserve"><value>后面板</value></data>
+  <data name="ZoneSidePanel" xml:space="preserve"><value>侧面板</value></data>
+  <data name="ZoneGraphicsCard" xml:space="preserve"><value>GPU</value></data>
+  <data name="ZoneFanLight" xml:space="preserve"><value>风扇灯光</value></data>
+  <data name="ZonePowerButton" xml:space="preserve"><value>电源按钮</value></data>
+  <data name="ZoneLogoLight" xml:space="preserve"><value>徽标灯</value></data>
+  <data name="ZoneLightingSync" xml:space="preserve"><value>灯光同步</value></data>
+  <data name="ZoneGeneric" xml:space="preserve"><value>区域</value></data>
+  <data name="ZoneLightGroup" xml:space="preserve"><value>灯光组</value></data>
+  <data name="ZoneCaseFrontFans" xml:space="preserve"><value>机箱前置风扇</value></data>
+  <data name="ZoneCaseTopFans" xml:space="preserve"><value>机箱顶部风扇</value></data>
+  <data name="ZoneCpuWatercooler" xml:space="preserve"><value>CPU 水冷器</value></data>
+  <data name="ZoneLegionLogo" xml:space="preserve"><value>Legion 徽标</value></data>
+  <data name="ZoneBackFan" xml:space="preserve"><value>后置风扇</value></data>
+  <data name="Options" xml:space="preserve"><value>选项</value></data>
+  <data name="ApplicationSettings" xml:space="preserve"><value>应用程序设置</value></data>
+  <data name="StartWithWindows" xml:space="preserve"><value>随 Windows 启动</value></data>
+  <data name="MinimizeToTray" xml:space="preserve"><value>最小化到通知区域</value></data>
+  <data name="Language" xml:space="preserve"><value>语言</value></data>
+  <data name="ApplyMode" xml:space="preserve"><value>应用模式</value></data>
+  <data name="ResetToDefault" xml:space="preserve"><value>恢复默认</value></data>
+  <data name="ApplySpeed" xml:space="preserve"><value>应用速度</value></data>
+  <data name="EditCurve" xml:space="preserve"><value>编辑曲线</value></data>
+  <data name="Apply" xml:space="preserve"><value>应用</value></data>
+  <data name="Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="ResetDefault" xml:space="preserve"><value>恢复默认</value></data>
+  <data name="Applying" xml:space="preserve"><value>正在应用...</value></data>
+  <data name="FanStatusLive" xml:space="preserve"><value>实时监控</value></data>
+  <data name="CurrentSpeed" xml:space="preserve"><value>当前速度</value></data>
+  <data name="FirmwareRpmRange" xml:space="preserve"><value>固件范围：{0:N0}–{1:N0} RPM</value></data>
+  <data name="FirmwareMaxRpm" xml:space="preserve"><value>固件最大值：{0:N0} RPM</value></data>
+  <data name="Temperature" xml:space="preserve"><value>温度</value></data>
+  <data name="SpeedSuffix" xml:space="preserve"><value>% 速度</value></data>
+  <data name="TempLabel" xml:space="preserve"><value>温度：</value></data>
+  <data name="TargetSpeed" xml:space="preserve"><value>目标速度：</value></data>
+  <data name="FanName" xml:space="preserve"><value>风扇名称</value></data>
+  <data name="FanNameCpu" xml:space="preserve"><value>CPU 风扇</value></data>
+  <data name="FanNamePump" xml:space="preserve"><value>水冷泵</value></data>
+  <data name="FanNameGpu" xml:space="preserve"><value>GPU 风扇</value></data>
+  <data name="FanNameChassis" xml:space="preserve"><value>机箱风扇</value></data>
+  <data name="FanNameFrontRadiator" xml:space="preserve"><value>前置冷排风扇</value></data>
+  <data name="FanNameTopFans" xml:space="preserve"><value>顶部风扇</value></data>
+  <data name="FanNameRearFan" xml:space="preserve"><value>后置风扇</value></data>
+  <data name="FanNameN" xml:space="preserve"><value>风扇 {0}</value></data>
+  <data name="CurveEditorHeader" xml:space="preserve"><value>{0} 风扇曲线</value></data>
+  <data name="CurveEditorSubtitle" xml:space="preserve"><value>根据温度范围调整风扇响应</value></data>
+  <data name="FanSpeed" xml:space="preserve"><value>风扇速度</value></data>
+  <data name="ValidationError" xml:space="preserve"><value>数值必须不递减！</value></data>
+  <data name="StatusLabel" xml:space="preserve"><value>状态：</value></data>
+  <data name="MsgInitializing" xml:space="preserve"><value>正在初始化...</value></data>
+  <data name="MsgNotSupported" xml:space="preserve"><value>此设备不支持通过 WMI 控制风扇。请确保已安装 Lenovo Vantage Gaming Feature Driver。</value></data>
+  <data name="MsgConnected" xml:space="preserve"><value>已连接 - 检测到 {0} 个风扇</value></data>
+  <data name="MsgNoFans" xml:space="preserve"><value>未检测到风扇。该设备可能未通过 WMI 公开风扇信息。</value></data>
+  <data name="MsgNoFansShort" xml:space="preserve"><value>未检测到风扇。</value></data>
+  <data name="MsgFanControlNotAvailable" xml:space="preserve"><value>风扇控制不可用</value></data>
+  <data name="MsgNotSupportedLong" xml:space="preserve"><value>此设备不支持通过 WMI 控制风扇。请确保已安装 Lenovo Vantage Gaming Feature Driver，并以管理员身份运行。</value></data>
+  <data name="MsgModeSet" xml:space="preserve"><value>模式已设置为 {0}</value></data>
+  <data name="MsgErrorSettingMode" xml:space="preserve"><value>设置模式时出错：{0}</value></data>
+  <data name="MsgFullSpeedEnabled" xml:space="preserve"><value>全速模式已启用</value></data>
+  <data name="MsgFullSpeedDisabled" xml:space="preserve"><value>全速模式已禁用</value></data>
+  <data name="MsgError" xml:space="preserve"><value>错误：{0}</value></data>
+  <data name="MsgResetToDefaults" xml:space="preserve"><value>已恢复默认设置（均衡模式）</value></data>
+  <data name="MsgErrorResetting" xml:space="preserve"><value>重置时出错：{0}</value></data>
+  <data name="MsgReappliedCurve" xml:space="preserve"><value>已重新应用保存的全局风扇曲线（检测到 {0} 个风扇区域）</value></data>
+  <data name="MsgAppliedSpeed" xml:space="preserve"><value>已应用目标为 {0}% 的全局风扇曲线</value></data>
+  <data name="MsgAppliedCurve" xml:space="preserve"><value>已应用全局自定义风扇曲线</value></data>
+  <data name="MsgStartWithWindowsEnabled" xml:space="preserve"><value>已启用随 Windows 启动</value></data>
+  <data name="MsgStartWithWindowsDisabled" xml:space="preserve"><value>已禁用随 Windows 启动</value></data>
+  <data name="MsgErrorTogglingAutostart" xml:space="preserve"><value>切换自动启动时出错：{0}</value></data>
+  <data name="MsgInitializationError" xml:space="preserve"><value>初始化错误：{0}</value></data>
+  <data name="MsgConflictWarning" xml:space="preserve"><value>警告：{0} 正在运行，可能与风扇控制冲突。为获得最佳效果，请考虑将其关闭。</value></data>
+  <data name="ShutdownConflicts" xml:space="preserve"><value>关闭冲突项</value></data>
+  <data name="ConfirmShutdownConflictsTitle" xml:space="preserve"><value>关闭 Lenovo 软件？</value></data>
+  <data name="ConfirmShutdownConflicts" xml:space="preserve"><value>这将停止检测到的 Lenovo Vantage 进程和 VantageService。Lenovo Vantage 中未保存的工作可能会丢失。是否继续？</value></data>
+  <data name="MsgConflictShutdownSuccess" xml:space="preserve"><value>已停止 {0} 个冲突的 Lenovo 组件</value></data>
+  <data name="MsgConflictShutdownPartial" xml:space="preserve"><value>无法停止所有冲突组件：{0}</value></data>
+  <data name="MsgConflictShutdownError" xml:space="preserve"><value>停止冲突组件时出错：{0}</value></data>
+  <data name="TooltipModeQuiet" xml:space="preserve"><value>使用保守的风扇速度，优先降低噪音。</value></data>
+  <data name="TooltipModeBalanced" xml:space="preserve"><value>平衡散热性能与风扇噪音。</value></data>
+  <data name="TooltipModePerformance" xml:space="preserve"><value>使用更积极的散热以维持性能。</value></data>
+  <data name="TooltipModeCustom" xml:space="preserve"><value>使用手动目标速度和自定义风扇曲线。</value></data>
+  <data name="TooltipFullSpeed" xml:space="preserve"><value>以最高速度运行受支持的风扇。这会增加噪音，仅应在需要最大散热时使用。可用性取决于 Lenovo 固件和驱动程序。</value></data>
+  <data name="TooltipManualSpeed" xml:space="preserve"><value>对每个固件风扇区域应用一条全局曲线。会强制执行 Lenovo 的安全最小值。</value></data>
+  <data name="TooltipEditCurve" xml:space="preserve"><value>编辑每个固件风扇区域使用的单一全局曲线。曲线不得下降。</value></data>
+  <data name="TooltipEditLightName" xml:space="preserve"><value>编辑此灯光的显示名称。清空以恢复默认名称。</value></data>
+  <data name="TooltipEditFanName" xml:space="preserve"><value>编辑此风扇组的显示名称。清空以恢复检测到的默认名称。</value></data>
+  <data name="TooltipShutdownConflicts" xml:space="preserve"><value>确认后停止检测到的 Lenovo Vantage 和 Gaming AI 进程及服务。</value></data>
+  <data name="AutomationFanControl" xml:space="preserve"><value>风扇控制</value></data>
+  <data name="AutomationTargetSpeedHelp" xml:space="preserve"><value>使用方向键调整目标风扇速度。</value></data>
+  <data name="AutomationCurvePoint" xml:space="preserve"><value>{0} °C 时的风扇速度</value></data>
+  <data name="AutomationCurvePointHelp" xml:space="preserve"><value>使用方向键调整此曲线点。</value></data>
+  <data name="SystemTemperatures" xml:space="preserve"><value>系统温度</value></data>
+  <data name="SystemTemperaturesSubtitle" xml:space="preserve"><value>显示已验证的遥测源；不可用的固件传感器会被明确标示。</value></data>
+  <data name="SystemTemperatureGpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="SystemTemperatureCpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="SystemTemperatureSsd" xml:space="preserve"><value>SSD</value></data>
+  <data name="SystemTemperatureMotherboard" xml:space="preserve"><value>主板</value></data>
+  <data name="TooltipOpenTemperatureHistory" xml:space="preserve"><value>单击查看温度历史</value></data>
+  <data name="TemperatureHistoryTitle" xml:space="preserve"><value>{0} · 温度历史</value></data>
+  <data name="TemperatureHistorySubtitle" xml:space="preserve"><value>温度历史 · 最近一小时显示详细数据，最长 12 小时显示汇总数据</value></data>
+  <data name="TemperatureHistoryCurrent" xml:space="preserve"><value>当前</value></data>
+  <data name="TemperatureHistoryLow" xml:space="preserve"><value>最低</value></data>
+  <data name="TemperatureHistoryHigh" xml:space="preserve"><value>最高</value></data>
+  <data name="TemperatureHistoryEmpty" xml:space="preserve"><value>下一次读取后将显示温度历史。</value></data>
+  <data name="DetailNvidiaTelemetryUnavailable" xml:space="preserve"><value>NVIDIA 遥测不可用</value></data>
+  <data name="DetailNvidiaGpuTemperature" xml:space="preserve"><value>NVIDIA GPU 温度</value></data>
+  <data name="DetailDriveSmartTemperatureUnavailable" xml:space="preserve"><value>驱动器 SMART 温度不可用</value></data>
+  <data name="DetailNoSensorExposed" xml:space="preserve"><value>此系统未公开 {0} 传感器</value></data>
+  <data name="DetailInstallPawnIo" xml:space="preserve"><value>安装 PawnIO 以读取 {0} 温度</value></data>
+  <data name="DetailFirmwareSharedSystemSensor" xml:space="preserve"><value>Lenovo 固件共享系统传感器（ID {0}）</value></data>
+  <data name="MsgApplicationAlreadyRunning" xml:space="preserve"><value>Lenovo 台式机风扇控制已在运行。</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>显示</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>退出</value></data>
+</root>

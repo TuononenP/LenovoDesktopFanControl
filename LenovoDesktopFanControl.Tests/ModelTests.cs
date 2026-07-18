@@ -215,9 +215,9 @@ public class FanSettingsTests
         Assert.Null(settings.GlobalFanCurve);
         Assert.Empty(settings.FanCurves);
         Assert.Equal(2000, settings.PollingIntervalMs);
-        Assert.False(settings.StartWithWindows);
+        Assert.True(settings.StartWithWindows);
         Assert.True(settings.MinimizeToTray);
-        Assert.Equal("en", settings.Language);
+        Assert.Equal(string.Empty, settings.Language);
     }
 
     [Fact]

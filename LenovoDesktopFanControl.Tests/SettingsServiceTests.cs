@@ -41,6 +41,26 @@ public class SettingsServiceTests : IDisposable
         Assert.Null(settings.GlobalFanCurve);
         Assert.Empty(settings.FanCurves);
         Assert.Equal(2000, settings.PollingIntervalMs);
+        Assert.True(settings.StartWithWindows);
+    }
+
+    [Fact]
+    public void Load_MigratesLegacyBackgroundHostSettingToStartWithWindows()
+    {
+        Directory.CreateDirectory(_testDirectory);
+        var settingsFile = Path.Combine(_testDirectory, "settings.json");
+        File.WriteAllText(settingsFile, """
+            {
+              "StartWithWindows": false,
+              "KeepLightingActiveInBackground": true
+            }
+            """);
+
+        var settings = _service.Load();
+
+        Assert.True(settings.StartWithWindows);
+        Assert.Null(settings.KeepLightingActiveInBackground);
+        Assert.DoesNotContain("KeepLightingActiveInBackground", File.ReadAllText(settingsFile));
     }
 
     [Fact]

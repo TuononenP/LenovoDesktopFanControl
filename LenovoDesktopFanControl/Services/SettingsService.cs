@@ -42,7 +42,11 @@ public class SettingsService : ISettingsService
                 return new FanSettings();
 
             var json = File.ReadAllText(_settingsFile);
-            return JsonSerializer.Deserialize<FanSettings>(json, JsonOptions) ?? new FanSettings();
+            var settings = JsonSerializer.Deserialize<FanSettings>(json, JsonOptions) ?? new FanSettings();
+            if (settings.MigrateLegacyBackgroundLightingSetting())
+                Save(settings);
+
+            return settings;
         }
         catch
         {

@@ -42,10 +42,10 @@ if ($null -eq $signTool) {
 
 $outputDirectory = Split-Path -Parent $TargetPath
 $assemblyName = [IO.Path]::GetFileNameWithoutExtension($TargetPath)
-$files = @(
+$files = @(@(
     $TargetPath
     (Join-Path $outputDirectory "$assemblyName.exe")
-) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
 
 if ($files.Count -eq 0) {
     return

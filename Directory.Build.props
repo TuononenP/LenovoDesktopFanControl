@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <ApplicationVersion>1.4.0</ApplicationVersion>
+    <MsiProductVersion>1.4.0</MsiProductVersion>
+  </PropertyGroup>
+</Project>

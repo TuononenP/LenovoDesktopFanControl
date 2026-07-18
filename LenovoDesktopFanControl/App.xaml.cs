@@ -7,29 +7,64 @@ using SystemColors = System.Windows.SystemColors;
 public partial class App : System.Windows.Application
 {
     internal static bool StartMinimized { get; private set; }
+#if DEBUG
+    private const string ApplicationMutexName = @"Local\LenovoDesktopFanControl.Debug";
+    private const string StopApplicationEventName =
+        @"Local\LenovoDesktopFanControl.StopApplication.Debug";
+#else
+    private const string ApplicationMutexName = @"Local\LenovoDesktopFanControl";
+    private const string StopApplicationEventName =
+        @"Local\LenovoDesktopFanControl.StopApplication";
+#endif
 
     private Mutex? _singleInstanceMutex;
+    private EventWaitHandle? _stopApplicationEvent;
     private readonly Dictionary<string, System.Windows.Media.Color> _standardPalette = [];
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (e.Args.Length == 1 &&
+            string.Equals(e.Args[0], "--uninstall-lighting-host", StringComparison.OrdinalIgnoreCase))
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            base.OnStartup(e);
+            var hostStopped = Services.LightingBackgroundHost.StopExisting();
+            new Services.AutoStartService().Disable();
+            if (!hostStopped)
+                Environment.ExitCode = 1;
+            Shutdown();
+            return;
+        }
+
+        if (Services.LightingBackgroundHost.TryCreate(e.Args, out var lightingBackgroundHost))
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            base.OnStartup(e);
+            _ = RunLightingBackgroundHostAsync(lightingBackgroundHost!);
+            return;
+        }
+
         if (Services.LenovoTowerLightingPersistence.TryParseDeferredPersistenceRequest(
                 e.Args,
                 out var persistenceRequest))
         {
-            StartupUri = null;
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             base.OnStartup(e);
             _ = RunDeferredLightingPersistenceAsync(persistenceRequest);
             return;
         }
 
+        // The host retains LampArray ownership for its entire lifetime. The
+        // interactive window communicates with it over a local named pipe.
+        Services.LightingBackgroundHost.EnsureRunning();
+        EnsureLightingBackgroundStartsWithWindows();
+
         StartMinimized = e.Args.Any(
             argument => string.Equals(argument, "--minimized", StringComparison.OrdinalIgnoreCase));
 
         _singleInstanceMutex = new Mutex(
             initiallyOwned: true,
-            name: @"Local\LenovoDesktopFanControl",
+            name: ApplicationMutexName,
             createdNew: out var createdNew);
         if (!createdNew)
         {
@@ -43,6 +78,10 @@ public partial class App : System.Windows.Application
             Shutdown();
             return;
         }
+        _stopApplicationEvent = new EventWaitHandle(
+            false,
+            EventResetMode.AutoReset,
+            StopApplicationEventName);
 
         base.OnStartup(e);
 
@@ -51,6 +90,63 @@ public partial class App : System.Windows.Application
 
         ApplySystemContrastPalette();
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
+
+        var mainWindow = new MainWindow();
+        MainWindow = mainWindow;
+        mainWindow.Show();
+        _ = WaitForApplicationStopRequestAsync(mainWindow);
+    }
+
+    private async Task WaitForApplicationStopRequestAsync(MainWindow mainWindow)
+    {
+        try
+        {
+            var stopEvent = _stopApplicationEvent;
+            if (stopEvent == null)
+                return;
+
+            await Task.Run(() => stopEvent.WaitOne());
+            await Dispatcher.InvokeAsync(mainWindow.RequestExitForUninstall);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Normal application shutdown disposed the wait handle.
+        }
+    }
+
+    private async Task RunLightingBackgroundHostAsync(
+        Services.LightingBackgroundHost lightingBackgroundHost)
+    {
+        using (lightingBackgroundHost)
+        {
+            await lightingBackgroundHost.RunAsync();
+        }
+
+        Shutdown();
+    }
+
+    private static void EnsureLightingBackgroundStartsWithWindows()
+    {
+        try
+        {
+            var settings = new Services.SettingsService().Load();
+            if (!settings.StartWithWindows)
+                return;
+
+            var executablePath = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(executablePath))
+            {
+                Services.Log.Warn("Unable to enable lighting background startup: executable path is unavailable");
+                return;
+            }
+
+            new Services.AutoStartService().Enable(executablePath);
+            Services.Log.Info("Configured the lighting background host to start at Windows sign-in");
+        }
+        catch (Exception ex)
+        {
+            Services.Log.Warn($"Unable to configure lighting background startup: {ex.Message}");
+        }
     }
 
     private async Task RunDeferredLightingPersistenceAsync(
@@ -106,6 +202,8 @@ public partial class App : System.Windows.Application
         _singleInstanceMutex?.ReleaseMutex();
         _singleInstanceMutex?.Dispose();
         _singleInstanceMutex = null;
+        _stopApplicationEvent?.Dispose();
+        _stopApplicationEvent = null;
         base.OnExit(e);
     }
 

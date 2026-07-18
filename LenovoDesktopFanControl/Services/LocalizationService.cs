@@ -29,6 +29,21 @@ public sealed class Loc : INotifyPropertyChanged
 
 public static class LocalizationService
 {
+    // Keep this explicit rather than probing ResourceManager. ResourceManager can
+    // resolve Simplified Chinese through its parent culture, which made zh-CN
+    // invisible to the former resource-set discovery loop.
+    private static readonly string[] SupportedCultureCodes =
+    [
+        "en",
+        "fi-FI",
+        "zh-CN",
+        "fr-FR",
+        "de-DE",
+        "es-ES",
+        "ja-JP",
+        "ko-KR"
+    ];
+
     private static CultureInfo _culture = CultureInfo.InvariantCulture;
 
     public static CultureInfo CurrentCulture
@@ -49,6 +64,35 @@ public static class LocalizationService
             ? CultureInfo.InvariantCulture
             : new CultureInfo(cultureCode);
         CurrentCulture = ci;
+    }
+
+    /// <summary>
+    /// Resolves an application language from a saved choice or the Windows UI
+    /// language. A saved, supported choice always wins. Unsupported Windows
+    /// languages fall back to English.
+    /// </summary>
+    internal static string ResolveLanguage(string? savedLanguage, CultureInfo? operatingSystemCulture = null)
+    {
+        var saved = FindSupportedCulture(savedLanguage);
+        if (saved is not null)
+            return saved;
+
+        // CurrentUICulture reflects the signed-in user's Windows display
+        // language. InstalledUICulture instead reports the original OS install
+        // language and can differ after a user changes their display language.
+        var systemCulture = operatingSystemCulture ?? CultureInfo.CurrentUICulture;
+        var exact = FindSupportedCulture(systemCulture.Name);
+        if (exact is not null)
+            return exact;
+
+        var languageMatch = SupportedCultureCodes.FirstOrDefault(cultureCode =>
+            !string.Equals(cultureCode, "en", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(
+                CultureInfo.GetCultureInfo(cultureCode).TwoLetterISOLanguageName,
+                systemCulture.TwoLetterISOLanguageName,
+                StringComparison.OrdinalIgnoreCase));
+
+        return languageMatch ?? "en";
     }
 
     public static string Get(string key)
@@ -76,26 +120,15 @@ public static class LocalizationService
 
     public static List<string> GetAvailableCultures()
     {
-        var result = new List<string> { "en" };
-        try
-        {
-            var asm = typeof(LocalizationService).Assembly;
-            var rm = new System.Resources.ResourceManager(
-                "LenovoDesktopFanControl.Resources.Strings", asm);
-            var cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
-            foreach (var ci in cultures)
-            {
-                if (ci.Equals(CultureInfo.InvariantCulture)) continue;
-                try
-                {
-                    var rs = rm.GetResourceSet(ci, true, false);
-                    if (rs != null)
-                        result.Add(ci.Name);
-                }
-                catch { }
-            }
-        }
-        catch { }
-        return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return SupportedCultureCodes.ToList();
+    }
+
+    private static string? FindSupportedCulture(string? cultureCode)
+    {
+        if (string.IsNullOrWhiteSpace(cultureCode))
+            return null;
+
+        return SupportedCultureCodes.FirstOrDefault(candidate =>
+            string.Equals(candidate, cultureCode, StringComparison.OrdinalIgnoreCase));
     }
 }

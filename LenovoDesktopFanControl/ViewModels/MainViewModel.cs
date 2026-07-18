@@ -192,6 +192,12 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 "en" => "English",
                 "fi-FI" => "Suomi",
+                "zh-CN" => "简体中文",
+                "fr-FR" => "Français",
+                "de-DE" => "Deutsch",
+                "es-ES" => "Español",
+                "ja-JP" => "日本語",
+                "ko-KR" => "한국어",
                 _ => lang
             };
             AvailableLanguages.Add(new LanguageInfo { Code = lang, DisplayName = displayName });
@@ -265,8 +271,14 @@ public class MainViewModel : INotifyPropertyChanged
             _timer.Interval = TimeSpan.FromMilliseconds(
                 Math.Clamp(_settings.PollingIntervalMs, 500, 10_000));
 
-            var lang = string.IsNullOrEmpty(_settings.Language) ? "en" : _settings.Language;
-            SelectedLanguage = lang;
+            var lang = LocalizationService.ResolveLanguage(_settings.Language);
+            if (!string.Equals(_settings.Language, lang, StringComparison.OrdinalIgnoreCase))
+            {
+                _settings.Language = lang;
+                _settingsService.Save(_settings);
+            }
+            _selectedLanguage = lang;
+            OnPropertyChanged(nameof(SelectedLanguage));
             LocalizationService.SetLanguage(lang);
             Loc.SetCulture(LocalizationService.CurrentCulture);
 
@@ -762,7 +774,7 @@ public class MainViewModel : INotifyPropertyChanged
         Lighting.Dispose();
     }
 
-    public async Task ShutdownAsync()
+    public async Task ShutdownAsync(bool persistFirmwareLighting = true)
     {
         if (Interlocked.Exchange(ref _shutdownStarted, 1) != 0)
             return;
@@ -783,7 +795,8 @@ public class MainViewModel : INotifyPropertyChanged
             }
         }
 
-        await Lighting.PersistStateAsync();
+        if (persistFirmwareLighting)
+            await Lighting.PersistStateAsync();
         SaveLightingSettings();
         SaveTemperatureHistory();
         _settingsService.Save(_settings);

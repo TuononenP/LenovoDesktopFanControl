@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace LenovoDesktopFanControl.Models;
 
 public class FanSettings
@@ -9,9 +11,16 @@ public class FanSettings
     public Dictionary<int, TemperatureHistory> TemperatureHistory { get; set; } = new();
     public Dictionary<string, TemperatureHistory> SystemTemperatureHistory { get; set; } = new();
     public int PollingIntervalMs { get; set; } = 2000;
-    public bool StartWithWindows { get; set; }
+    // The background lighting host starts at sign-in unless the user opts out.
+    public bool StartWithWindows { get; set; } = true;
+    // Retained only to migrate settings written by versions that kept a
+    // separate background-host setting. New settings use StartWithWindows.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? KeepLightingActiveInBackground { get; set; }
     public bool MinimizeToTray { get; set; } = true;
-    public string Language { get; set; } = "en";
+    // An empty value means language has not been chosen yet. It is resolved from
+    // the Windows display language on first launch and then persisted.
+    public string Language { get; set; } = string.Empty;
     public bool LightingEnabled { get; set; } = true;
     public int LightingBrightness { get; set; } = 100;
     public Dictionary<int, LightingZoneColor> LightingZoneColors { get; set; } = new();
@@ -45,5 +54,15 @@ public class FanSettings
 
         GlobalFanCurve = [.. curve];
         FanCurves.Clear();
+    }
+
+    public bool MigrateLegacyBackgroundLightingSetting()
+    {
+        if (KeepLightingActiveInBackground is not { } keepLightingActive)
+            return false;
+
+        StartWithWindows = keepLightingActive;
+        KeepLightingActiveInBackground = null;
+        return true;
     }
 }

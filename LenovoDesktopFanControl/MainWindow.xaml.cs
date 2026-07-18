@@ -44,7 +44,7 @@ public partial class MainWindow : Window
             _fanControlService,
             settingsService,
             autoStartService,
-            new LampArrayLightingService());
+            new PipeLightingControlService());
         DataContext = _viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Loc.Instance.PropertyChanged += OnLocalizationChanged;
@@ -252,8 +252,17 @@ public partial class MainWindow : Window
     {
         try
         {
-            await _initializationTask;
-            await _viewModel.ShutdownAsync();
+            try
+            {
+                await _initializationTask.WaitAsync(TimeSpan.FromSeconds(20));
+            }
+            catch (TimeoutException)
+            {
+                Log.Warn("Application initialization did not finish before shutdown; continuing shutdown");
+            }
+            // The background host owns LampArray continuously, including while
+            // this interactive window is open or after it exits.
+            await _viewModel.ShutdownAsync(persistFirmwareLighting: false);
         }
         catch (Exception ex)
         {
@@ -552,6 +561,8 @@ public partial class MainWindow : Window
         _exitRequested = true;
         Close();
     }
+
+    internal void RequestExitForUninstall() => RequestExit();
 
     private void RunOnDispatcher(Action action)
     {

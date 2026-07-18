@@ -3,7 +3,7 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-        <Version>1.3.0</Version>
+        <Version>$(ApplicationVersion)</Version>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
@@ -11,7 +11,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
         <NeutralLanguage>en</NeutralLanguage>
-        <SatelliteResourceLanguages>en;fi-FI</SatelliteResourceLanguages>
+        <SatelliteResourceLanguages>en;fi-FI;zh-CN;fr-FR;de-DE;es-ES;ja-JP;ko-KR</SatelliteResourceLanguages>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +22,12 @@
     <ItemGroup>
         <Compile Remove="obj\**\*.cs;artifacts\**\*.cs" />
     </ItemGroup>
+
+    <Target Name="StopLightingBackgroundHostBeforeBuild"
+            BeforeTargets="PrepareForBuild"
+            Condition="'$(Configuration)' == 'Debug'">
+        <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\Stop-BackgroundLighting.ps1&quot;" />
+    </Target>
 
     <ItemGroup>
         <Resource Include="Assets\AppIcon.ico" />

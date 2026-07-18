@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>Contrôle des ventilateurs de bureau Lenovo</value></data>
+  <data name="AppSubtitle" xml:space="preserve"><value>Contrôle précis du refroidissement et surveillance du système en temps réel</value></data>
+  <data name="CurveEditorTitle" xml:space="preserve"><value>Éditeur de courbe de ventilation</value></data>
+  <data name="Loading" xml:space="preserve"><value>Chargement...</value></data>
+  <data name="SmartFanMode" xml:space="preserve"><value>Mode SmartFan</value></data>
+  <data name="ModeQuiet" xml:space="preserve"><value>Silencieux</value></data>
+  <data name="ModeBalanced" xml:space="preserve"><value>Équilibré</value></data>
+  <data name="ModePerformance" xml:space="preserve"><value>Performances</value></data>
+  <data name="ModeCustom" xml:space="preserve"><value>Personnalisé</value></data>
+  <data name="FullSpeed" xml:space="preserve"><value>Vitesse maximale</value></data>
+  <data name="TowerLighting" xml:space="preserve"><value>Éclairage du boîtier</value></data>
+  <data name="LightingEnabled" xml:space="preserve"><value>Éclairage</value></data>
+  <data name="ZoneEnabled" xml:space="preserve"><value>Activé</value></data>
+  <data name="LightName" xml:space="preserve"><value>Nom de l'éclairage</value></data>
+  <data name="Rename" xml:space="preserve"><value>Renommer</value></data>
+  <data name="Brightness" xml:space="preserve"><value>Luminosité</value></data>
+  <data name="ApplyLighting" xml:space="preserve"><value>Appliquer l'éclairage</value></data>
+  <data name="GlobalColor" xml:space="preserve"><value>Tous les éclairages</value></data>
+  <data name="ColorCustom" xml:space="preserve"><value>Personnalisée</value></data>
+  <data name="ColorCustomValue" xml:space="preserve"><value>Personnalisée ({0})</value></data>
+  <data name="PickCustomColor" xml:space="preserve"><value>Choisir une couleur personnalisée</value></data>
+  <data name="TooltipPickCustomColor" xml:space="preserve"><value>Choisissez n'importe quelle couleur RVB</value></data>
+  <data name="ColorPickerTitle" xml:space="preserve"><value>Couleur personnalisée</value></data>
+  <data name="ColorPickerPreview" xml:space="preserve"><value>Aperçu</value></data>
+  <data name="ColorPickerHex" xml:space="preserve"><value>Couleur hexadécimale</value></data>
+  <data name="MaxRpm" xml:space="preserve"><value>RPM maximal</value></data>
+  <data name="ZoneBranding" xml:space="preserve"><value>Bannière Legion</value></data>
+  <data name="ZoneAccent" xml:space="preserve"><value>Éclairages d'accentuation</value></data>
+  <data name="ZoneIllumination" xml:space="preserve"><value>Illumination</value></data>
+  <data name="ZoneStatus" xml:space="preserve"><value>Voyant d'état</value></data>
+  <data name="ZonePresentation" xml:space="preserve"><value>Présentation</value></data>
+  <data name="ZoneControl" xml:space="preserve"><value>Voyant de contrôle</value></data>
+  <data name="ZoneMixed" xml:space="preserve"><value>Éclairages mixtes</value></data>
+  <data name="ZoneUndefined" xml:space="preserve"><value>Éclairage général</value></data>
+  <data name="ZoneFrontPanel" xml:space="preserve"><value>Panneau avant</value></data>
+  <data name="ZoneRearPanel" xml:space="preserve"><value>Panneau arrière</value></data>
+  <data name="ZoneSidePanel" xml:space="preserve"><value>Panneau latéral</value></data>
+  <data name="ZoneGraphicsCard" xml:space="preserve"><value>GPU</value></data>
+  <data name="ZoneFanLight" xml:space="preserve"><value>Éclairage des ventilateurs</value></data>
+  <data name="ZonePowerButton" xml:space="preserve"><value>Bouton d'alimentation</value></data>
+  <data name="ZoneLogoLight" xml:space="preserve"><value>Éclairage du logo</value></data>
+  <data name="ZoneLightingSync" xml:space="preserve"><value>Synchronisation de l'éclairage</value></data>
+  <data name="ZoneGeneric" xml:space="preserve"><value>Zone</value></data>
+  <data name="ZoneLightGroup" xml:space="preserve"><value>Groupe d'éclairage</value></data>
+  <data name="ZoneCaseFrontFans" xml:space="preserve"><value>Ventilateurs avant du boîtier</value></data>
+  <data name="ZoneCaseTopFans" xml:space="preserve"><value>Ventilateurs supérieurs du boîtier</value></data>
+  <data name="ZoneCpuWatercooler" xml:space="preserve"><value>Refroidisseur liquide du CPU</value></data>
+  <data name="ZoneLegionLogo" xml:space="preserve"><value>Logo Legion</value></data>
+  <data name="ZoneBackFan" xml:space="preserve"><value>Ventilateur arrière</value></data>
+  <data name="Options" xml:space="preserve"><value>Options</value></data>
+  <data name="ApplicationSettings" xml:space="preserve"><value>Paramètres de l'application</value></data>
+  <data name="StartWithWindows" xml:space="preserve"><value>Démarrer avec Windows</value></data>
+  <data name="MinimizeToTray" xml:space="preserve"><value>Réduire dans la zone de notification</value></data>
+  <data name="Language" xml:space="preserve"><value>Langue</value></data>
+  <data name="ApplyMode" xml:space="preserve"><value>Appliquer le mode</value></data>
+  <data name="ResetToDefault" xml:space="preserve"><value>Rétablir les valeurs par défaut</value></data>
+  <data name="ApplySpeed" xml:space="preserve"><value>Appliquer la vitesse</value></data>
+  <data name="EditCurve" xml:space="preserve"><value>Modifier la courbe</value></data>
+  <data name="Apply" xml:space="preserve"><value>Appliquer</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="ResetDefault" xml:space="preserve"><value>Rétablir par défaut</value></data>
+  <data name="Applying" xml:space="preserve"><value>Application...</value></data>
+  <data name="FanStatusLive" xml:space="preserve"><value>Surveillance en direct</value></data>
+  <data name="CurrentSpeed" xml:space="preserve"><value>Vitesse actuelle</value></data>
+  <data name="FirmwareRpmRange" xml:space="preserve"><value>Plage du micrologiciel : {0:N0}–{1:N0} RPM</value></data>
+  <data name="FirmwareMaxRpm" xml:space="preserve"><value>Maximum du micrologiciel : {0:N0} RPM</value></data>
+  <data name="Temperature" xml:space="preserve"><value>Température</value></data>
+  <data name="SpeedSuffix" xml:space="preserve"><value>% de vitesse</value></data>
+  <data name="TempLabel" xml:space="preserve"><value>Temp. :</value></data>
+  <data name="TargetSpeed" xml:space="preserve"><value>Vitesse cible :</value></data>
+  <data name="FanName" xml:space="preserve"><value>Nom du ventilateur</value></data>
+  <data name="FanNameCpu" xml:space="preserve"><value>Ventilateur CPU</value></data>
+  <data name="FanNamePump" xml:space="preserve"><value>Pompe de refroidissement liquide</value></data>
+  <data name="FanNameGpu" xml:space="preserve"><value>Ventilateur GPU</value></data>
+  <data name="FanNameChassis" xml:space="preserve"><value>Ventilateur du boîtier</value></data>
+  <data name="FanNameFrontRadiator" xml:space="preserve"><value>Ventilateurs du radiateur avant</value></data>
+  <data name="FanNameTopFans" xml:space="preserve"><value>Ventilateurs supérieurs</value></data>
+  <data name="FanNameRearFan" xml:space="preserve"><value>Ventilateur arrière</value></data>
+  <data name="FanNameN" xml:space="preserve"><value>Ventilateur {0}</value></data>
+  <data name="CurveEditorHeader" xml:space="preserve"><value>Courbe du ventilateur {0}</value></data>
+  <data name="CurveEditorSubtitle" xml:space="preserve"><value>Définissez la réponse du ventilateur sur toute la plage de températures</value></data>
+  <data name="FanSpeed" xml:space="preserve"><value>Vitesse du ventilateur</value></data>
+  <data name="ValidationError" xml:space="preserve"><value>Les valeurs doivent être croissantes ou égales !</value></data>
+  <data name="StatusLabel" xml:space="preserve"><value>État :</value></data>
+  <data name="MsgInitializing" xml:space="preserve"><value>Initialisation...</value></data>
+  <data name="MsgNotSupported" xml:space="preserve"><value>Cet appareil ne prend pas en charge le contrôle des ventilateurs via WMI. Vérifiez que Lenovo Vantage Gaming Feature Driver est installé.</value></data>
+  <data name="MsgConnected" xml:space="preserve"><value>Connecté - {0} ventilateur(s) détecté(s)</value></data>
+  <data name="MsgNoFans" xml:space="preserve"><value>Aucun ventilateur détecté. L'appareil n'expose peut-être pas les ventilateurs via WMI.</value></data>
+  <data name="MsgNoFansShort" xml:space="preserve"><value>Aucun ventilateur détecté.</value></data>
+  <data name="MsgFanControlNotAvailable" xml:space="preserve"><value>Contrôle des ventilateurs indisponible</value></data>
+  <data name="MsgNotSupportedLong" xml:space="preserve"><value>Cet appareil ne prend pas en charge le contrôle des ventilateurs via WMI. Vérifiez que Lenovo Vantage Gaming Feature Driver est installé et que vous l'exécutez en tant qu'administrateur.</value></data>
+  <data name="MsgModeSet" xml:space="preserve"><value>Mode défini sur {0}</value></data>
+  <data name="MsgErrorSettingMode" xml:space="preserve"><value>Erreur lors du réglage du mode : {0}</value></data>
+  <data name="MsgFullSpeedEnabled" xml:space="preserve"><value>Mode vitesse maximale activé</value></data>
+  <data name="MsgFullSpeedDisabled" xml:space="preserve"><value>Mode vitesse maximale désactivé</value></data>
+  <data name="MsgError" xml:space="preserve"><value>Erreur : {0}</value></data>
+  <data name="MsgResetToDefaults" xml:space="preserve"><value>Valeurs par défaut rétablies (mode Équilibré)</value></data>
+  <data name="MsgErrorResetting" xml:space="preserve"><value>Erreur lors de la réinitialisation : {0}</value></data>
+  <data name="MsgReappliedCurve" xml:space="preserve"><value>Courbe globale enregistrée réappliquée ({0} zone(s) de ventilateur détectée(s))</value></data>
+  <data name="MsgAppliedSpeed" xml:space="preserve"><value>Courbe globale appliquée avec une cible de {0} %</value></data>
+  <data name="MsgAppliedCurve" xml:space="preserve"><value>Courbe personnalisée globale appliquée</value></data>
+  <data name="MsgStartWithWindowsEnabled" xml:space="preserve"><value>Démarrage avec Windows activé</value></data>
+  <data name="MsgStartWithWindowsDisabled" xml:space="preserve"><value>Démarrage avec Windows désactivé</value></data>
+  <data name="MsgErrorTogglingAutostart" xml:space="preserve"><value>Erreur lors du changement du démarrage automatique : {0}</value></data>
+  <data name="MsgInitializationError" xml:space="preserve"><value>Erreur d'initialisation : {0}</value></data>
+  <data name="MsgConflictWarning" xml:space="preserve"><value>Avertissement : {0} est en cours d'exécution et peut entrer en conflit avec le contrôle des ventilateurs. Envisagez de le fermer pour de meilleurs résultats.</value></data>
+  <data name="ShutdownConflicts" xml:space="preserve"><value>Arrêter les conflits</value></data>
+  <data name="ConfirmShutdownConflictsTitle" xml:space="preserve"><value>Arrêter les logiciels Lenovo ?</value></data>
+  <data name="ConfirmShutdownConflicts" xml:space="preserve"><value>Cela arrêtera les processus Lenovo Vantage détectés et VantageService. Le travail non enregistré dans Lenovo Vantage risque d'être perdu. Continuer ?</value></data>
+  <data name="MsgConflictShutdownSuccess" xml:space="preserve"><value>{0} composant(s) Lenovo en conflit arrêté(s)</value></data>
+  <data name="MsgConflictShutdownPartial" xml:space="preserve"><value>Impossible d'arrêter tous les composants en conflit : {0}</value></data>
+  <data name="MsgConflictShutdownError" xml:space="preserve"><value>Erreur lors de l'arrêt des composants en conflit : {0}</value></data>
+  <data name="TooltipModeQuiet" xml:space="preserve"><value>Privilégie un faible bruit avec des vitesses de ventilateur modérées.</value></data>
+  <data name="TooltipModeBalanced" xml:space="preserve"><value>Équilibre les performances de refroidissement et le bruit des ventilateurs.</value></data>
+  <data name="TooltipModePerformance" xml:space="preserve"><value>Utilise un refroidissement plus agressif pour des performances soutenues.</value></data>
+  <data name="TooltipModeCustom" xml:space="preserve"><value>Utilise vos vitesses cibles manuelles et votre courbe personnalisée.</value></data>
+  <data name="TooltipFullSpeed" xml:space="preserve"><value>Fait fonctionner les ventilateurs pris en charge à leur vitesse maximale. Cela augmente le bruit et ne doit être utilisé que lorsqu'un refroidissement maximal est requis. La disponibilité dépend du micrologiciel et des pilotes Lenovo.</value></data>
+  <data name="TooltipManualSpeed" xml:space="preserve"><value>Applique une courbe globale à chaque zone de ventilation du micrologiciel. Le minimum sécurisé de Lenovo est appliqué.</value></data>
+  <data name="TooltipEditCurve" xml:space="preserve"><value>Modifiez la courbe globale unique utilisée par chaque zone de ventilation du micrologiciel. La courbe ne doit jamais diminuer.</value></data>
+  <data name="TooltipEditLightName" xml:space="preserve"><value>Modifiez le nom affiché de cet éclairage. Effacez-le pour restaurer le nom par défaut.</value></data>
+  <data name="TooltipEditFanName" xml:space="preserve"><value>Modifiez le nom affiché de ce groupe de ventilateurs. Effacez-le pour restaurer le nom détecté par défaut.</value></data>
+  <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Après confirmation, arrête les processus et services Lenovo Vantage et Gaming AI détectés.</value></data>
+  <data name="AutomationFanControl" xml:space="preserve"><value>Contrôle des ventilateurs</value></data>
+  <data name="AutomationTargetSpeedHelp" xml:space="preserve"><value>Utilisez les touches fléchées pour ajuster la vitesse cible du ventilateur.</value></data>
+  <data name="AutomationCurvePoint" xml:space="preserve"><value>Vitesse du ventilateur à {0} °C</value></data>
+  <data name="AutomationCurvePointHelp" xml:space="preserve"><value>Utilisez les touches fléchées pour ajuster ce point de courbe.</value></data>
+  <data name="SystemTemperatures" xml:space="preserve"><value>Températures système</value></data>
+  <data name="SystemTemperaturesSubtitle" xml:space="preserve"><value>Les sources de télémétrie vérifiées sont affichées ; les capteurs de micrologiciel indisponibles sont clairement signalés.</value></data>
+  <data name="SystemTemperatureGpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="SystemTemperatureCpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="SystemTemperatureSsd" xml:space="preserve"><value>SSD</value></data>
+  <data name="SystemTemperatureMotherboard" xml:space="preserve"><value>Carte mère</value></data>
+  <data name="TooltipOpenTemperatureHistory" xml:space="preserve"><value>Cliquez pour afficher l'historique des températures</value></data>
+  <data name="TemperatureHistoryTitle" xml:space="preserve"><value>{0} · Historique des températures</value></data>
+  <data name="TemperatureHistorySubtitle" xml:space="preserve"><value>Historique des températures · détail pour la dernière heure, résumé jusqu'à 12 heures</value></data>
+  <data name="TemperatureHistoryCurrent" xml:space="preserve"><value>Actuelle</value></data>
+  <data name="TemperatureHistoryLow" xml:space="preserve"><value>Basse</value></data>
+  <data name="TemperatureHistoryHigh" xml:space="preserve"><value>Haute</value></data>
+  <data name="TemperatureHistoryEmpty" xml:space="preserve"><value>L'historique des températures apparaîtra après la prochaine lecture.</value></data>
+  <data name="DetailNvidiaTelemetryUnavailable" xml:space="preserve"><value>Télémétrie NVIDIA indisponible</value></data>
+  <data name="DetailNvidiaGpuTemperature" xml:space="preserve"><value>Température du GPU NVIDIA</value></data>
+  <data name="DetailDriveSmartTemperatureUnavailable" xml:space="preserve"><value>Température SMART du lecteur indisponible</value></data>
+  <data name="DetailNoSensorExposed" xml:space="preserve"><value>Aucun capteur {0} n'est exposé par ce système</value></data>
+  <data name="DetailInstallPawnIo" xml:space="preserve"><value>Installez PawnIO pour lire la température {0}</value></data>
+  <data name="DetailFirmwareSharedSystemSensor" xml:space="preserve"><value>Capteur système partagé du micrologiciel Lenovo (ID {0})</value></data>
+  <data name="MsgApplicationAlreadyRunning" xml:space="preserve"><value>Lenovo Desktop Fan Control est déjà en cours d'exécution.</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>Afficher</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Quitter</value></data>
+</root>
