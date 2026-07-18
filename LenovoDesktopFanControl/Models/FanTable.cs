@@ -3,6 +3,7 @@ namespace LenovoDesktopFanControl.Models;
 public class FanTable
 {
     public const int PointCount = 10;
+    public const int MinimumTargetPercentage = 50;
     public static readonly byte[] MinimumSpeeds = [1, 1, 1, 1, 1, 1, 1, 1, 3, 5];
 
     public byte[] Speeds { get; set; } = new byte[10];

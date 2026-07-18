@@ -170,8 +170,67 @@ public class FanFirmwareCompatibilityTests
 
         Assert.Equal("FanNamePump", fan.NameResourceKey);
         Assert.Equal(800, fan.MinRpm);
+        Assert.True(fan.HasFirmwareRpmRange);
         Assert.Null(FanFirmwareCompatibility.NormalizeRpm(0, fan.MinRpm > 0));
         Assert.Equal(2008, FanFirmwareCompatibility.NormalizeRpm(2008, fan.MinRpm > 0));
+    }
+
+    [Theory]
+    [InlineData(0, 800, 2000, 40)]
+    [InlineData(1, 800, 2000, 46)]
+    [InlineData(5, 800, 2000, 70)]
+    [InlineData(10, 800, 2000, 100)]
+    [InlineData(1, 100, 1250, 17.2)]
+    public void FanLevelToPercentage_UsesReportedFirmwareRpmRange(
+        int level,
+        int minimumRpm,
+        int maximumRpm,
+        double expected)
+    {
+        Assert.Equal(
+            expected,
+            FanFirmwareCompatibility.FanLevelToPercentage(
+                level,
+                minimumRpm,
+                maximumRpm),
+            3);
+    }
+
+    [Theory]
+    [InlineData(46, 800, 2000, 1)]
+    [InlineData(70, 800, 2000, 5)]
+    [InlineData(100, 800, 2000, 10)]
+    [InlineData(-20, 800, 2000, 0)]
+    [InlineData(120, 800, 2000, 10)]
+    public void PercentageToFanLevel_ClampsAndMapsReportedFirmwareRange(
+        double percentage,
+        int minimumRpm,
+        int maximumRpm,
+        byte expected)
+    {
+        Assert.Equal(
+            expected,
+            FanFirmwareCompatibility.PercentageToFanLevel(
+                percentage,
+                minimumRpm,
+                maximumRpm));
+    }
+
+    [Fact]
+    public void DiscoverFans_NamesTestedWaterCooledT7SystemFanGroups()
+    {
+        FanTableRecord[] records =
+        [
+            new(3, 1, 125),
+            new(4, 1, 125),
+            new(5, 1, 125)
+        ];
+
+        var fans = FanFirmwareCompatibility.DiscoverFans(3313, records, waterCoolingSupported: true);
+
+        Assert.Equal(
+            ["FanNameFrontRadiator", "FanNameTopFans", "FanNameRearFan"],
+            fans.Select(fan => fan.NameResourceKey));
     }
 
     [Fact]

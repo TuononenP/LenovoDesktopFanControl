@@ -5,6 +5,7 @@ public class FanSettings
     public SmartFanMode Mode { get; set; } = SmartFanMode.Balanced;
     public byte[]? GlobalFanCurve { get; set; }
     public Dictionary<int, byte[]> FanCurves { get; set; } = new();
+    public Dictionary<int, string> FanNames { get; set; } = new();
     public int PollingIntervalMs { get; set; } = 2000;
     public bool StartWithWindows { get; set; }
     public bool MinimizeToTray { get; set; } = true;

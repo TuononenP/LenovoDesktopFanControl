@@ -210,6 +210,7 @@ internal static class FanFirmwareCompatibility
                     Temperature = IsValidTemperature(sensor.Temperature) ? sensor.Temperature : null,
                     MaxRpm = NormalizeMaxRpm(group.Max(record => record.MaxRpm)),
                     MinRpm = NormalizeMinimumRpm(group.Max(record => record.MinRpm)),
+                    HasFirmwareRpmRange = group.Any(record => record.MaxRpm > 0),
                     NameResourceKey = nameResourceKey,
                     IsAvailable = true
                 };
@@ -224,15 +225,35 @@ internal static class FanFirmwareCompatibility
         foreach (var record in records)
         {
             // These pairs are consistent across Lenovo's known GameZone table
-            // generations. Other pairs are deliberately left generic because
-            // their meaning changes between firmware generations.
+            // generations. Other pairs remain generic unless the tested
+            // water-cooling layout is detected below.
             if (waterCoolingSupported && (record.FanId, record.SensorId) is (1, 1))
                 return "FanNamePump";
-            if ((record.FanId, record.SensorId) is (0, 3) or (1, 1))
-                return "FanNameCpu";
-            if ((record.FanId, record.SensorId) is (2, 5))
-                return "FanNameGpu";
+            if (waterCoolingSupported)
+            {
+                // On the tested Legion T7 water-cooling layout, the firmware
+                // exposes the three front/radiator fans, two top fans, and the
+                // rear fan as control zones 3, 4, and 5 respectively.
+                return record.FanId switch
+                {
+                    3 => "FanNameFrontRadiator",
+                    4 => "FanNameTopFans",
+                    5 => "FanNameRearFan",
+                    _ => InferKnownFanName(record)
+                };
+            }
+            return InferKnownFanName(record);
         }
+
+        return null;
+    }
+
+    private static string? InferKnownFanName(FanTableRecord record)
+    {
+        if ((record.FanId, record.SensorId) is (0, 3) or (1, 1))
+            return "FanNameCpu";
+        if ((record.FanId, record.SensorId) is (2, 5))
+            return "FanNameGpu";
 
         return null;
     }
@@ -256,6 +277,38 @@ internal static class FanFirmwareCompatibility
         if (minSpeed <= 0)
             return 0;
         return minSpeed <= 500 ? minSpeed * 10 : minSpeed;
+    }
+
+    public static double FanLevelToPercentage(
+        int level,
+        int minimumRpm,
+        int maximumRpm)
+    {
+        level = Math.Clamp(level, 0, 10);
+        if (maximumRpm <= 0 || minimumRpm < 0 || minimumRpm > maximumRpm)
+            return level * 10d;
+
+        var rpm = minimumRpm + (maximumRpm - minimumRpm) * (level / 10d);
+        return rpm / maximumRpm * 100d;
+    }
+
+    public static byte PercentageToFanLevel(
+        double percentage,
+        int minimumRpm,
+        int maximumRpm)
+    {
+        if (maximumRpm <= 0 || minimumRpm < 0 || minimumRpm >= maximumRpm)
+            return (byte)Math.Clamp(
+                (int)Math.Round(percentage / 10d, MidpointRounding.AwayFromZero),
+                0,
+                10);
+
+        var requestedRpm = Math.Clamp(percentage, 0, 100) / 100d * maximumRpm;
+        var level = (requestedRpm - minimumRpm) / (maximumRpm - minimumRpm) * 10d;
+        return (byte)Math.Clamp(
+            (int)Math.Round(level, MidpointRounding.AwayFromZero),
+            0,
+            10);
     }
 
     public static ConflictShutdownResult ReconcileConflictShutdown(

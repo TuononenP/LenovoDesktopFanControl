@@ -16,15 +16,38 @@ public class FanViewModel : INotifyPropertyChanged
     private int? _temperature;
     private int _targetSpeedPercentage = 50;
     private bool _isBusy;
+    private string _fanName = "";
+    private bool _hasCustomName;
+    private bool _isEditingName;
     private readonly string? _nameResourceKey;
     private readonly object? _nameResourceArgument;
 
     public int FanId { get; }
     public int TelemetryId { get; }
     public int SensorId { get; }
-    public string FanName { get; private set; }
+    public string DefaultFanName { get; private set; } = "";
+    public string FanName
+    {
+        get => _fanName;
+        set => SetFanName(value, notifyChange: true);
+    }
+    public bool HasCustomName => _hasCustomName;
+    public bool IsEditingName
+    {
+        get => _isEditingName;
+        set
+        {
+            if (_isEditingName == value) return;
+            _isEditingName = value;
+            OnPropertyChanged();
+        }
+    }
     public int MaxRpm { get; }
     public int MinRpm { get; }
+    public bool HasFirmwareRpmRange { get; }
+    public string FirmwareRpmRange => MinRpm > 0
+        ? LocalizationService.Get("FirmwareRpmRange", MinRpm, MaxRpm)
+        : LocalizationService.Get("FirmwareMaxRpm", MaxRpm);
     public ObservableCollection<FanChannelViewModel> Channels { get; } = [];
     public bool HasMultipleChannels => Channels.Count > 1;
 
@@ -47,7 +70,13 @@ public class FanViewModel : INotifyPropertyChanged
     public int TargetSpeedPercentage
     {
         get => _targetSpeedPercentage;
-        set { _targetSpeedPercentage = value; OnPropertyChanged(); }
+        set
+        {
+            var clamped = Math.Clamp(value, FanTable.MinimumTargetPercentage, 100);
+            if (_targetSpeedPercentage == clamped) return;
+            _targetSpeedPercentage = clamped;
+            OnPropertyChanged();
+        }
     }
 
     public bool IsBusy
@@ -59,6 +88,7 @@ public class FanViewModel : INotifyPropertyChanged
     public ICommand ApplySpeedCommand { get; }
     public ICommand EditCurveCommand { get; }
     public ICommand ApplyCurveCommand { get; }
+    public ICommand EditNameCommand { get; }
 
     public FanViewModel(IWmiFanControlService service, MainViewModel parent, FanInfo info)
         : this(service, parent, [info])
@@ -79,13 +109,19 @@ public class FanViewModel : INotifyPropertyChanged
         FanId = info.FanId;
         TelemetryId = info.TelemetryId >= 0 ? info.TelemetryId : info.FanId;
         SensorId = info.SensorId;
-        FanName = infos.Count > 1 && info.NameResourceKey != "FanNamePump"
+        DefaultFanName = infos.Count > 1 && (info.NameResourceKey is null or "FanNameN")
             ? LocalizationService.Get("FanNameN", info.FanId)
             : info.Name;
-        _nameResourceKey = info.NameResourceKey;
-        _nameResourceArgument = info.NameResourceArgument;
+        _fanName = DefaultFanName;
+        _nameResourceKey = infos.Count > 1 && info.NameResourceKey == "FanNameN"
+            ? "FanNameN"
+            : info.NameResourceKey;
+        _nameResourceArgument = infos.Count > 1 && info.NameResourceKey == "FanNameN"
+            ? info.FanId
+            : info.NameResourceArgument;
         MaxRpm = info.MaxRpm;
         MinRpm = info.MinRpm;
+        HasFirmwareRpmRange = info.HasFirmwareRpmRange;
         _currentRpm = info.CurrentRpm;
         _temperature = info.Temperature;
         foreach (var channel in infos)
@@ -95,6 +131,7 @@ public class FanViewModel : INotifyPropertyChanged
         ApplySpeedCommand = new RelayCommand(async () => await ApplySpeedAsync());
         EditCurveCommand = new RelayCommand(() => _parent.OpenCurveEditor(this));
         ApplyCurveCommand = new RelayCommand(async () => await ApplyCurveAsync());
+        EditNameCommand = new RelayCommand(() => IsEditingName = true);
     }
 
     public void RefreshSummary()
@@ -111,10 +148,38 @@ public class FanViewModel : INotifyPropertyChanged
         if (string.IsNullOrEmpty(_nameResourceKey))
             return;
 
-        FanName = _nameResourceArgument == null
+        DefaultFanName = _nameResourceArgument == null
             ? LocalizationService.Get(_nameResourceKey)
             : LocalizationService.Get(_nameResourceKey, _nameResourceArgument);
+        if (!_hasCustomName)
+        {
+            _fanName = DefaultFanName;
+            OnPropertyChanged(nameof(FanName));
+        }
+        OnPropertyChanged(nameof(FirmwareRpmRange));
+    }
+
+    internal void RestoreFanName(string name) => SetFanName(name, notifyChange: false);
+
+    private void SetFanName(string? value, bool notifyChange)
+    {
+        var name = string.IsNullOrWhiteSpace(value) ? DefaultFanName : value.Trim();
+        if (name.Length > 48)
+            name = name[..48];
+        var hasCustomName = !string.Equals(name, DefaultFanName, StringComparison.Ordinal);
+        if (_fanName == name && _hasCustomName == hasCustomName)
+        {
+            if (!string.Equals(value, name, StringComparison.Ordinal))
+                OnPropertyChanged(nameof(FanName));
+            return;
+        }
+
+        _fanName = name;
+        _hasCustomName = hasCustomName;
         OnPropertyChanged(nameof(FanName));
+        OnPropertyChanged(nameof(HasCustomName));
+        if (notifyChange)
+            FanNameChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async Task ApplySpeedAsync()
@@ -170,6 +235,7 @@ public class FanViewModel : INotifyPropertyChanged
         await ApplyCurveAsync(curve);
     }
 
+    public event EventHandler? FanNameChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

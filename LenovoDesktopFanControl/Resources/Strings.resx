@@ -53,9 +53,11 @@
   <data name="LightingEnabled" xml:space="preserve"><value>Lights</value></data>
   <data name="ZoneEnabled" xml:space="preserve"><value>On</value></data>
   <data name="LightName" xml:space="preserve"><value>Light name</value></data>
+  <data name="Rename" xml:space="preserve"><value>Rename</value></data>
   <data name="Brightness" xml:space="preserve"><value>Brightness</value></data>
   <data name="ApplyLighting" xml:space="preserve"><value>Apply Lighting</value></data>
   <data name="GlobalColor" xml:space="preserve"><value>All Lights</value></data>
+  <data name="ColorCustom" xml:space="preserve"><value>Custom</value></data>
   <data name="MaxRpm" xml:space="preserve"><value>Max RPM</value></data>
   <data name="ZoneBranding" xml:space="preserve"><value>Legion Banner</value></data>
   <data name="ZoneAccent" xml:space="preserve"><value>Accent Lights</value></data>
@@ -101,16 +103,22 @@
   <data name="Applying" xml:space="preserve"><value>Applying...</value></data>
   <data name="FanStatusLive" xml:space="preserve"><value>Live monitoring</value></data>
   <data name="CurrentSpeed" xml:space="preserve"><value>Current speed</value></data>
+  <data name="FirmwareRpmRange" xml:space="preserve"><value>Firmware range: {0:N0}–{1:N0} RPM</value></data>
+  <data name="FirmwareMaxRpm" xml:space="preserve"><value>Firmware maximum: {0:N0} RPM</value></data>
   <data name="Temperature" xml:space="preserve"><value>Temperature</value></data>
   <data name="SpeedSuffix" xml:space="preserve"><value>% speed</value></data>
   <data name="TempLabel" xml:space="preserve"><value>Temp: </value></data>
   <data name="TargetSpeed" xml:space="preserve"><value>Target Speed:</value></data>
 
   <!-- Fan names -->
+  <data name="FanName" xml:space="preserve"><value>Fan name</value></data>
   <data name="FanNameCpu" xml:space="preserve"><value>CPU Fan</value></data>
   <data name="FanNamePump" xml:space="preserve"><value>Water-Cooling Pump</value></data>
   <data name="FanNameGpu" xml:space="preserve"><value>GPU Fan</value></data>
   <data name="FanNameChassis" xml:space="preserve"><value>Chassis Fan</value></data>
+  <data name="FanNameFrontRadiator" xml:space="preserve"><value>Front radiator fans</value></data>
+  <data name="FanNameTopFans" xml:space="preserve"><value>Top fans</value></data>
+  <data name="FanNameRearFan" xml:space="preserve"><value>Rear fan</value></data>
   <data name="FanNameN" xml:space="preserve"><value>Fan {0}</value></data>
 
   <!-- Curve editor -->
@@ -162,6 +170,7 @@
   <data name="TooltipManualSpeed" xml:space="preserve"><value>Applies one global curve to every firmware fan zone. Lenovo's safe minimum is enforced.</value></data>
   <data name="TooltipEditCurve" xml:space="preserve"><value>Edit the single global curve used by every firmware fan zone. The curve must never decrease.</value></data>
   <data name="TooltipEditLightName" xml:space="preserve"><value>Edit this light's display name. Clear it to restore the default name.</value></data>
+  <data name="TooltipEditFanName" xml:space="preserve"><value>Edit this fan group's display name. Clear it to restore the detected default name.</value></data>
   <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Stops detected Lenovo Vantage and Gaming AI processes and services after confirmation.</value></data>
 
   <!-- Accessibility -->

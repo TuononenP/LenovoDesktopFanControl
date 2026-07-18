@@ -69,11 +69,57 @@ public class MainViewModelTests
             Assert.Equal(SmartFanMode.Quiet, viewModel.SelectedFanMode);
             Assert.True(viewModel.IsFullSpeed);
             Assert.False(viewModel.IsFullSpeedSupported);
-            Assert.Equal(40, fan.TargetSpeedPercentage);
+            Assert.Equal(90, fan.TargetSpeedPercentage);
             Assert.Equal(1200, fan.CurrentRpm);
             Assert.Equal(ApplicationStatusKind.Connected, viewModel.StatusKind);
             Assert.True(viewModel.HasFans);
             Assert.False(viewModel.ShowNoFans);
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
+    public async Task InitializeAsync_RestoresAndPersistsCustomFanNames()
+    {
+        var service = new FakeFanControlService
+        {
+            DiscoveredFans =
+            [
+                new FanInfo
+                {
+                    FanId = 3,
+                    SensorId = 2,
+                    Name = "Front radiator fans",
+                    NameResourceKey = "FanNameFrontRadiator"
+                }
+            ]
+        };
+        var settings = new InMemorySettingsService(new FanSettings
+        {
+            FanNames =
+            {
+                [3] = "Front intake"
+            }
+        });
+        var viewModel = new MainViewModel(service, settings, new FakeAutoStartService());
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            var fan = Assert.Single(viewModel.Fans);
+            Assert.Equal("Front intake", fan.FanName);
+
+            fan.FanName = "Radiator intake";
+
+            Assert.Equal("Radiator intake", settings.Settings.FanNames[3]);
+
+            fan.FanName = "";
+
+            Assert.Equal("Front radiator fans", fan.FanName);
+            Assert.False(settings.Settings.FanNames.ContainsKey(3));
         }
         finally
         {

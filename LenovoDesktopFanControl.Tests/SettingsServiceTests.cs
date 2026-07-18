@@ -52,6 +52,10 @@ public class SettingsServiceTests : IDisposable
             MinimizeToTray = true,
             GlobalFanCurve = [1, 1, 2, 2, 3, 3, 4, 5, 6, 7],
             Language = "fi-FI",
+            FanNames =
+            {
+                [3] = "Front intake"
+            },
             LightingZoneNames =
             {
                 [2] = "Desk glow"
@@ -69,6 +73,7 @@ public class SettingsServiceTests : IDisposable
         Assert.True(loaded.MinimizeToTray);
         Assert.Equal(settings.GlobalFanCurve, loaded.GlobalFanCurve);
         Assert.Equal("fi-FI", loaded.Language);
+        Assert.Equal("Front intake", loaded.FanNames[3]);
         Assert.Equal("Desk glow", loaded.LightingZoneNames[2]);
         Assert.Equal(35, loaded.LightingZoneBrightness[2]);
     }

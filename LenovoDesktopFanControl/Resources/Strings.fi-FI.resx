@@ -53,9 +53,11 @@
   <data name="LightingEnabled" xml:space="preserve"><value>Valot</value></data>
   <data name="ZoneEnabled" xml:space="preserve"><value>Päällä</value></data>
   <data name="LightName" xml:space="preserve"><value>Valon nimi</value></data>
+  <data name="Rename" xml:space="preserve"><value>Nimeä uudelleen</value></data>
   <data name="Brightness" xml:space="preserve"><value>Kirkkaus</value></data>
   <data name="ApplyLighting" xml:space="preserve"><value>Käytä valaistusta</value></data>
   <data name="GlobalColor" xml:space="preserve"><value>Kaikki valot</value></data>
+  <data name="ColorCustom" xml:space="preserve"><value>Mukautettu</value></data>
   <data name="MaxRpm" xml:space="preserve"><value>Maksimikierrokset</value></data>
   <data name="ZoneBranding" xml:space="preserve"><value>Legion-logo</value></data>
   <data name="ZoneAccent" xml:space="preserve"><value>Korostusvalot</value></data>
@@ -101,16 +103,22 @@
   <data name="Applying" xml:space="preserve"><value>Toteutetaan...</value></data>
   <data name="FanStatusLive" xml:space="preserve"><value>Reaaliaikainen valvonta</value></data>
   <data name="CurrentSpeed" xml:space="preserve"><value>Nykyinen nopeus</value></data>
+  <data name="FirmwareRpmRange" xml:space="preserve"><value>Laiteohjelmiston alue: {0:N0}–{1:N0} RPM</value></data>
+  <data name="FirmwareMaxRpm" xml:space="preserve"><value>Laiteohjelmiston maksimi: {0:N0} RPM</value></data>
   <data name="Temperature" xml:space="preserve"><value>Lämpötila</value></data>
   <data name="SpeedSuffix" xml:space="preserve"><value>% nopeus</value></data>
   <data name="TempLabel" xml:space="preserve"><value>Lämpö: </value></data>
   <data name="TargetSpeed" xml:space="preserve"><value>Tavoitenopeus:</value></data>
 
   <!-- Fan names -->
+  <data name="FanName" xml:space="preserve"><value>Tuulettimen nimi</value></data>
   <data name="FanNameCpu" xml:space="preserve"><value>CPU-tuuletin</value></data>
   <data name="FanNamePump" xml:space="preserve"><value>Vesijäähdytyspumppu</value></data>
   <data name="FanNameGpu" xml:space="preserve"><value>GPU-tuuletin</value></data>
   <data name="FanNameChassis" xml:space="preserve"><value>Kotelo-tuuletin</value></data>
+  <data name="FanNameFrontRadiator" xml:space="preserve"><value>Etujäähdyttimen tuulettimet</value></data>
+  <data name="FanNameTopFans" xml:space="preserve"><value>Ylätuulettimet</value></data>
+  <data name="FanNameRearFan" xml:space="preserve"><value>Takatuuletin</value></data>
   <data name="FanNameN" xml:space="preserve"><value>Tuuletin {0}</value></data>
 
   <!-- Curve editor -->
@@ -162,6 +170,7 @@
   <data name="TooltipManualSpeed" xml:space="preserve"><value>Asettaa yhden yleisen käyrän kaikille laiteohjelmiston tuuletinvyöhykkeille. Lenovon turvallinen vähimmäiskäyrä varmistetaan.</value></data>
   <data name="TooltipEditCurve" xml:space="preserve"><value>Muokkaa kaikkien tuuletinvyöhykkeiden käyttämää yleistä käyrää. Käyrä ei saa koskaan laskea.</value></data>
   <data name="TooltipEditLightName" xml:space="preserve"><value>Muokkaa tämän valon näyttönimeä. Tyhjennä kenttä palauttaaksesi oletusnimen.</value></data>
+  <data name="TooltipEditFanName" xml:space="preserve"><value>Muokkaa tämän tuuletinryhmän näyttönimeä. Tyhjennä kenttä palauttaaksesi havaitun oletusnimen.</value></data>
   <data name="TooltipShutdownConflicts" xml:space="preserve"><value>Pysäyttää vahvistuksen jälkeen havaitut Lenovo Vantage- ja Gaming AI -prosessit ja palvelut.</value></data>
 
   <!-- Accessibility -->

@@ -11,7 +11,14 @@
     <UserControl.Resources>
         <conv:RpmToStringConverter x:Key="RpmConverter" />
         <conv:TempToStringConverter x:Key="TempConverter" />
+        <conv:TemperatureToBrushConverter x:Key="TemperatureBrushConverter"
+                                           CoolBrush="{StaticResource SuccessBrush}"
+                                           ElevatedBrush="{StaticResource TemperatureYellowBrush}"
+                                           HotBrush="{StaticResource TemperatureOrangeBrush}"
+                                           CriticalBrush="{StaticResource DangerBrush}"
+                                           UnavailableBrush="{StaticResource TextMutedBrush}" />
         <conv:BoolToVisibilityConverter x:Key="Bool2Vis" />
+        <conv:BoolToInverseVisibilityConverter x:Key="Bool2InvVis" />
     </UserControl.Resources>
 
     <Border x:Name="CardRoot"
@@ -63,9 +70,32 @@
                 </Border>
 
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding FanName}"
-                               FontSize="15"
-                               FontWeight="SemiBold" />
+                    <Grid>
+                        <Button Command="{Binding EditNameCommand}"
+                                Style="{StaticResource RenameableTextButtonStyle}"
+                                Visibility="{Binding IsEditingName, Converter={StaticResource Bool2InvVis}}"
+                                AutomationProperties.Name="{loc:Loc TooltipEditFanName}"
+                                AutomationProperties.HelpText="{loc:Loc TooltipEditFanName}">
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="{Binding FanName}"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <TextBox MaxLength="48"
+                                 Padding="4,2"
+                                 FontSize="15"
+                                 FontWeight="SemiBold"
+                                 Text="{Binding FanName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                 Visibility="{Binding IsEditingName, Converter={StaticResource Bool2Vis}}"
+                                 IsVisibleChanged="FanNameEditor_IsVisibleChanged"
+                                 KeyDown="FanNameEditor_KeyDown"
+                                 LostKeyboardFocus="FanNameEditor_LostKeyboardFocus"
+                                 ToolTip="{loc:Loc TooltipEditFanName}"
+                                 AutomationProperties.Name="{loc:Loc FanName}"
+                                 AutomationProperties.HelpText="{loc:Loc TooltipEditFanName}" />
+                    </Grid>
                     <TextBlock Text="{loc:Loc FanStatusLive}"
                                Margin="0,2,0,0"
                                FontSize="11"
@@ -101,6 +131,11 @@
                                FontSize="26"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding FirmwareRpmRange}"
+                               Margin="0,3,0,0"
+                               FontSize="10.5"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Visibility="{Binding HasFirmwareRpmRange, Converter={StaticResource Bool2Vis}}" />
                     <ItemsControl ItemsSource="{Binding Channels}"
                                   Margin="0,10,0,0"
                                   Visibility="{Binding HasMultipleChannels, Converter={StaticResource Bool2Vis}}">
@@ -144,7 +179,7 @@
                                    HorizontalAlignment="Center"
                                    FontSize="15"
                                    FontWeight="SemiBold"
-                                   Foreground="{StaticResource WarningBrush}" />
+                                   Foreground="{Binding Temperature, Converter={StaticResource TemperatureBrushConverter}}" />
                     </StackPanel>
                 </Border>
             </Grid>
@@ -192,11 +227,11 @@
                         ToolTip="{loc:Loc TooltipManualSpeed}"
                         Style="{StaticResource HorizontalSliderStyle}"
                         Value="{Binding TargetSpeedPercentage}"
-                        Minimum="0" Maximum="100"
+                        Minimum="50" Maximum="100"
                         TickFrequency="10"
                         IsSnapToTickEnabled="False" />
                 <Grid Grid.Row="2" Margin="0,2,0,0">
-                    <TextBlock Text="0%" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBlock Text="50%" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
                     <TextBlock Text="100%" HorizontalAlignment="Right" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
                 </Grid>
             </Grid>
@@ -210,13 +245,11 @@
                 </Grid.ColumnDefinitions>
                 <Button Content="{loc:Loc EditCurve}"
                         Command="{Binding EditCurveCommand}"
-                        ToolTip="{loc:Loc TooltipEditCurve}"
                         AutomationProperties.HelpText="{loc:Loc TooltipEditCurve}"
                         Style="{StaticResource SecondaryButtonStyle}" />
                 <Button Grid.Column="2"
                         Content="{loc:Loc ApplySpeed}"
                         Command="{Binding ApplySpeedCommand}"
-                        ToolTip="{loc:Loc TooltipManualSpeed}"
                         AutomationProperties.HelpText="{loc:Loc TooltipManualSpeed}"
                         Style="{StaticResource PrimaryButtonStyle}" />
             </Grid>

@@ -13,4 +13,5 @@ public class FanInfo
     public bool IsAvailable { get; set; }
     public int MaxRpm { get; set; } = 2500;
     public int MinRpm { get; set; }
+    public bool HasFirmwareRpmRange { get; set; }
 }

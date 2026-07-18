@@ -103,6 +103,81 @@
             </Setter>
         </Style>
 
+        <Style x:Key="RenameableTextButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="7,4" />
+            <Setter Property="Margin" Value="-8,-5" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="RenameableTextBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                                <Setter TargetName="RenameableTextBorder"
+                                        Property="Background"
+                                        Value="{StaticResource AccentSoftBrush}" />
+                                <Setter TargetName="RenameableTextBorder"
+                                        Property="BorderBrush"
+                                        Value="{StaticResource AccentHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="RenameableTextBorder"
+                                        Property="BorderBrush"
+                                        Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="RenameableTextBorder"
+                                        Property="Background"
+                                        Value="{StaticResource AccentSoftBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="RenameableTextBorder" Property="Opacity" Value="0.72" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Tooltips -->
+        <Style TargetType="ToolTip">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="MaxWidth" Value="340" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7"
+                                SnapsToDevicePixels="True">
+                            <TextBlock Text="{TemplateBinding Content}"
+                                       TextWrapping="Wrap" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Segmented mode selector -->
         <Style x:Key="ModeSegmentStyle" TargetType="RadioButton">
             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
@@ -294,6 +369,12 @@
                                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                                   VerticalAlignment="Center"
                                                   IsHitTestVisible="False" />
+                                <TextBlock x:Name="EmptySelectionText"
+                                           Text="{TemplateBinding Tag}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           Visibility="Collapsed"
+                                           IsHitTestVisible="False" />
                                 <Path Grid.Column="1"
                                       Width="8" Height="5"
                                       HorizontalAlignment="Right"
@@ -342,6 +423,11 @@
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.42" />
+                            </Trigger>
+                            <Trigger Property="SelectedItem" Value="{x:Null}">
+                                <Setter TargetName="EmptySelectionText"
+                                        Property="Visibility"
+                                        Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

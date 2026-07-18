@@ -87,6 +87,35 @@ public class FanViewModelTests
     }
 
     [Fact]
+    public async Task FirmwareRpmRange_UsesOnlyReportedFirmwareLimits()
+    {
+        var service = new FakeFanControlService();
+        var parent = CreateParent(service, out _);
+        try
+        {
+            var reported = new FanViewModel(service, parent, new FanInfo
+            {
+                MinRpm = 800,
+                MaxRpm = 2000,
+                HasFirmwareRpmRange = true
+            });
+            var fallback = new FanViewModel(service, parent, new FanInfo
+            {
+                MaxRpm = 2500
+            });
+
+            Assert.True(reported.HasFirmwareRpmRange);
+            Assert.Contains("800", reported.FirmwareRpmRange);
+            Assert.Contains("2,000", reported.FirmwareRpmRange);
+            Assert.False(fallback.HasFirmwareRpmRange);
+        }
+        finally
+        {
+            await parent.ShutdownAsync();
+        }
+    }
+
+    [Fact]
     public async Task SpeedPercentage_IsZeroForUnavailableRpmOrInvalidMaximum()
     {
         var service = new FakeFanControlService();
@@ -485,6 +514,40 @@ public class FanViewModelTests
     }
 
     [Fact]
+    public async Task FanName_CanBeCustomizedAndClearedToRestoreDefault()
+    {
+        var service = new FakeFanControlService();
+        var parent = CreateParent(service, out _);
+        try
+        {
+            var fan = new FanViewModel(service, parent, new FanInfo
+            {
+                FanId = 3,
+                Name = "Front radiator fans",
+                NameResourceKey = "FanNameFrontRadiator"
+            });
+            var changedCount = 0;
+            fan.FanNameChanged += (_, _) => changedCount++;
+
+            fan.FanName = "  Front intake  ";
+
+            Assert.Equal("Front intake", fan.FanName);
+            Assert.True(fan.HasCustomName);
+            Assert.Equal(1, changedCount);
+
+            fan.FanName = "";
+
+            Assert.Equal("Front radiator fans", fan.FanName);
+            Assert.False(fan.HasCustomName);
+            Assert.Equal(2, changedCount);
+        }
+        finally
+        {
+            await parent.ShutdownAsync();
+        }
+    }
+
+    [Fact]
     public async Task TargetSpeedPercentage_DefaultsToFifty()
     {
         var service = new FakeFanControlService();
@@ -494,6 +557,27 @@ public class FanViewModelTests
             var fan = new FanViewModel(service, parent, new FanInfo { FanId = 1 });
 
             Assert.Equal(50, fan.TargetSpeedPercentage);
+        }
+        finally
+        {
+            await parent.ShutdownAsync();
+        }
+    }
+
+    [Fact]
+    public async Task TargetSpeedPercentage_ClampsToEffectiveManualRange()
+    {
+        var service = new FakeFanControlService();
+        var parent = CreateParent(service, out _);
+        try
+        {
+            var fan = new FanViewModel(service, parent, new FanInfo { FanId = 1 });
+
+            fan.TargetSpeedPercentage = 10;
+            Assert.Equal(FanTable.MinimumTargetPercentage, fan.TargetSpeedPercentage);
+
+            fan.TargetSpeedPercentage = 120;
+            Assert.Equal(100, fan.TargetSpeedPercentage);
         }
         finally
         {
@@ -513,6 +597,11 @@ public class FanViewModelTests
             Assert.NotNull(fan.ApplySpeedCommand);
             Assert.NotNull(fan.EditCurveCommand);
             Assert.NotNull(fan.ApplyCurveCommand);
+            Assert.NotNull(fan.EditNameCommand);
+
+            fan.EditNameCommand.Execute(null);
+
+            Assert.True(fan.IsEditingName);
         }
         finally
         {

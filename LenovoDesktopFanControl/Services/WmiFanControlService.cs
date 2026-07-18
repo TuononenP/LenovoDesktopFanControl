@@ -713,6 +713,7 @@ public sealed class WmiFanControlService : IWmiFanControlService
                 Temperature = discovered.Temperature,
                 MaxRpm = discovered.MaxRpm,
                 MinRpm = discovered.MinRpm,
+                HasFirmwareRpmRange = discovered.HasFirmwareRpmRange,
                 IsAvailable = true
             };
             Log.Info(
@@ -734,6 +735,7 @@ public sealed class WmiFanControlService : IWmiFanControlService
                 NameResourceKey = discovered.NameResourceKey,
                 MaxRpm = discovered.MaxRpm,
                 MinRpm = discovered.MinRpm,
+                HasFirmwareRpmRange = discovered.HasFirmwareRpmRange,
                 IsAvailable = false
             };
         }

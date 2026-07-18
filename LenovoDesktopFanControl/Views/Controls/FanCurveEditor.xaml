@@ -32,6 +32,10 @@
                        Margin="0,5,0,0"
                        FontSize="12.5"
                        Foreground="{StaticResource TextMutedBrush}" />
+            <TextBlock x:Name="FirmwareRangeText"
+                       Margin="0,4,0,0"
+                       FontSize="11"
+                       Foreground="{StaticResource AccentBrush}" />
         </StackPanel>
 
         <!-- Interactive curve chart -->

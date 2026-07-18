@@ -283,8 +283,12 @@ public class MainViewModel : INotifyPropertyChanged
             foreach (var zone in fans.GroupBy(info => info.FanId).OrderBy(group => group.Key))
             {
                 var vm = new FanViewModel(_service, this, zone);
+                if (_settings.FanNames.TryGetValue(vm.FanId, out var savedName) &&
+                    !string.IsNullOrWhiteSpace(savedName))
+                    vm.RestoreFanName(savedName);
+                vm.FanNameChanged += OnFanNameChanged;
                 var zoneCurve = _settings.GetOrDefaultCurve(zone.Key);
-                vm.TargetSpeedPercentage = zoneCurve[0] * 10;
+                vm.TargetSpeedPercentage = zoneCurve[^1] * 10;
                 Fans.Add(vm);
             }
 
@@ -550,7 +554,12 @@ public class MainViewModel : INotifyPropertyChanged
     public void OpenCurveEditor(FanViewModel fan)
     {
         var currentCurve = GetFanCurve(fan.FanId);
-        var editor = new FanCurveEditorWindow(fan.FanName, currentCurve);
+        var editor = new FanCurveEditorWindow(
+            fan.FanName,
+            currentCurve,
+            fan.MinRpm,
+            fan.MaxRpm,
+            fan.HasFirmwareRpmRange);
         if (editor.ShowDialog() == true)
         {
             var newCurve = editor.ResultCurve;
@@ -673,51 +682,66 @@ public class MainViewModel : INotifyPropertyChanged
         _settingsService.Save(_settings);
     }
 
-    private void ApplySavedLightingZoneColors()
+    private void OnFanNameChanged(object? sender, EventArgs e)
     {
-        Lighting.RestoreZoneNames(_settings.LightingZoneNames);
-        Lighting.RestoreZoneBrightness(_settings.LightingZoneBrightness);
-
-        foreach (var zone in Lighting.Zones)
-            zone.IsEnabled = !_settings.LightingZoneEnabled.TryGetValue(zone.Index, out var enabled) || enabled;
-
-        if (_settings.LightingZoneColors.Count == 0)
+        if (sender is not FanViewModel fan)
             return;
 
-        var savedColors = _settings.LightingZoneColors.Values
-            .Select(color => (color.Red, color.Green, color.Blue))
-            .Distinct()
-            .ToArray();
-        var inheritedGlobalColor = savedColors.Length == 1
-            ? Lighting.Colors.FirstOrDefault(color =>
-                color.Red == savedColors[0].Red &&
-                color.Green == savedColors[0].Green &&
-                color.Blue == savedColors[0].Blue)
-            : null;
+        if (fan.HasCustomName)
+            _settings.FanNames[fan.FanId] = fan.FanName;
+        else
+            _settings.FanNames.Remove(fan.FanId);
+        _settingsService.Save(_settings);
+    }
 
-        foreach (var zone in Lighting.Zones)
+    private void ApplySavedLightingZoneColors()
+    {
+        Lighting.RestoreZoneState(() =>
         {
-            if (!_settings.LightingZoneColors.TryGetValue(zone.Index, out var saved))
+            Lighting.RestoreZoneNames(_settings.LightingZoneNames);
+            Lighting.RestoreZoneBrightness(_settings.LightingZoneBrightness);
+
+            foreach (var zone in Lighting.Zones)
+                zone.IsEnabled = !_settings.LightingZoneEnabled.TryGetValue(zone.Index, out var enabled) || enabled;
+
+            if (_settings.LightingZoneColors.Count == 0)
+                return;
+
+            var savedColors = _settings.LightingZoneColors.Values
+                .Select(color => (color.Red, color.Green, color.Blue))
+                .Distinct()
+                .ToArray();
+            var inheritedGlobalColor = savedColors.Length == 1
+                ? Lighting.Colors.FirstOrDefault(color =>
+                    color.Red == savedColors[0].Red &&
+                    color.Green == savedColors[0].Green &&
+                    color.Blue == savedColors[0].Blue)
+                : null;
+
+            foreach (var zone in Lighting.Zones)
             {
-                // A newly supported device (for example the GPU lighting zone) inherits
-                // an existing all-zones color during the first run after upgrading.
-                if (inheritedGlobalColor != null)
-                    zone.SelectedColor = inheritedGlobalColor;
-                continue;
+                if (!_settings.LightingZoneColors.TryGetValue(zone.Index, out var saved))
+                {
+                    // A newly supported device (for example the GPU lighting zone) inherits
+                    // an existing all-zones color during the first run after upgrading.
+                    if (inheritedGlobalColor != null)
+                        zone.SelectedColor = inheritedGlobalColor;
+                    continue;
+                }
+
+                var match = Lighting.Colors.FirstOrDefault(c =>
+                    c.Red == saved.Red && c.Green == saved.Green && c.Blue == saved.Blue);
+                zone.SelectedColor = match;
             }
 
-            var match = Lighting.Colors.FirstOrDefault(c =>
-                c.Red == saved.Red && c.Green == saved.Green && c.Blue == saved.Blue);
-            zone.SelectedColor = match;
-        }
-
-        var firstColor = Lighting.Zones.FirstOrDefault()?.SelectedColor;
-        var hasSingleGlobalColor = firstColor != null && Lighting.Zones.All(zone =>
-            zone.SelectedColor is { } color &&
-            color.Red == firstColor.Red &&
-            color.Green == firstColor.Green &&
-            color.Blue == firstColor.Blue);
-        Lighting.RestoreGlobalColorSelection(hasSingleGlobalColor ? firstColor : null);
+            var firstColor = Lighting.Zones.FirstOrDefault()?.SelectedColor;
+            var hasSingleGlobalColor = firstColor != null && Lighting.Zones.All(zone =>
+                zone.SelectedColor is { } color &&
+                color.Red == firstColor.Red &&
+                color.Green == firstColor.Green &&
+                color.Blue == firstColor.Blue);
+            Lighting.RestoreGlobalColorSelection(hasSingleGlobalColor ? firstColor : null);
+        });
     }
 
     private void SaveLightingSettings()

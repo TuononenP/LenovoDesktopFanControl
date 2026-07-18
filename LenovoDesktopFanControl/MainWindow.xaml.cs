@@ -344,6 +344,55 @@ public partial class MainWindow : Window
             new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160)));
     }
 
+    private void LightNameEditor_IsVisibleChanged(
+        object sender,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox editor || e.NewValue is not true)
+            return;
+
+        _ = editor.Dispatcher.BeginInvoke(() =>
+        {
+            editor.Focus();
+            editor.SelectAll();
+        });
+    }
+
+    private void LightNameEditor_KeyDown(
+        object sender,
+        System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox editor ||
+            editor.DataContext is not LightingZoneViewModel zone)
+            return;
+
+        if (e.Key == System.Windows.Input.Key.Enter)
+        {
+            editor.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
+            zone.IsEditingName = false;
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            editor.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateTarget();
+            zone.IsEditingName = false;
+            e.Handled = true;
+        }
+    }
+
+    private void LightNameEditor_LostKeyboardFocus(
+        object sender,
+        System.Windows.Input.KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox editor ||
+            editor.DataContext is not LightingZoneViewModel zone ||
+            !zone.IsEditingName)
+            return;
+
+        editor.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
+        zone.IsEditingName = false;
+    }
+
     private void OnStateChanged(object? sender, EventArgs e)
     {
         if (_isClosing)

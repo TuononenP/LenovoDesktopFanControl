@@ -16,30 +16,53 @@ public partial class FanCurveEditorWindow : Window
     private readonly Slider[] _sliders = new Slider[10];
     private readonly TextBlock[] _valueLabels = new TextBlock[10];
     private readonly byte[] _values = new byte[10];
+    private readonly int _minimumRpm;
+    private readonly int _maximumRpm;
+    private readonly bool _hasFirmwareRpmRange;
     public byte[]? ResultCurve { get; private set; }
 
     private static readonly byte[] DefaultCurve = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     private static readonly int[] CurveTemperatures = [30, 40, 50, 55, 60, 65, 70, 80, 90, 100];
 
-    public FanCurveEditorWindow(string fanName, byte[] currentCurve)
+    public FanCurveEditorWindow(
+        string fanName,
+        byte[] currentCurve,
+        int minimumRpm,
+        int maximumRpm,
+        bool hasFirmwareRpmRange)
     {
         InitializeComponent();
+        _minimumRpm = minimumRpm;
+        _maximumRpm = maximumRpm;
+        _hasFirmwareRpmRange = hasFirmwareRpmRange;
         SourceInitialized += (_, _) => NativeWindowTheme.Apply(this);
         Header.Text = LocalizationService.Get("CurveEditorHeader", fanName);
+        FirmwareRangeText.Text = LocalizationService.Get(
+            minimumRpm > 0 ? "FirmwareRpmRange" : "FirmwareMaxRpm",
+            minimumRpm > 0 ? [minimumRpm, maximumRpm] : [maximumRpm]);
+        FirmwareRangeText.Visibility = hasFirmwareRpmRange
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 
         var source = currentCurve.Length == 10 ? currentCurve : DefaultCurve;
 
         for (var i = 0; i < 10; i++)
         {
-            _values[i] = source[i];
+            _values[i] = (byte)Math.Clamp(
+                (int)source[i],
+                (int)FanTable.MinimumSpeeds[i],
+                10);
+            var minimumPercentage = LevelToPercentage(FanTable.MinimumSpeeds[i]);
+            var maximumPercentage = LevelToPercentage(10);
             var slider = new Slider
             {
                 Orientation = System.Windows.Controls.Orientation.Vertical,
-                Minimum = FanTable.MinimumSpeeds[i],
-                Maximum = 10,
-                Value = source[i],
+                Minimum = minimumPercentage,
+                Maximum = maximumPercentage,
+                Value = LevelToPercentage(_values[i]),
                 IsSnapToTickEnabled = true,
-                TickFrequency = 1,
+                TickFrequency = (maximumPercentage - minimumPercentage) /
+                    (10 - FanTable.MinimumSpeeds[i]),
                 TickPlacement = TickPlacement.TopLeft,
                 Margin = new Thickness(6, 0, 6, 0),
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -60,7 +83,7 @@ public partial class FanCurveEditorWindow : Window
 
             var label = new TextBlock
             {
-                Text = $"{source[i] * 10}%",
+                Text = FormatPercentage(_values[i]),
                 FontSize = 10,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center
             };
@@ -75,8 +98,10 @@ public partial class FanCurveEditorWindow : Window
 
     private void OnSliderChanged(int idx)
     {
-        _values[idx] = (byte)Math.Round(_sliders[idx].Value);
-        _valueLabels[idx].Text = $"{_values[idx] * 10}%";
+        _values[idx] = (byte)Math.Max(
+            FanTable.MinimumSpeeds[idx],
+            PercentageToLevel(_sliders[idx].Value));
+        _valueLabels[idx].Text = FormatPercentage(_values[idx]);
         DrawCurve();
         ErrorText.Visibility = Visibility.Collapsed;
     }
@@ -127,7 +152,7 @@ public partial class FanCurveEditorWindow : Window
         for (var i = 0; i < 10; i++)
         {
             var x = firstPointX + i * stepW;
-            var y = verticalInset + h - (_values[i] / 10.0 * h);
+            var y = verticalInset + h - (LevelToPercentage(_values[i]) / 100d * h);
             polyline.Points.Add(new System.Windows.Point(x, y));
         }
 
@@ -179,10 +204,32 @@ public partial class FanCurveEditorWindow : Window
         for (var i = 0; i < 10; i++)
         {
             _values[i] = DefaultCurve[i];
-            _sliders[i].Value = DefaultCurve[i];
-            _valueLabels[i].Text = $"{DefaultCurve[i] * 10}%";
+            _sliders[i].Value = LevelToPercentage(DefaultCurve[i]);
+            _valueLabels[i].Text = FormatPercentage(DefaultCurve[i]);
         }
         DrawCurve();
         ErrorText.Visibility = Visibility.Collapsed;
     }
+
+    private double LevelToPercentage(byte level) =>
+        _hasFirmwareRpmRange
+            ? FanFirmwareCompatibility.FanLevelToPercentage(
+                level,
+                _minimumRpm,
+                _maximumRpm)
+            : level * 10d;
+
+    private byte PercentageToLevel(double percentage) =>
+        _hasFirmwareRpmRange
+            ? FanFirmwareCompatibility.PercentageToFanLevel(
+                percentage,
+                _minimumRpm,
+                _maximumRpm)
+            : (byte)Math.Clamp(
+                (int)Math.Round(percentage / 10d, MidpointRounding.AwayFromZero),
+                0,
+                10);
+
+    private string FormatPercentage(byte level) =>
+        $"{Math.Round(LevelToPercentage(level), MidpointRounding.AwayFromZero):0}%";
 }

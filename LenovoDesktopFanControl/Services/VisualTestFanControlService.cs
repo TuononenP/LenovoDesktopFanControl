@@ -57,7 +57,9 @@ internal sealed class VisualTestFanControlService(int fanCount) : IWmiFanControl
                 CurrentRpm = 920 + index * 280,
                 Temperature = 42 + index * 5,
                 IsAvailable = true,
-                MaxRpm = 2500 + index * 250
+                MaxRpm = 2500 + index * 250,
+                MinRpm = 500,
+                HasFirmwareRpmRange = true
             })
             .ToList();
         return Task.FromResult(fans);
