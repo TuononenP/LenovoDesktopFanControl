@@ -165,6 +165,7 @@
                         MinWidth="86"
                         Padding="12,9"
                         VerticalAlignment="Top"
+                        Visibility="{Binding ShowTemperature, Converter={StaticResource Bool2Vis}}"
                         Command="{Binding OpenTemperatureChartCommand}"
                         ToolTip="Click to view temperature history"
                         Cursor="Hand"

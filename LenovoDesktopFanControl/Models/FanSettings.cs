@@ -7,6 +7,7 @@ public class FanSettings
     public Dictionary<int, byte[]> FanCurves { get; set; } = new();
     public Dictionary<int, string> FanNames { get; set; } = new();
     public Dictionary<int, TemperatureHistory> TemperatureHistory { get; set; } = new();
+    public Dictionary<string, TemperatureHistory> SystemTemperatureHistory { get; set; } = new();
     public int PollingIntervalMs { get; set; } = 2000;
     public bool StartWithWindows { get; set; }
     public bool MinimizeToTray { get; set; } = true;

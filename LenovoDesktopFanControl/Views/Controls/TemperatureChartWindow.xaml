@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <StackPanel>
-            <TextBlock Text="{Binding FanName}" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding SourceName}" FontSize="22" FontWeight="SemiBold" />
             <TextBlock Text="Temperature history · detailed for the last hour, compacted up to 12 hours"
                        Margin="0,5,0,0" Foreground="{StaticResource TextMutedBrush}" />
         </StackPanel>

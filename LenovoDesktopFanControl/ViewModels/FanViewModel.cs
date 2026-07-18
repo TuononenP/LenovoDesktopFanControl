@@ -19,6 +19,7 @@ public class FanViewModel : INotifyPropertyChanged
     private string _fanName = "";
     private bool _hasCustomName;
     private bool _isEditingName;
+    private bool _showTemperature = true;
     private readonly string? _nameResourceKey;
     private readonly object? _nameResourceArgument;
 
@@ -51,6 +52,17 @@ public class FanViewModel : INotifyPropertyChanged
     public ObservableCollection<FanChannelViewModel> Channels { get; } = [];
     public TemperatureHistory TemperatureHistory { get; } = new();
     public bool HasMultipleChannels => Channels.Count > 1;
+
+    public bool ShowTemperature
+    {
+        get => _showTemperature;
+        internal set
+        {
+            if (_showTemperature == value) return;
+            _showTemperature = value;
+            OnPropertyChanged();
+        }
+    }
 
     public int? CurrentRpm
     {

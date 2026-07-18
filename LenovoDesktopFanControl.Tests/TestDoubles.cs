@@ -66,6 +66,14 @@ internal sealed class FakeFanControlService : IWmiFanControlService
     public void Dispose() => IsDisposed = true;
 }
 
+internal sealed class FakeSystemTemperatureService(
+    IReadOnlyList<SystemTemperatureReading> readings) : ISystemTemperatureService
+{
+    public Task<IReadOnlyList<SystemTemperatureReading>> ReadAsync() => Task.FromResult(readings);
+
+    public void Dispose() { }
+}
+
 internal sealed class InMemorySettingsService(FanSettings? settings = null) : ISettingsService
 {
     public FanSettings Settings { get; set; } = settings ?? new FanSettings();

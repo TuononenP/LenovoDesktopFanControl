@@ -9,6 +9,11 @@ Set-StrictMode -Version Latest
 
 $publisher = 'CN=LenovoDesktopFanControl'
 $codeSigningOid = '1.3.6.1.5.5.7.3.3'
+if ($null -eq (Get-PSDrive -Name Cert -ErrorAction SilentlyContinue)) {
+    Write-Verbose 'Development signing skipped because the certificate provider is not available.'
+    return
+}
+
 $certificate = Get-ChildItem Cert:\CurrentUser\My |
     Where-Object {
         $_.Subject -eq $publisher -and

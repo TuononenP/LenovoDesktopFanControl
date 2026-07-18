@@ -4,6 +4,7 @@
         AfterTargets="Build"
         Condition="'$(OS)' == 'Windows_NT'
                    and '$(DesignTimeBuild)' != 'true'
+                   and '$(CI)' != 'true'
                    and '$(TargetFramework)' != ''
                    and Exists('$(MSBuildThisFileDirectory)tools\Sign-DevelopmentBuild.ps1')">
         <Exec

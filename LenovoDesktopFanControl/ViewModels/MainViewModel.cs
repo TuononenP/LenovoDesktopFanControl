@@ -22,6 +22,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly ISettingsService _settingsService;
     private readonly IAutoStartService _autoStartService;
     private readonly DispatcherTimer _timer;
+    private readonly ISystemTemperatureService _systemTemperatureService;
 
     private FanSettings _settings;
     private bool _isSupported;
@@ -37,6 +38,7 @@ public class MainViewModel : INotifyPropertyChanged
     private string _conflictWarning = "";
 
     public ObservableCollection<FanViewModel> Fans { get; } = [];
+    public ObservableCollection<SystemTemperatureViewModel> SystemTemperatures { get; } = [];
     public LightingViewModel Lighting { get; }
 
     public ObservableCollection<LanguageInfo> AvailableLanguages { get; } = [];
@@ -150,12 +152,16 @@ public class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel(IWmiFanControlService service, ISettingsService settingsService,
         IAutoStartService? autoStartService = null,
-        ILightingControlService? lightingControlService = null)
+        ILightingControlService? lightingControlService = null,
+        ISystemTemperatureService? systemTemperatureService = null)
     {
         _service = service;
         _settingsService = settingsService;
         _autoStartService = autoStartService ?? new AutoStartService();
         _settings = new FanSettings();
+        _systemTemperatureService = systemTemperatureService ?? new SystemTemperatureService();
+        foreach (var name in new[] { "GPU", "CPU", "SSD", "Motherboard" })
+            SystemTemperatures.Add(new SystemTemperatureViewModel(name, OpenTemperatureChart));
         Lighting = new LightingViewModel(lightingControlService);
         Lighting.Applied += OnLightingApplied;
         Lighting.SettingsChanged += OnLightingSettingsChanged;
@@ -249,6 +255,11 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _settings = _settingsService.Load();
+            foreach (var temperature in SystemTemperatures)
+            {
+                if (_settings.SystemTemperatureHistory.TryGetValue(temperature.Name, out var history))
+                    temperature.RestoreTemperatureHistory(history);
+            }
             _timer.Interval = TimeSpan.FromMilliseconds(
                 Math.Clamp(_settings.PollingIntervalMs, 500, 10_000));
 
@@ -301,6 +312,7 @@ public class MainViewModel : INotifyPropertyChanged
                 vm.TargetSpeedPercentage = zoneCurve[^1] * 10;
                 Fans.Add(vm);
             }
+            UpdateSharedTemperaturePresentation();
 
             if (Fans.Count > 0)
             {
@@ -392,9 +404,11 @@ public class MainViewModel : INotifyPropertyChanged
                     }
                 }
                 fan.RefreshSummary();
-                if (fan.Temperature is int currentTemperature)
+                if (fan.ShowTemperature && fan.Temperature is int currentTemperature)
                     fan.RecordTemperature(currentTemperature);
             }
+
+            await RefreshSystemTemperaturesAsync();
 
             if (DateTime.UtcNow - _lastTemperatureHistorySaveUtc >= TimeSpan.FromMinutes(5))
             {
@@ -411,6 +425,77 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Interlocked.Exchange(ref _refreshInProgress, 0);
         }
+    }
+
+    private async Task RefreshSystemTemperaturesAsync()
+    {
+        try
+        {
+            var readings = await _systemTemperatureService.ReadAsync();
+            foreach (var reading in readings)
+            {
+                var viewModel = SystemTemperatures.FirstOrDefault(item => item.Name == reading.Name);
+                viewModel?.Update(reading);
+            }
+
+            // Lenovo's desktop GameZone firmware exposes a shared thermal sensor
+            // for the chassis fans, but does not name it.  The current Legion T7
+            // firmware reports it as sensor 2 and LibreHardwareMonitor exposes no
+            // Super I/O sensor for the Lenovo 3784 board.  Use it only when a
+            // named motherboard sensor is unavailable, and preserve the source
+            // detail so it is not presented as a confirmed board-die reading.
+            if (readings.FirstOrDefault(reading => reading.Name == "Motherboard")?.Celsius is null)
+            {
+                var fallback = FindFirmwareSystemTemperature();
+                if (fallback != null)
+                {
+                    SystemTemperatures.FirstOrDefault(item => item.Name == "Motherboard")
+                        ?.Update(fallback);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"System temperature refresh failed: {ex.Message}");
+        }
+    }
+
+    private SystemTemperatureReading? FindFirmwareSystemTemperature()
+    {
+        var sensor = Fans
+            .SelectMany(fan => fan.Channels)
+            .Where(channel => channel.Temperature is int temperature &&
+                              FanFirmwareCompatibility.IsValidTemperature(temperature))
+            .GroupBy(channel => channel.SensorId)
+            .Select(group => new
+            {
+                SensorId = group.Key,
+                FanCount = group.Select(channel => channel.TelemetryId).Distinct().Count(),
+                Celsius = (int)Math.Round(group.Average(channel => channel.Temperature!.Value))
+            })
+            .Where(sensor => sensor.FanCount >= 2)
+            .OrderByDescending(sensor => sensor.FanCount)
+            .ThenBy(sensor => sensor.SensorId)
+            .FirstOrDefault();
+
+        return sensor == null
+            ? null
+            : new SystemTemperatureReading(
+                "Motherboard",
+                sensor.Celsius,
+                $"Lenovo firmware shared system sensor (ID {sensor.SensorId})");
+    }
+
+    private void UpdateSharedTemperaturePresentation()
+    {
+        var sharedSensorIds = Fans
+            .GroupBy(fan => fan.SensorId)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToHashSet();
+
+        foreach (var fan in Fans)
+            fan.ShowTemperature = !sharedSensorIds.Contains(fan.SensorId);
     }
 
     public async Task ShutdownConflictingSoftwareAsync()
@@ -454,6 +539,15 @@ public class MainViewModel : INotifyPropertyChanged
     public void OpenTemperatureChart(FanViewModel fan)
     {
         var chart = new TemperatureChartWindow(fan)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        chart.ShowDialog();
+    }
+
+    public void OpenTemperatureChart(SystemTemperatureViewModel temperature)
+    {
+        var chart = new TemperatureChartWindow(temperature)
         {
             Owner = System.Windows.Application.Current?.MainWindow
         };
@@ -799,9 +893,19 @@ public class MainViewModel : INotifyPropertyChanged
         _settings.TemperatureHistory.Clear();
         foreach (var fan in Fans)
         {
+            if (!fan.ShowTemperature)
+                continue;
             fan.TemperatureHistory.Compact(DateTime.UtcNow);
             if (fan.TemperatureHistory.Samples.Count > 0)
                 _settings.TemperatureHistory[fan.FanId] = fan.TemperatureHistory;
+        }
+
+        _settings.SystemTemperatureHistory.Clear();
+        foreach (var temperature in SystemTemperatures)
+        {
+            temperature.TemperatureHistory.Compact(DateTime.UtcNow);
+            if (temperature.TemperatureHistory.Samples.Count > 0)
+                _settings.SystemTemperatureHistory[temperature.Name] = temperature.TemperatureHistory;
         }
     }
 }

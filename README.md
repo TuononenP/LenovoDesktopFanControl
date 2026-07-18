@@ -84,6 +84,7 @@ Enabling **Start with Windows** creates a per-user Task Scheduler logon task wit
 - A Windows LampArray-compatible Lenovo lighting controller for lighting control
 - An NVIDIA display driver for lighting control on the supported Lenovo OEM RTX 5080
 - Administrator privileges for Lenovo WMI operations
+- The official signed [PawnIO](https://pawnio.eu/) driver for low-level CPU and motherboard temperature telemetry
 
 Target framework: `net10.0-windows10.0.26100.0`.
 
@@ -266,6 +267,13 @@ The workflow can also be started manually from the GitHub Actions page by provid
 - Close other fan-control applications reported by the conflict warning.
 - Review `%LOCALAPPDATA%\LenovoDesktopFanControl\log.txt`.
 
+### CPU or motherboard temperature is unavailable
+
+- Install the official signed [PawnIO](https://pawnio.eu/) driver and restart the application.
+- Run the application as administrator.
+- Review the LibreHardwareMonitor sensor inventory in `%LOCALAPPDATA%\LenovoDesktopFanControl\log.txt`.
+- Motherboard temperature requires a `System` or `Motherboard` sensor exposed by the board's Super I/O controller; unsupported boards remain clearly marked as unavailable.
+
 ### Lighting does not appear
 
 - Confirm Windows Dynamic Lighting recognizes the device.
@@ -288,3 +296,7 @@ Exit the application and rename or delete `%LOCALAPPDATA%\LenovoDesktopFanContro
 ## License
 
 Licensed under the [MIT License](LICENSE).
+
+## Third-party notices
+
+The application includes [LibreHardwareMonitorLib 0.9.6](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) for CPU, SSD, and motherboard temperature telemetry. LibreHardwareMonitorLib is licensed under the [Mozilla Public License 2.0](https://www.mozilla.org/MPL/2.0/). Its corresponding source code and third-party notices are available from the linked project; this application does not modify that library. A copy of this notice is included with every application build as `THIRD-PARTY-NOTICES.md`.

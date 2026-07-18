@@ -260,6 +260,34 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_HidesRepeatedSharedTemperatureFromFanCards()
+    {
+        var service = new FakeFanControlService
+        {
+            DiscoveredFans =
+            [
+                new FanInfo { FanId = 1, SensorId = 2, Temperature = 34 },
+                new FanInfo { FanId = 2, SensorId = 2, Temperature = 34 },
+                new FanInfo { FanId = 3, SensorId = 3, Temperature = 48 }
+            ]
+        };
+        var viewModel = new MainViewModel(
+            service, new InMemorySettingsService(), new FakeAutoStartService());
+        try
+        {
+            await viewModel.InitializeAsync();
+
+            Assert.False(viewModel.Fans[0].ShowTemperature);
+            Assert.False(viewModel.Fans[1].ShowTemperature);
+            Assert.True(viewModel.Fans[2].ShowTemperature);
+        }
+        finally
+        {
+            await viewModel.ShutdownAsync();
+        }
+    }
+
+    [Fact]
     public async Task ApplyModeAsync_PersistsModeAndReappliesCurveForCustomMode()
     {
         byte[] curve = [1, 1, 2, 2, 3, 3, 4, 5, 6, 7];
