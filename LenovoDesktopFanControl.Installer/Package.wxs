@@ -1,0 +1,79 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="Lenovo Desktop Fan Control"
+           Manufacturer="Petri Tuononen"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="B2392899-07C7-4175-A9D4-808986E9210E"
+           Scope="perUser">
+    <MediaTemplate EmbedCab="yes" />
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+    <Icon Id="ProductIcon" SourceFile="..\LenovoDesktopFanControl\Assets\AppIcon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
+
+    <!-- The stock WiX wizard keeps Windows Installer's familiar behavior while
+         using app-branded artwork for its welcome, completion, and banner areas. -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <WixVariable Id="WixUIDialogBmp" Value="Assets\InstallerDialog.png" />
+    <WixVariable Id="WixUIBannerBmp" Value="Assets\InstallerBanner.png" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="INSTALLFOLDER" Name="Lenovo Desktop Fan Control" />
+    </StandardDirectory>
+    <ComponentGroupRef Id="PublishedApplicationFiles" />
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="Lenovo Desktop Fan Control">
+        <Component Id="StartMenuShortcutComponent">
+          <Shortcut Id="StartMenuShortcut"
+                    Name="Lenovo Desktop Fan Control"
+                    Description="Control Lenovo desktop cooling and lighting"
+                    Target="[INSTALLFOLDER]LenovoDesktopFanControl.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\LenovoDesktopFanControl"
+                         Name="StartMenuShortcut"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- The packaged custom-action DLL is stored in the MSI Binary table and
+         extracted to Windows Installer's secure working directory. It is never
+         installed into the user-writable application directory. -->
+    <Binary Id="InstallerActions"
+            SourceFile="$(var.InstallerActionsPath)" />
+    <CustomAction Id="StopApplicationAndLightingHost"
+                  BinaryRef="InstallerActions"
+                  DllEntry="StopApplicationAndLightingHost"
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="check" />
+    <CustomAction Id="RemoveLightingStartup"
+                  BinaryRef="InstallerActions"
+                  DllEntry="RemoveLightingStartup"
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="check" />
+    <CustomAction Id="StartLightingHostAfterInstall"
+                  BinaryRef="InstallerActions"
+                  DllEntry="StartLightingHost"
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="check" />
+    <InstallExecuteSequence>
+      <Custom Action="StopApplicationAndLightingHost"
+              Before="RemoveLightingStartup"
+              Condition="Installed OR WIX_UPGRADE_DETECTED" />
+      <Custom Action="StartLightingHostAfterInstall"
+              After="InstallFinalize"
+              Condition="NOT REMOVE" />
+      <Custom Action="RemoveLightingStartup"
+              Before="RemoveFiles"
+              Condition="REMOVE=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>

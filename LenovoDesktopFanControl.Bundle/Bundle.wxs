@@ -1,0 +1,25 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <!-- WixStdBA selects its UI language from Windows and falls back to English.
+       The chained MSI contains all application satellite resources; Burn hides
+       its internal UI, so one neutral MSI is sufficient. -->
+  <Bundle Name="Lenovo Desktop Fan Control"
+          Manufacturer="Petri Tuononen"
+          Version="$(var.BundleVersion)"
+          UpgradeCode="D3C6BD2E-50D9-4AF3-B5B9-225E93C5DB83"
+          DisableModify="button">
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+          Theme="hyperlinkSidebarLicense"
+          LicenseUrl=""
+          LogoSideFile="..\LenovoDesktopFanControl.Installer\Assets\InstallerDialog.png"
+          ShowVersion="yes" />
+    </BootstrapperApplication>
+
+    <Chain>
+      <MsiPackage Id="ApplicationMsi"
+                  SourceFile="$(var.MsiOutputDirectory)\en-US\LenovoDesktopFanControl-Setup.msi"
+                  Name="msi\LenovoDesktopFanControl-Setup.msi" />
+    </Chain>
+  </Bundle>
+</Wix>

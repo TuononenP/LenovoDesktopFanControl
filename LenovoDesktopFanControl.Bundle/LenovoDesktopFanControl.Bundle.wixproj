@@ -1,0 +1,25 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputType>Bundle</OutputType>
+    <OutputName>LenovoDesktopFanControl-Setup</OutputName>
+    <BundleVersion Condition="'$(BundleVersion)' == ''">$(MsiProductVersion)</BundleVersion>
+    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">$(BundleVersion)</ApplicationVersion>
+    <MsiOutputDirectory>$(MSBuildProjectDirectory)\..\LenovoDesktopFanControl.Installer\bin\$(Configuration)</MsiOutputDirectory>
+    <BuildLocalizedMsi Condition="'$(BuildLocalizedMsi)' == ''">true</BuildLocalizedMsi>
+    <DefineConstants>BundleVersion=$(BundleVersion);MsiOutputDirectory=$(MsiOutputDirectory)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.BootstrapperApplications.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+  <!-- The MSIs are source payloads for Setup.exe. Release CI builds and signs
+       them before building the bundle, then sets BuildLocalizedMsi=false. -->
+  <Target Name="BuildLocalizedMsi"
+          BeforeTargets="CoreCompile"
+          Condition="'$(BuildLocalizedMsi)' == 'true'">
+    <MSBuild Projects="$(MSBuildProjectDirectory)\..\LenovoDesktopFanControl.Installer\LenovoDesktopFanControl.Installer.wixproj"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);ProductVersion=$(BundleVersion);ApplicationVersion=$(ApplicationVersion);ReleaseSigningCertificatePath=$(ReleaseSigningCertificatePath);ReleaseSigningCertificatePassword=$(ReleaseSigningCertificatePassword)" />
+  </Target>
+</Project>

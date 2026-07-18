@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="fr-FR">
+  <String Id="DowngradeError" Value="Une version plus récente de Lenovo Desktop Fan Control est déjà installée." />
+</WixLocalization>

@@ -1,0 +1,62 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <OutputName>LenovoDesktopFanControl-Setup</OutputName>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">$(MsiProductVersion)</ProductVersion>
+    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">$(ProductVersion)</ApplicationVersion>
+    <PublishDirectory>$(MSBuildProjectDirectory)\obj\publish\</PublishDirectory>
+    <PublishDirectoryNoTrailingSlash>$([System.String]::Copy('$(PublishDirectory)').TrimEnd('\'))</PublishDirectoryNoTrailingSlash>
+    <GeneratedInstallerFilesPath>$(MSBuildProjectDirectory)\obj\$(Configuration)\GeneratedInstallerFiles.wxs</GeneratedInstallerFilesPath>
+    <InstallerActionsPath>$(MSBuildProjectDirectory)\..\LenovoDesktopFanControl.InstallerActions\bin\$(Configuration)\net48\LenovoDesktopFanControl.InstallerActions.CA.dll</InstallerActionsPath>
+    <DefineConstants>PublishDirectory=$(PublishDirectory);ProductVersion=$(ProductVersion);InstallerActionsPath=$(InstallerActionsPath)</DefineConstants>
+    <!-- A release must never be published when Windows Installer ICE
+         validation was skipped or produced any other WiX warning. -->
+    <TreatWarningsAsErrors Condition="'$(CI)' == 'true'">true</TreatWarningsAsErrors>
+    <!-- ICE91 is intentionally inapplicable: this package has fixed per-user
+         scope and installs into LocalAppData. Microsoft documents ICE91
+         warnings as harmless for packages never used per-machine. -->
+    <SuppressIces>ICE91</SuppressIces>
+    <!-- This workstation's policy blocks the Windows Installer service calls
+         used by ICE validation. Skip that unavailable local check without
+         hiding it in CI; pass -p:SuppressValidation=false from an elevated
+         local shell to run ICE validation manually. -->
+    <SuppressValidation Condition="'$(CI)' != 'true'">true</SuppressValidation>
+    <!-- The bundle hides MSI UI and supplies localized setup UI itself, so the
+         release payload only needs one English fallback MSI. Pass Cultures on
+         the command line to produce standalone localized MSIs when required. -->
+    <Cultures Condition="'$(Cultures)' == ''">en-US</Cultures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <ProjectReference Include="..\LenovoDesktopFanControl.InstallerActions\LenovoDesktopFanControl.InstallerActions.csproj"
+                      ReferenceOutputAssembly="false" />
+    <Compile Include="$(GeneratedInstallerFilesPath)" />
+  </ItemGroup>
+
+  <Target Name="PublishApplication" BeforeTargets="CoreCompile">
+    <MSBuild Projects="..\LenovoDesktopFanControl\LenovoDesktopFanControl.csproj"
+             Targets="Restore;Publish"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishSingleFile=false;PublishDir=$(PublishDirectory);Version=$(ApplicationVersion)" />
+  </Target>
+
+  <Target Name="EnsureInstallerActionsPackaged"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="ResolveProjectReferences">
+    <Error Condition="!Exists('$(InstallerActionsPath)')"
+           Text="The packaged DTF custom action was not produced at '$(InstallerActionsPath)'." />
+  </Target>
+
+  <Target Name="GenerateInstallerFiles"
+          AfterTargets="PublishApplication"
+          BeforeTargets="CoreCompile">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\Generate-InstallerFiles.ps1&quot; -PublishDirectory &quot;$(PublishDirectoryNoTrailingSlash)&quot; -OutputPath &quot;$(GeneratedInstallerFilesPath)&quot;" />
+  </Target>
+
+  <Target Name="SignPublishedApplication"
+          AfterTargets="PublishApplication"
+          BeforeTargets="CoreCompile"
+          Condition="'$(ReleaseSigningCertificatePath)' != ''">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\Sign-ReleaseArtifacts.ps1&quot; -CertificatePath &quot;$(ReleaseSigningCertificatePath)&quot; -CertificatePassword &quot;$(ReleaseSigningCertificatePassword)&quot; -FilePaths &quot;$(PublishDirectory)LenovoDesktopFanControl.exe&quot;" />
+  </Target>
+</Project>

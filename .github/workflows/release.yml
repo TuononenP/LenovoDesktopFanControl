@@ -22,7 +22,9 @@ jobs:
   build-and-release:
     name: Build and publish release
     runs-on: windows-latest
-    timeout-minutes: 30
+    # Leave enough room for publishing, installer validation, signing,
+    # checksums, workflow-artifact upload, and GitHub release upload.
+    timeout-minutes: 60
 
     env:
       PROJECT: LenovoDesktopFanControl/LenovoDesktopFanControl.csproj
@@ -39,7 +41,9 @@ jobs:
         with:
           dotnet-version: "10.0.x"
           cache: true
-          cache-dependency-path: "**/*.csproj"
+          cache-dependency-path: |
+            **/*.csproj
+            **/*.wixproj
 
       - name: Resolve release version
         id: version
@@ -53,8 +57,8 @@ jobs:
             $version = "${{ github.ref_name }}".TrimStart('v')
           }
 
-          if ($version -notmatch '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$') {
-            throw "Version '$version' is not a valid semantic version."
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Version '$version' must be a stable major.minor.patch version because MSI upgrades cannot order pre-release labels."
           }
 
           "version=$version" >> $env:GITHUB_OUTPUT
@@ -65,6 +69,27 @@ jobs:
         run: |
           dotnet restore $env:SOLUTION
           dotnet restore $env:PROJECT --runtime win-x64
+          dotnet restore LenovoDesktopFanControl.Installer/LenovoDesktopFanControl.Installer.wixproj
+          dotnet restore LenovoDesktopFanControl.Bundle/LenovoDesktopFanControl.Bundle.wixproj
+
+      - name: Prepare release signing certificate
+        id: signing
+        shell: pwsh
+        env:
+          SIGNING_CERTIFICATE_BASE64: ${{ secrets.SIGNING_CERTIFICATE_BASE64 }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SIGNING_CERTIFICATE_BASE64) -or
+              [string]::IsNullOrWhiteSpace($env:SIGNING_CERTIFICATE_PASSWORD)) {
+            Write-Warning "Signing secrets are unavailable. Publishing clearly named unsigned artifacts."
+            "enabled=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          $certificatePath = Join-Path $env:RUNNER_TEMP "LenovoDesktopFanControl-release-signing.pfx"
+          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:SIGNING_CERTIFICATE_BASE64))
+          "RELEASE_SIGNING_CERTIFICATE_PATH=$certificatePath" >> $env:GITHUB_ENV
+          "RELEASE_SIGNING_CERTIFICATE_PASSWORD=$env:SIGNING_CERTIFICATE_PASSWORD" >> $env:GITHUB_ENV
+          "enabled=true" >> $env:GITHUB_OUTPUT
 
       - name: Test
         run: dotnet test $env:SOLUTION --configuration Release --no-restore
@@ -97,20 +122,78 @@ jobs:
             -p:DebugType=None `
             -p:DebugSymbols=false
 
+      - name: Sign application executables
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Sign-ReleaseArtifacts.ps1 `
+            -CertificatePath $env:RELEASE_SIGNING_CERTIFICATE_PATH `
+            -CertificatePassword $env:RELEASE_SIGNING_CERTIFICATE_PASSWORD `
+            -FilePaths artifacts/portable/LenovoDesktopFanControl.exe,artifacts/self-contained/LenovoDesktopFanControl.exe
+
+      - name: Build MSI installer
+        shell: pwsh
+        run: |
+          $msiVersion = "${{ steps.version.outputs.version }}"
+          dotnet build LenovoDesktopFanControl.Installer/LenovoDesktopFanControl.Installer.wixproj `
+            --configuration Release `
+            --no-restore `
+            -p:ProductVersion=$msiVersion `
+            -p:ApplicationVersion=${{ steps.version.outputs.version }} `
+            -p:ReleaseSigningCertificatePath=$env:RELEASE_SIGNING_CERTIFICATE_PATH `
+            -p:ReleaseSigningCertificatePassword=$env:RELEASE_SIGNING_CERTIFICATE_PASSWORD
+
+      - name: Sign MSI installers
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          $msiFiles = Get-ChildItem "LenovoDesktopFanControl.Installer/bin/Release" -Recurse -Filter "*.msi" |
+            Select-Object -ExpandProperty FullName
+          if ($msiFiles.Count -ne 1) {
+            throw "Expected one neutral MSI payload, found $($msiFiles.Count)."
+          }
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Sign-ReleaseArtifacts.ps1 `
+            -CertificatePath $env:RELEASE_SIGNING_CERTIFICATE_PATH `
+            -CertificatePassword $env:RELEASE_SIGNING_CERTIFICATE_PASSWORD `
+            -FilePaths $msiFiles
+
+      - name: Build localized Setup bundle
+        shell: pwsh
+        run: |
+          dotnet build LenovoDesktopFanControl.Bundle/LenovoDesktopFanControl.Bundle.wixproj `
+            --configuration Release `
+            --no-restore `
+            -p:BundleVersion=${{ steps.version.outputs.version }} `
+            -p:ApplicationVersion=${{ steps.version.outputs.version }} `
+            -p:BuildLocalizedMsi=false
+
+      - name: Sign Setup bundle
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Sign-ReleaseArtifacts.ps1 `
+            -CertificatePath $env:RELEASE_SIGNING_CERTIFICATE_PATH `
+            -CertificatePassword $env:RELEASE_SIGNING_CERTIFICATE_PASSWORD `
+            -FilePaths LenovoDesktopFanControl.Bundle/bin/Release/LenovoDesktopFanControl-Setup.exe
+
       - name: Package artifacts and checksums
         id: package
         shell: pwsh
         run: |
           $version = "${{ steps.version.outputs.version }}"
+          $artifactSuffix = if ("${{ steps.signing.outputs.enabled }}" -eq "true") { "" } else { "-unsigned" }
           $releaseDirectory = Join-Path $PWD "release"
           New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
 
-          $portable = Join-Path $releaseDirectory "LenovoDesktopFanControl-$version-win-x64.zip"
-          $selfContained = Join-Path $releaseDirectory "LenovoDesktopFanControl-$version-win-x64-self-contained.zip"
+          $portable = Join-Path $releaseDirectory "LenovoDesktopFanControl-$version-win-x64$artifactSuffix.zip"
+          $selfContained = Join-Path $releaseDirectory "LenovoDesktopFanControl-$version-win-x64-self-contained$artifactSuffix.zip"
           Compress-Archive -Path "artifacts/portable/*" -DestinationPath $portable
           Compress-Archive -Path "artifacts/self-contained/*" -DestinationPath $selfContained
+          $setupBundle = Join-Path $releaseDirectory "LenovoDesktopFanControl-$version-win-x64-Setup$artifactSuffix.exe"
+          Copy-Item "LenovoDesktopFanControl.Bundle/bin/Release/LenovoDesktopFanControl-Setup.exe" $setupBundle
 
-          Get-FileHash $portable, $selfContained -Algorithm SHA256 |
+          $filesToHash = @($portable, $selfContained, $setupBundle)
+          Get-FileHash $filesToHash -Algorithm SHA256 |
             ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |
             Set-Content -Path (Join-Path $releaseDirectory "SHA256SUMS.txt") -Encoding ascii
 

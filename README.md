@@ -39,22 +39,25 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 - Lighting power and brightness controls
 - Global color selection
 - Independent power and color selection for detected lighting zones
-- Saved lighting preferences restored at startup and when Windows grants lighting control
+- A persistent background host keeps the complete per-zone profile active when the UI closes
+- Saved lighting preferences restored when the background host starts
 - Windows 11 ambient background-lighting registration
 
 ### Desktop integration
 
-- Start with Windows through an elevated logon task
+- Start the lighting background host with Windows through an elevated logon task
 - Minimize or close to the notification area; use the tray menu to exit
 - Single-instance application behavior
-- English and Finnish localization
+- English, Finnish, Simplified Chinese, French, German, Spanish, Japanese, and Korean localization
 - High-contrast palette support
 - Administrator elevation through the application manifest
 - Conflict detection for other fan-control applications
 
 ## Lighting Behavior
 
-The application controls tower lighting through Windows LampArray. An ordinary unpackaged LampArray app only controls lighting while it is in the foreground. On Windows 11 build 23466 and later, the included sparse package identity registers the app as an ambient background-lighting controller so that its selected color can remain active while another window is in the foreground.
+The application controls tower lighting through Windows LampArray. A hidden background host owns LampArray for the full user session; the interactive WPF window sends its lighting commands to that host through a local named pipe. Consequently, on supported ambient-lighting systems, opening or exiting the UI does not release the controller or cause a lighting reset, and the full per-zone profile remains active after the UI exits.
+
+On Windows 11 build 23466 and later, the included sparse package identity registers the app as an ambient background-lighting controller so that its selected color can remain active while another window is in the foreground.
 
 No Lenovo application or DLL is required by this project. If the exact supported controller (`VID 17EF`, `PID C955`) is present but Windows reports zero lamps, the application checks the firmware-provided `LENOVO_GAMEZONE_DATA` WMI interface. It enables Dynamic Lighting only when the firmware reports that the feature is supported and currently disabled, then retries Windows LampArray discovery. Controllers that do not match, already expose lamps, or report no firmware support are never modified.
 
@@ -68,13 +71,25 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Install-Backgrou
 .\artifacts\background-lighting\LenovoDesktopFanControl.exe
 ```
 
-Approve the administrator prompt, then open **Settings > Personalization > Dynamic Lighting > Background light control** and move **Lenovo Desktop Fan Control** to the top of the priority list. Registration uses a local development certificate and applies only to the specified build output. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Uninstall-BackgroundLighting.ps1` to remove the identity and certificate.
+Approve the administrator prompt, then open **Settings > Personalization > Dynamic Lighting > Background light control** and move **Lenovo Desktop Fan Control** to the top of the priority list. Registration uses a local development certificate and applies only to the specified build output. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Uninstall-BackgroundLighting.ps1` to stop the host and remove its startup task, identity, and certificate.
 
 The registration script also signs the selected local app build. Once that development certificate exists, subsequent `dotnet build` and IDE builds are signed automatically so Windows Smart App Control does not block the rebuilt managed DLL.
 
-Windows 10 supports foreground LampArray control only. On exit, a short-lived helper waits for Windows to release LampArray ownership, then saves a uniform static tower color through the exact controller's guarded vendor HID interface (`VID 17EF`, `PID C955`, usage `FF89:00CC`). This lets a global static color survive after LampArray ownership is released without Lenovo software. Independent per-zone LampArray colors cannot be represented by that firmware profile, so keep the registered application running or minimized in the notification area when using them.
+The background host restores each saved zone's power, color, and brightness at host startup, including the supported GPU zone. This avoids relying on the controller's limited uniform firmware profile. Windows 10 treats LampArray control as foreground-only, so it cannot guarantee an active profile after the UI exits; use Windows 11 with the ambient background-lighting registration for persistent operation.
 
-Enabling **Start with Windows** creates a per-user Task Scheduler logon task with the highest available privileges and starts the app minimized to the notification area. This avoids the delay and elevation limitations of an ordinary `Run` registry entry. The window close button keeps the lighting controller running in the tray; choose **Exit** from the tray menu to stop the process.
+Enabling **Start with Windows** creates a user-specific Task Scheduler logon task with the highest available privileges and starts the hidden lighting host at sign-in. This avoids the delay and elevation limitations of an ordinary `Run` registry entry. Closing the window can still minimize it to the tray, while choosing **Exit** closes only the interactive UI—the background host continues managing lighting.
+
+Debug builds use their own IPC names and never stop an installed Release host. A build requests that only the Debug background host exit so its output is unlocked. If the Debug UI is still open or minimized to the tray, the build stops with a clear message; choose **Exit** from the tray menu before rebuilding. To stop the Debug host manually, run:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Stop-BackgroundLighting.ps1
+```
+
+### Uninstalling a manual or ZIP deployment
+
+Exit the interactive UI, then run the background-lighting uninstall script above. It stops the hidden host, removes the Task Scheduler entry, removes any legacy Run-key entry, unregisters the sparse package identity, and removes its development certificate. Afterwards, delete the application's installed folder manually.
+
+An MSI is not required for this workflow. It is useful if you want a standard **Installed apps** entry and an uninstall action that also removes the application files automatically.
 
 `WmiLightingService` is experimental and is not the active runtime backend. The tested controller rejects its undocumented firmware writes, so it should not be treated as a persistent-lighting solution yet.
 
@@ -111,6 +126,24 @@ dotnet build -c Release
 dotnet test -c Release
 ```
 
+Build one self-contained, localized `Setup.exe` installer with a Windows **Installed apps** entry and uninstall support:
+
+```powershell
+dotnet build LenovoDesktopFanControl.Bundle\LenovoDesktopFanControl.Bundle.wixproj -c Release
+```
+
+The build writes `LenovoDesktopFanControl.Bundle\bin\Release\LenovoDesktopFanControl-Setup.exe`. Its WiX setup wizard selects the Windows display language when WiX provides it and otherwise falls back to English. It embeds one neutral MSI that contains the application's English, Finnish, Simplified Chinese, French, German, Spanish, Japanese, and Korean resources; the app selects and saves the matching Windows language at first launch. Each installation is per-user, so its background host, startup task, and uninstall action remain isolated from other user sessions. The installer creates a Start Menu shortcut and uses an embedded, packaged custom-action DLL to close the interactive UI, stop the actual host during maintenance, restart an existing host after install or repair, and remove startup registrations before uninstall deletes files. The elevated app creates or refreshes its user-specific **Start with Windows** task on first launch; the task grants that user removal rights so the per-user uninstaller can remove it without requiring MSI elevation. The setup wizard uses the application's dark blue/violet cooling artwork.
+
+Only `Setup.exe` is distributed. Because it contains one self-contained MSI payload, it is roughly the size of one installer rather than eight (about 65 MB in the current build). To build separate standalone localized MSIs for a special distribution, pass the desired culture list with `'-p:Cultures=en-US;fi-FI;zh-CN;fr-FR;de-DE;es-ES;ja-JP;ko-KR'` when building `LenovoDesktopFanControl.Installer.wixproj`.
+
+Run the generated per-user setup normally:
+
+```powershell
+.\LenovoDesktopFanControl.Bundle\bin\Release\LenovoDesktopFanControl-Setup.exe
+```
+
+To remove it, use **Settings > Apps > Installed apps > Lenovo Desktop Fan Control > Uninstall**.
+
 ## Using the Application
 
 1. Select a SmartFan mode and choose **Apply Mode**.
@@ -118,7 +151,7 @@ dotnet test -c Release
 3. Use **Edit Curve** to configure and apply a ten-point curve for an individual fan zone.
 4. Click a System Temperatures card to view its temperature history. Shared motherboard/system sensors appear there once instead of on every fan card.
 5. In Tower Lighting, enable the lights, select brightness and colors, then choose **Apply Lighting**.
-6. On supported Windows 11 builds, register and prioritize the app for background lighting if the selected color should remain active while another app is in the foreground.
+6. On supported Windows 11 builds, register and prioritize the app for background lighting if the selected color should remain active while another app is in the foreground. The background host keeps the selected profile active after the UI exits.
 
 Applying custom fan control changes firmware behavior. Monitor temperatures and use conservative curves appropriate for the installed hardware.
 
@@ -159,7 +192,7 @@ The application follows MVVM:
 
 - Views define the WPF interface and forward user actions through bindings and commands.
 - View models coordinate polling, commands, status, localization, and persistence.
-- Services isolate WMI, LampArray, settings, startup registration, logging, and native Windows behavior.
+- Services isolate WMI, the persistent LampArray host and UI proxy, settings, startup registration, logging, and native Windows behavior.
 - Models represent firmware modes, fan telemetry, curves, settings, and lighting zones.
 
 At startup, `MainWindow` selects either `VisualTestFanControlService` or `WmiFanControlService`, constructs `MainViewModel`, and initializes settings, lighting, firmware compatibility, and fan discovery. `MainViewModel` periodically refreshes telemetry and persists user configuration through `SettingsService`.
@@ -190,7 +223,10 @@ LenovoDesktopFanControl/
 |   |   |-- IWmiFanControlService.cs         Fan-control abstraction
 |   |   |-- WmiFanControlService.cs          Lenovo WMI fan discovery and control
 |   |   |-- ILightingControlService.cs        Lighting abstraction
-|   |   |-- LampArrayLightingService.cs      Active Windows lighting backend
+|   |   |-- LampArrayLightingService.cs      Host-owned Windows lighting backend
+|   |   |-- LightingBackgroundHost.cs        Persistent LampArray owner and host lifecycle
+|   |   |-- LightingHostProtocol.cs          Named-pipe protocol and host controller
+|   |   |-- PipeLightingControlService.cs    UI proxy for the lighting host
 |   |   |-- LenovoRtxGpuLightingController.cs Standalone Lenovo OEM RTX 5080 lighting
 |   |   |-- DynamicLightingFirmwareRecovery.cs Guarded standalone lighting recovery
 |   |   |-- WmiLightingService.cs            Experimental Lenovo lighting backend
@@ -215,11 +251,20 @@ LenovoDesktopFanControl/
 |   |   |-- Markup/                          Localization markup extension
 |   |   `-- TrayMenuRenderer.cs              Notification-area menu rendering
 |   |-- Themes/                              Colors, controls, and typography
-|   `-- Resources/                           English and Finnish strings
+|   `-- Resources/                           English, Finnish, Chinese, French, German, Spanish, Japanese, and Korean strings
+|-- LenovoDesktopFanControl.Installer/       WiX MSI installer project
+|   |-- LenovoDesktopFanControl.Installer.wixproj MSI build and application publish target
+|   `-- Package.wxs                          MSI install and host-cleanup uninstall action
+|-- LenovoDesktopFanControl.InstallerActions/ Embedded DTF custom-action project
+|   `-- InstallerCustomActions.cs            Secure host lifecycle and task-cleanup actions
+|-- LenovoDesktopFanControl.Bundle/          WiX Burn Setup.exe bundle
+|   |-- LenovoDesktopFanControl.Bundle.wixproj Localized Setup.exe bundle build
+|   `-- Bundle.wxs                           OS-language selection and chained MSI payloads
 |-- Packaging/
 |   `-- AppxManifest.xml                     Ambient background-lighting extension
 |-- tools/
 |   |-- Install-BackgroundLighting.ps1       Local identity registration
+|   |-- Stop-BackgroundLighting.ps1          Stops the lighting host before a build
 |   `-- Uninstall-BackgroundLighting.ps1     Local identity removal
 `-- LenovoDesktopFanControl.Tests/           xUnit test project
     |-- MainViewModelTests.cs                App orchestration and persistence
@@ -248,12 +293,13 @@ Do not commit generated `bin/` or `obj/` output, local settings, or logs.
 
 ## Releases
 
-The release workflow in `.github/workflows/release.yml` runs the complete test suite and publishes two Windows x64 packages:
+The release workflow in `.github/workflows/release.yml` runs the complete test suite and publishes three Windows x64 artifacts:
 
 - A smaller framework-dependent build that requires the .NET 10 Desktop Runtime
 - A self-contained single-file build that includes the required runtime
+- One self-contained, localized `Setup.exe` bundle with Windows **Installed apps** uninstall support
 
-It also publishes `SHA256SUMS.txt` for integrity verification. Create a semantic-version tag to start a release:
+When `SIGNING_CERTIFICATE_BASE64` and `SIGNING_CERTIFICATE_PASSWORD` GitHub repository secrets are available, the release workflow signs the application executables, the internal MSI payload before it is bundled, and the final `Setup.exe` before generating `SHA256SUMS.txt`. Without both secrets, it still publishes the builds but appends `-unsigned` to every artifact filename, including `Setup-unsigned.exe`; users may see Windows security warnings or be blocked by Smart App Control. The job allows 60 minutes for packaging and upload headroom. Create a stable semantic-version tag to start a release:
 
 ```powershell
 git tag v1.0.0
@@ -293,7 +339,7 @@ On Windows 11 build 23466 or later, register the package identity, keep the appl
 
 ### Lighting changes after exit
 
-LampArray control ends when the process exits. Enable minimize-to-tray and leave the application running if the selected profile must remain active.
+On Windows 11 with the ambient registration, the interactive UI can exit without changing the lighting profile because the background host remains active. If the profile resets, confirm that `LenovoDesktopFanControl.exe --lighting-background` is running and review the background-host entries in `%LOCALAPPDATA%\LenovoDesktopFanControl\log.txt`.
 
 ### Settings behave unexpectedly
 
