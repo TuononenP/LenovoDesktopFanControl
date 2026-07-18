@@ -96,7 +96,7 @@ An MSI is not required for this workflow. It is useful if you want a standard **
 ## Compatibility and Requirements
 
 - Windows 10 or Windows 11
-- .NET 10 Desktop Runtime to run a built application
+- .NET 10 Desktop Runtime for the smaller framework-dependent ZIP; the Setup installer and self-contained ZIP include the runtime
 - .NET 10 SDK to build from source
 - A supported Lenovo desktop for real fan control
 - A Windows LampArray-compatible Lenovo lighting controller for lighting control
@@ -107,6 +107,28 @@ An MSI is not required for this workflow. It is useful if you want a standard **
 Target framework: `net10.0-windows10.0.26100.0`.
 
 Hardware support is detected at runtime. Unsupported systems show a clear status instead of attempting fan-control writes.
+
+## Install a Release
+
+Download the latest installer from [GitHub Releases](https://github.com/TuononenP/LenovoDesktopFanControl/releases). For most users, choose:
+
+```text
+LenovoDesktopFanControl-<version>-win-x64-Setup.exe
+```
+
+If the project does not yet have a trusted code-signing certificate, the filename is instead:
+
+```text
+LenovoDesktopFanControl-<version>-win-x64-Setup-unsigned.exe
+```
+
+The setup is self-contained, so it does not require a separate .NET runtime. It selects the Windows display language when supported and falls back to English. The installed application also supports English, Finnish, Simplified Chinese, French, German, Spanish, Japanese, and Korean.
+
+Installation is per-user. Setup adds a Start Menu shortcut and a standard **Settings > Apps > Installed apps** entry. Uninstall stops the interactive application and lighting host, removes the user-specific startup registrations, and deletes the installed files.
+
+On first launch, **Start with Windows** is enabled by default. This creates a user-specific elevated logon task for the hidden lighting host; it can be disabled from the application settings. Exiting the interactive UI does not stop that host, so the saved lighting profile remains active.
+
+Unsigned releases can still be installed on Windows configurations that allow the user to approve an unrecognized publisher, but Windows may display a security warning and Smart App Control can block them. Verify the downloaded file against `SHA256SUMS.txt` on the same release page before running it.
 
 ## Build, Run, and Test
 
@@ -134,7 +156,7 @@ dotnet build LenovoDesktopFanControl.Bundle\LenovoDesktopFanControl.Bundle.wixpr
 
 The build writes `LenovoDesktopFanControl.Bundle\bin\Release\LenovoDesktopFanControl-Setup.exe`. Its WiX setup wizard selects the Windows display language when WiX provides it and otherwise falls back to English. It embeds one neutral MSI that contains the application's English, Finnish, Simplified Chinese, French, German, Spanish, Japanese, and Korean resources; the app selects and saves the matching Windows language at first launch. Each installation is per-user, so its background host, startup task, and uninstall action remain isolated from other user sessions. The installer creates a Start Menu shortcut and uses an embedded, packaged custom-action DLL to close the interactive UI, stop the actual host during maintenance, restart an existing host after install or repair, and remove startup registrations before uninstall deletes files. The elevated app creates or refreshes its user-specific **Start with Windows** task on first launch; the task grants that user removal rights so the per-user uninstaller can remove it without requiring MSI elevation. The setup wizard uses the application's dark blue/violet cooling artwork.
 
-Only `Setup.exe` is distributed. Because it contains one self-contained MSI payload, it is roughly the size of one installer rather than eight (about 65 MB in the current build). To build separate standalone localized MSIs for a special distribution, pass the desired culture list with `'-p:Cultures=en-US;fi-FI;zh-CN;fr-FR;de-DE;es-ES;ja-JP;ko-KR'` when building `LenovoDesktopFanControl.Installer.wixproj`.
+Only `Setup.exe` is distributed as the installer. Because it contains one self-contained MSI payload, it is roughly the size of one installer rather than eight (about 64 MiB in the current build). To build separate standalone localized MSIs for a special distribution, pass the desired culture list with `'-p:Cultures=en-US;fi-FI;zh-CN;fr-FR;de-DE;es-ES;ja-JP;ko-KR'` when building `LenovoDesktopFanControl.Installer.wixproj`.
 
 Run the generated per-user setup normally:
 
@@ -254,7 +276,7 @@ LenovoDesktopFanControl/
 |   `-- Resources/                           English, Finnish, Chinese, French, German, Spanish, Japanese, and Korean strings
 |-- LenovoDesktopFanControl.Installer/       WiX MSI installer project
 |   |-- LenovoDesktopFanControl.Installer.wixproj MSI build and application publish target
-|   `-- Package.wxs                          MSI install and host-cleanup uninstall action
+|   `-- Package.wxs                          Per-user MSI and host-cleanup uninstall actions
 |-- LenovoDesktopFanControl.InstallerActions/ Embedded DTF custom-action project
 |   `-- InstallerCustomActions.cs            Secure host lifecycle and task-cleanup actions
 |-- LenovoDesktopFanControl.Bundle/          WiX Burn Setup.exe bundle
@@ -263,7 +285,10 @@ LenovoDesktopFanControl/
 |-- Packaging/
 |   `-- AppxManifest.xml                     Ambient background-lighting extension
 |-- tools/
+|   |-- Generate-InstallerFiles.ps1          Deterministic per-user MSI file components
 |   |-- Install-BackgroundLighting.ps1       Local identity registration
+|   |-- Sign-DevelopmentBuild.ps1            Local development-build signing
+|   |-- Sign-ReleaseArtifacts.ps1            Authenticode release signing
 |   |-- Stop-BackgroundLighting.ps1          Stops the lighting host before a build
 |   `-- Uninstall-BackgroundLighting.ps1     Local identity removal
 `-- LenovoDesktopFanControl.Tests/           xUnit test project
@@ -293,13 +318,15 @@ Do not commit generated `bin/` or `obj/` output, local settings, or logs.
 
 ## Releases
 
-The release workflow in `.github/workflows/release.yml` runs the complete test suite and publishes three Windows x64 artifacts:
+The release workflow in `.github/workflows/release.yml` restores the application and WiX projects, runs the complete test suite, builds the packaged installer custom action, validates the MSI with Windows Installer ICE checks, and publishes three Windows x64 artifacts:
 
 - A smaller framework-dependent build that requires the .NET 10 Desktop Runtime
 - A self-contained single-file build that includes the required runtime
 - One self-contained, localized `Setup.exe` bundle with Windows **Installed apps** uninstall support
 
-When `SIGNING_CERTIFICATE_BASE64` and `SIGNING_CERTIFICATE_PASSWORD` GitHub repository secrets are available, the release workflow signs the application executables, the internal MSI payload before it is bundled, and the final `Setup.exe` before generating `SHA256SUMS.txt`. Without both secrets, it still publishes the builds but appends `-unsigned` to every artifact filename, including `Setup-unsigned.exe`; users may see Windows security warnings or be blocked by Smart App Control. The job allows 60 minutes for packaging and upload headroom. Create a stable semantic-version tag to start a release:
+The release artifact also includes `SHA256SUMS.txt` for verifying every downloadable payload.
+
+When `SIGNING_CERTIFICATE_BASE64` and `SIGNING_CERTIFICATE_PASSWORD` GitHub repository secrets are available, the release workflow signs the application executables, the internal MSI payload before it is bundled, and the final `Setup.exe` before generating the checksums. Without both secrets, it still publishes all three builds and appends `-unsigned` to each ZIP or executable filename, including `Setup-unsigned.exe`; users may see Windows security warnings or be blocked by Smart App Control. The job allows 60 minutes for installer validation, packaging, and upload headroom. Create a stable `major.minor.patch` tag to start a release:
 
 ```powershell
 git tag v1.0.0
