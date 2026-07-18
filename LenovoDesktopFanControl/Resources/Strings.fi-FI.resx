@@ -122,7 +122,7 @@
   <data name="FanNameN" xml:space="preserve"><value>Tuuletin {0}</value></data>
 
   <!-- Curve editor -->
-  <data name="CurveEditorHeader" xml:space="preserve"><value>Järjestelmän tuuletinkäyräeditori</value></data>
+  <data name="CurveEditorHeader" xml:space="preserve"><value>{0}-tuulettimen käyrä</value></data>
   <data name="CurveEditorSubtitle" xml:space="preserve"><value>Määritä tuulettimen vaste lämpötila-alueella</value></data>
   <data name="FanSpeed" xml:space="preserve"><value>Tuuletinnopeus</value></data>
   <data name="ValidationError" xml:space="preserve"><value>Arvojen on oltava ei-väheneviä!</value></data>

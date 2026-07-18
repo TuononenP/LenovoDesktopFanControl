@@ -36,6 +36,8 @@ public partial class FanCurveEditorWindow : Window
         _maximumRpm = maximumRpm;
         _hasFirmwareRpmRange = hasFirmwareRpmRange;
         SourceInitialized += (_, _) => NativeWindowTheme.Apply(this);
+        Title = $"{fanName} · {LocalizationService.Get("CurveEditorTitle")}";
+        AutomationProperties.SetName(this, Title);
         Header.Text = LocalizationService.Get("CurveEditorHeader", fanName);
         FirmwareRangeText.Text = LocalizationService.Get(
             minimumRpm > 0 ? "FirmwareRpmRange" : "FirmwareMaxRpm",

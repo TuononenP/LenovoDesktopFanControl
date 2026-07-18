@@ -122,7 +122,7 @@
   <data name="FanNameN" xml:space="preserve"><value>Fan {0}</value></data>
 
   <!-- Curve editor -->
-  <data name="CurveEditorHeader" xml:space="preserve"><value>System Fan Curve Editor</value></data>
+  <data name="CurveEditorHeader" xml:space="preserve"><value>{0} fan curve</value></data>
   <data name="CurveEditorSubtitle" xml:space="preserve"><value>Shape fan response across the temperature range</value></data>
   <data name="FanSpeed" xml:space="preserve"><value>Fan Speed</value></data>
   <data name="ValidationError" xml:space="preserve"><value>Values must be non-decreasing!</value></data>
