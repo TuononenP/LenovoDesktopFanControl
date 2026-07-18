@@ -11,6 +11,7 @@ public interface ILightingControlService : IDisposable
     Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue);
     Task SetZoneBrightnessAsync(int zoneIndex, double brightness);
     Task SetZoneEnabledAsync(int zoneIndex, bool enabled);
+    Task ReapplyGpuStateAsync() => Task.CompletedTask;
     Task PersistStateAsync();
 
     bool IsControlAvailable { get; }

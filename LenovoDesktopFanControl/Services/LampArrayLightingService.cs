@@ -9,6 +9,7 @@ namespace LenovoDesktopFanControl.Services;
 public sealed class LampArrayLightingService : ILightingControlService
 {
     private const int RecoveryRetryCount = 5;
+    private const int GpuApplyDebounceMilliseconds = 75;
     private const float PhysicalGroupGapMeters = 0.15f;
     private static readonly string[] TowerZoneNameResourceKeys =
     [
@@ -32,6 +33,8 @@ public sealed class LampArrayLightingService : ILightingControlService
     private readonly Dictionary<int, double> _zoneBrightness = [];
     private readonly Dictionary<int, bool> _zoneEnabled = [];
     private int _gpuZoneIndex = -1;
+    private CancellationTokenSource? _gpuApplyCancellation;
+    private long _gpuApplyVersion;
 
     public bool IsControlAvailable => _lampArray?.IsAvailable ?? false;
 
@@ -257,8 +260,7 @@ public sealed class LampArrayLightingService : ILightingControlService
             // color write. Zero brightness is the controller-wide hard-off.
             lampArray.BrightnessLevel = 0;
         }
-        ApplyGpuState(enabled);
-        return Task.CompletedTask;
+        return QueueGpuStateAsync();
     }
 
     public Task SetBrightnessAsync(double brightness)
@@ -267,8 +269,7 @@ public sealed class LampArrayLightingService : ILightingControlService
         _lastBrightness = Math.Clamp(brightness, 0, 1);
         Log.Info($"LampArray.SetBrightnessAsync({brightness:F2}) -> {_lastBrightness:F2}");
         lampArray.BrightnessLevel = _lastEnabled ? _lastBrightness : 0;
-        ApplyGpuState(_lastEnabled);
-        return Task.CompletedTask;
+        return QueueGpuStateAsync();
     }
 
     public Task SetColorAsync(byte red, byte green, byte blue)
@@ -280,8 +281,7 @@ public sealed class LampArrayLightingService : ILightingControlService
         _gpuColor = (red, green, blue);
         Log.Info($"LampArray.SetColorAsync(r={red}, g={green}, b={blue}) -> all enabled zones");
         ApplyAllZoneColors();
-        ApplyGpuState(_lastEnabled);
-        return Task.CompletedTask;
+        return QueueGpuStateAsync();
     }
 
     public Task SetZoneColorAsync(int zoneIndex, byte red, byte green, byte blue)
@@ -298,8 +298,7 @@ public sealed class LampArrayLightingService : ILightingControlService
             Log.Info(
                 $"LampArray.SetZoneColorAsync(zone={zoneIndex} '{zone.Name}', " +
                 $"r={red}, g={green}, b={blue}) -> Lenovo RTX GPU");
-            ApplyGpuState(_lastEnabled);
-            return Task.CompletedTask;
+            return QueueGpuStateAsync();
         }
 
         var color = GetEffectiveTowerColor(
@@ -325,8 +324,7 @@ public sealed class LampArrayLightingService : ILightingControlService
 
         if (zoneIndex == _gpuZoneIndex)
         {
-            ApplyGpuState(_lastEnabled);
-            return Task.CompletedTask;
+            return QueueGpuStateAsync();
         }
 
         var savedColor = _zoneColors.TryGetValue(zoneIndex, out var color)
@@ -350,8 +348,7 @@ public sealed class LampArrayLightingService : ILightingControlService
 
         if (zoneIndex == _gpuZoneIndex)
         {
-            ApplyGpuState(_lastEnabled);
-            return Task.CompletedTask;
+            return QueueGpuStateAsync();
         }
 
         var savedColor = _zoneColors.TryGetValue(zoneIndex, out var color)
@@ -399,21 +396,52 @@ public sealed class LampArrayLightingService : ILightingControlService
             0,
             255);
 
-    private void ApplyGpuState(bool enabled)
+    private async Task QueueGpuStateAsync()
     {
         if (_gpuZoneIndex < 0)
             return;
 
-        if (!_gpuLightingController.TryApplyStaticColor(
-                _gpuColor.R,
-                _gpuColor.G,
-                _gpuColor.B,
-                _lastBrightness * GetZoneBrightness(_gpuZoneIndex),
-                enabled && IsZoneEnabled(_gpuZoneIndex)))
+        var version = Interlocked.Increment(ref _gpuApplyVersion);
+        var cancellation = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _gpuApplyCancellation, cancellation);
+        previous?.Cancel();
+
+        try
         {
-            throw new InvalidOperationException(
-                "The Lenovo RTX GPU lighting controller did not accept the color change");
+            try
+            {
+                await Task.Delay(GpuApplyDebounceMilliseconds, cancellation.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (version != Volatile.Read(ref _gpuApplyVersion))
+                return;
+
+            if (!_gpuLightingController.TryApplyStaticColor(
+                    _gpuColor.R,
+                    _gpuColor.G,
+                    _gpuColor.B,
+                    _lastBrightness * GetZoneBrightness(_gpuZoneIndex),
+                    _lastEnabled && IsZoneEnabled(_gpuZoneIndex)))
+            {
+                throw new InvalidOperationException(
+                    "The Lenovo RTX GPU lighting controller did not accept the color change");
+            }
         }
+        finally
+        {
+            Interlocked.CompareExchange(ref _gpuApplyCancellation, null, cancellation);
+            cancellation.Dispose();
+        }
+    }
+
+    public Task ReapplyGpuStateAsync()
+    {
+        Log.Info("Re-applying the current Lenovo RTX GPU lighting state");
+        return QueueGpuStateAsync();
     }
 
     private double GetZoneBrightness(int zoneIndex) =>

@@ -410,6 +410,9 @@ public sealed class LightingViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public Task ReapplyGpuStateAsync() =>
+        _service?.ReapplyGpuStateAsync() ?? Task.CompletedTask;
+
     internal async Task ApplyAsync()
     {
         if (_service == null || !IsAvailable || IsBusy)
