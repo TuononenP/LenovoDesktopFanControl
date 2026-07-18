@@ -10,6 +10,8 @@ Lenovo Desktop Fan Control is a Windows desktop application for monitoring and c
 
 This is an unofficial, community-developed project and is not affiliated with, endorsed by, or supported by Lenovo. Lenovo and Legion are trademarks of Lenovo Group Limited.
 
+Compatibility disclaimer: this application has only been tested on the 2025 Lenovo Legion T7 PC Tower. Other Lenovo models, years, hardware configurations, and firmware versions are untested and may not be supported.
+
 Fan curves, firmware modes, and lighting controls interact with hardware through administrator-level WMI and Windows device APIs. Incorrect fan settings can reduce cooling performance, increase component temperatures, cause instability, or shorten hardware lifespan. Hardware behavior and firmware interfaces can vary between models and BIOS versions.
 
 Use this software at your own risk. Monitor system temperatures, use conservative fan curves, and keep a supported recovery method available. The authors and contributors provide the software without warranty and are not responsible for hardware damage, data loss, instability, warranty impact, or other consequences arising from its use. See the [MIT License](LICENSE) for the full warranty and liability terms.
@@ -31,7 +33,7 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 - Windows Dynamic Lighting/LampArray device discovery
 - Lighting power and brightness controls
 - Global color selection
-- Independent color selection for detected lighting zones
+- Independent power and color selection for detected lighting zones
 - Saved lighting preferences restored at startup and when Windows grants lighting control
 - Windows 11 ambient background-lighting registration
 
@@ -63,7 +65,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Install-Backgrou
 
 Approve the administrator prompt, then open **Settings > Personalization > Dynamic Lighting > Background light control** and move **Lenovo Desktop Fan Control** to the top of the priority list. Registration uses a local development certificate and applies only to the specified build output. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Uninstall-BackgroundLighting.ps1` to remove the identity and certificate.
 
-Windows 10 supports foreground LampArray control only. Closing the process always releases the device, and Lenovo firmware may restore its own profile, commonly blue. Keep the registered application running or minimized in the notification area for background control.
+The registration script also signs the selected local app build. Once that development certificate exists, subsequent `dotnet build` and IDE builds are signed automatically so Windows Smart App Control does not block the rebuilt managed DLL.
+
+Windows 10 supports foreground LampArray control only. On exit, a short-lived helper waits for Windows to release LampArray ownership, then saves a uniform static tower color through the exact controller's guarded vendor HID interface (`VID 17EF`, `PID C955`, usage `FF89:00CC`). This lets a global static color survive after LampArray ownership is released without Lenovo software. Independent per-zone LampArray colors cannot be represented by that firmware profile, so keep the registered application running or minimized in the notification area when using them.
 
 Enabling **Start with Windows** creates a per-user Task Scheduler logon task with the highest available privileges and starts the app minimized to the notification area. This avoids the delay and elevation limitations of an ordinary `Run` registry entry. The window close button keeps the lighting controller running in the tray; choose **Exit** from the tray menu to stop the process.
 
