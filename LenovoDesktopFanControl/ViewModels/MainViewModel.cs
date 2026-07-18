@@ -22,6 +22,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly ISettingsService _settingsService;
     private readonly IAutoStartService _autoStartService;
     private readonly DispatcherTimer _timer;
+    private readonly ISystemTemperatureService _systemTemperatureService;
 
     private FanSettings _settings;
     private bool _isSupported;
@@ -37,6 +38,7 @@ public class MainViewModel : INotifyPropertyChanged
     private string _conflictWarning = "";
 
     public ObservableCollection<FanViewModel> Fans { get; } = [];
+    public ObservableCollection<SystemTemperatureViewModel> SystemTemperatures { get; } = [];
     public LightingViewModel Lighting { get; }
 
     public ObservableCollection<LanguageInfo> AvailableLanguages { get; } = [];
@@ -150,12 +152,16 @@ public class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel(IWmiFanControlService service, ISettingsService settingsService,
         IAutoStartService? autoStartService = null,
-        ILightingControlService? lightingControlService = null)
+        ILightingControlService? lightingControlService = null,
+        ISystemTemperatureService? systemTemperatureService = null)
     {
         _service = service;
         _settingsService = settingsService;
         _autoStartService = autoStartService ?? new AutoStartService();
         _settings = new FanSettings();
+        _systemTemperatureService = systemTemperatureService ?? new SystemTemperatureService();
+        foreach (var name in new[] { "GPU", "CPU", "SSD", "Motherboard" })
+            SystemTemperatures.Add(new SystemTemperatureViewModel(name));
         Lighting = new LightingViewModel(lightingControlService);
         Lighting.Applied += OnLightingApplied;
         Lighting.SettingsChanged += OnLightingSettingsChanged;
@@ -396,6 +402,8 @@ public class MainViewModel : INotifyPropertyChanged
                     fan.RecordTemperature(currentTemperature);
             }
 
+            await RefreshSystemTemperaturesAsync();
+
             if (DateTime.UtcNow - _lastTemperatureHistorySaveUtc >= TimeSpan.FromMinutes(5))
             {
                 SaveTemperatureHistory();
@@ -410,6 +418,23 @@ public class MainViewModel : INotifyPropertyChanged
         finally
         {
             Interlocked.Exchange(ref _refreshInProgress, 0);
+        }
+    }
+
+    private async Task RefreshSystemTemperaturesAsync()
+    {
+        try
+        {
+            var readings = await _systemTemperatureService.ReadAsync();
+            foreach (var reading in readings)
+            {
+                var viewModel = SystemTemperatures.FirstOrDefault(item => item.Name == reading.Name);
+                viewModel?.Update(reading);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"System temperature refresh failed: {ex.Message}");
         }
     }
 
