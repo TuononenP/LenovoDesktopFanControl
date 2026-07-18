@@ -29,4 +29,42 @@ public sealed class SystemTemperatureViewModelTests
 
         Assert.Same(viewModel, opened);
     }
+
+    [Fact]
+    public void Update_UpdatesDisplayPropertiesAndRaisesNotifications()
+    {
+        var viewModel = new SystemTemperatureViewModel("GPU");
+        var changed = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+
+        viewModel.Update(new SystemTemperatureReading("GPU", 65, "NVIDIA GPU temperature"));
+
+        Assert.Equal(65, viewModel.Temperature);
+        Assert.Equal("65 °C", viewModel.TemperatureText);
+        Assert.Equal("NVIDIA GPU temperature", viewModel.Detail);
+        Assert.Contains(nameof(SystemTemperatureViewModel.Temperature), changed);
+        Assert.Contains(nameof(SystemTemperatureViewModel.TemperatureText), changed);
+        Assert.Contains(nameof(SystemTemperatureViewModel.Detail), changed);
+    }
+
+    [Fact]
+    public void RestoreTemperatureHistory_CopiesInputAndRemovesExpiredSamples()
+    {
+        var now = DateTime.UtcNow;
+        var source = new TemperatureHistory
+        {
+            Samples =
+            [
+                new(now.AddHours(-13), 20),
+                new(now.AddMinutes(-10), 50)
+            ]
+        };
+        var viewModel = new SystemTemperatureViewModel("CPU");
+
+        viewModel.RestoreTemperatureHistory(source);
+        source.Samples.Clear();
+
+        var sample = Assert.Single(viewModel.TemperatureHistory.Samples);
+        Assert.Equal(50, sample.Celsius);
+    }
 }

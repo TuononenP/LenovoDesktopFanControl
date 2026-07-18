@@ -246,4 +246,30 @@ public class FanSettingsTests
 
         Assert.Same(globalCurve, settings.GetOrDefaultCurve(7));
     }
+
+    [Fact]
+    public void SetCurve_StoresDefensiveCopyWithoutChangingOtherFanCurves()
+    {
+        byte[] curve = [1, 1, 2, 2, 3, 3, 4, 5, 6, 7];
+        var settings = new FanSettings
+        {
+            FanCurves = { [2] = FanTable.Default().Speeds }
+        };
+
+        settings.SetCurve(7, curve);
+        curve[0] = 9;
+
+        Assert.Equal([1, 1, 2, 2, 3, 3, 4, 5, 6, 7], settings.FanCurves[7]);
+        Assert.True(settings.FanCurves.ContainsKey(2));
+    }
+
+    [Fact]
+    public void SetCurve_RejectsInvalidCurveWithoutPersistingIt()
+    {
+        var settings = new FanSettings();
+
+        Assert.Throws<ArgumentException>(() => settings.SetCurve(7, [1, 2, 3]));
+
+        Assert.Empty(settings.FanCurves);
+    }
 }
