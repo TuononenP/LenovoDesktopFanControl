@@ -1,7 +1,9 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using LenovoDesktopFanControl.Models;
+using LenovoDesktopFanControl.Services;
 using LenovoDesktopFanControl.ViewModels;
 using MediaColor = System.Windows.Media.Color;
 using WpfCanvas = System.Windows.Controls.Canvas;
@@ -31,6 +33,9 @@ public partial class TemperatureChartWindow : Window
     private TemperatureChartWindow(string sourceName, int? currentTemperature, TemperatureHistory history)
     {
         SourceName = sourceName;
+        Title = $"{sourceName} · Temperature history";
+        AutomationProperties.SetName(this, Title);
+        SourceInitialized += (_, _) => NativeWindowTheme.Apply(this);
         _samples = history.Samples.OrderBy(sample => sample.TimestampUtc).ToArray();
         var values = _samples.Select(sample => sample.Celsius).ToArray();
         CurrentLabel = currentTemperature is int current ? $"{current} °C" : "—";

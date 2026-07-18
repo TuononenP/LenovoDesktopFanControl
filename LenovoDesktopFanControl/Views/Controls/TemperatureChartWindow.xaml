@@ -4,10 +4,14 @@
         Title="Temperature history"
         Width="760" Height="500" MinWidth="560" MinHeight="390"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource WindowGradientBrush}"
+        ResizeMode="CanResize"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        Background="{StaticResource WindowBrush}"
         Foreground="{StaticResource TextPrimaryBrush}"
-        UseLayoutRounding="True">
-    <Grid Margin="26">
+        FontFamily="{StaticResource AppFont}">
+    <Grid Margin="26,22,26,24"
+          Background="{StaticResource WindowBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />

@@ -24,6 +24,9 @@ Use this software at your own risk. Monitor system temperatures, use conservativ
 
 - Quiet, Balanced, Performance, and Custom SmartFan modes
 - Live fan RPM and temperature monitoring
+- GPU, CPU, SSD, and motherboard/system temperature cards with source details
+- Clickable temperature-history charts, retaining detailed readings for one hour and compacted readings for up to twelve hours
+- Shared Lenovo firmware sensors shown once in System Temperatures instead of repeated on every affected fan card
 - Per-fan target speeds
 - Interactive ten-point fan-curve editor
 - Multi-channel telemetry grouped into logical fan zones
@@ -84,7 +87,7 @@ Enabling **Start with Windows** creates a per-user Task Scheduler logon task wit
 - A Windows LampArray-compatible Lenovo lighting controller for lighting control
 - An NVIDIA display driver for lighting control on the supported Lenovo OEM RTX 5080
 - Administrator privileges for Lenovo WMI operations
-- The official signed [PawnIO](https://pawnio.eu/) driver for low-level CPU and motherboard temperature telemetry
+- The official signed [PawnIO](https://pawnio.eu/) driver is optional, but required for CPU and motherboard telemetry on systems that need low-level sensor access
 
 Target framework: `net10.0-windows10.0.26100.0`.
 
@@ -113,8 +116,9 @@ dotnet test -c Release
 1. Select a SmartFan mode and choose **Apply Mode**.
 2. For manual control, select Custom mode, adjust a fan’s target speed, and choose **Apply Speed**.
 3. Use **Edit Curve** to configure and apply a ten-point curve for an individual fan zone.
-4. In Tower Lighting, enable the lights, select brightness and colors, then choose **Apply Lighting**.
-5. On supported Windows 11 builds, register and prioritize the app for background lighting if the selected color should remain active while another app is in the foreground.
+4. Click a System Temperatures card to view its temperature history. Shared motherboard/system sensors appear there once instead of on every fan card.
+5. In Tower Lighting, enable the lights, select brightness and colors, then choose **Apply Lighting**.
+6. On supported Windows 11 builds, register and prioritize the app for background lighting if the selected color should remain active while another app is in the foreground.
 
 Applying custom fan control changes firmware behavior. Monitor temperatures and use conservative curves appropriate for the installed hardware.
 
@@ -145,7 +149,7 @@ Application data is stored in:
 `-- log.txt
 ```
 
-`settings.json` contains fan curves, mode, language, startup/tray preferences, and lighting preferences. `log.txt` records hardware discovery, control operations, warnings, and errors.
+`settings.json` contains fan curves, fan and system temperature histories, mode, language, startup/tray preferences, and lighting preferences. `log.txt` records hardware discovery, control operations, warnings, and errors.
 
 If behavior is unexpected, close the application, inspect `log.txt`, and include the relevant entries with any bug report. Deleting `settings.json` resets application preferences to their defaults.
 
@@ -272,7 +276,9 @@ The workflow can also be started manually from the GitHub Actions page by provid
 - Install the official signed [PawnIO](https://pawnio.eu/) driver and restart the application.
 - Run the application as administrator.
 - Review the LibreHardwareMonitor sensor inventory in `%LOCALAPPDATA%\LenovoDesktopFanControl\log.txt`.
-- Motherboard temperature requires a `System` or `Motherboard` sensor exposed by the board's Super I/O controller; unsupported boards remain clearly marked as unavailable.
+- Motherboard temperature normally requires a `System` or `Motherboard` sensor exposed by the board's Super I/O controller.
+- On supported Lenovo desktops where no named board sensor is exposed, the app can display the shared firmware system sensor used by the chassis fans. Its source is labelled clearly in the UI.
+- If neither source is available, the reading remains unavailable rather than guessing from an unrelated sensor.
 
 ### Lighting does not appear
 
