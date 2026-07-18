@@ -81,7 +81,7 @@ public sealed class SystemTemperatureService : ISystemTemperatureService
                     hardware.Where(item => item.HardwareType == HardwareType.Storage),
                     ["Temperature", "Composite Temperature"],
                     allowNamePrefix: true),
-                "Drive SMART temperature unavailable"),
+                LocalizationService.Get("DetailDriveSmartTemperatureUnavailable")),
             CreateReading("Motherboard", motherboardSensor, RequiresPawnIo("motherboard"))
         ];
     }
@@ -101,16 +101,16 @@ public sealed class SystemTemperatureService : ISystemTemperatureService
             };
             using var process = Process.Start(start);
             if (process == null || !process.WaitForExit(2_000) || process.ExitCode != 0)
-                return new SystemTemperatureReading("GPU", null, "NVIDIA telemetry unavailable");
+                return new SystemTemperatureReading("GPU", null, LocalizationService.Get("DetailNvidiaTelemetryUnavailable"));
 
             var output = process.StandardOutput.ReadToEnd().Trim();
             return int.TryParse(output.Split('\n')[0].Trim(), out var temperature)
-                ? new SystemTemperatureReading("GPU", temperature, "NVIDIA GPU temperature")
-                : new SystemTemperatureReading("GPU", null, "NVIDIA telemetry unavailable");
+                ? new SystemTemperatureReading("GPU", temperature, LocalizationService.Get("DetailNvidiaGpuTemperature"))
+                : new SystemTemperatureReading("GPU", null, LocalizationService.Get("DetailNvidiaTelemetryUnavailable"));
         }
         catch
         {
-            return new SystemTemperatureReading("GPU", null, "NVIDIA telemetry unavailable");
+            return new SystemTemperatureReading("GPU", null, LocalizationService.Get("DetailNvidiaTelemetryUnavailable"));
         }
     }
 
@@ -190,8 +190,8 @@ public sealed class SystemTemperatureService : ISystemTemperatureService
 
     private static string RequiresPawnIo(string sensorName) =>
         PawnIo.IsInstalled
-            ? $"No {sensorName} sensor exposed by this system"
-            : $"Install PawnIO to read {sensorName} temperature";
+            ? LocalizationService.Get("DetailNoSensorExposed", sensorName)
+            : LocalizationService.Get("DetailInstallPawnIo", sensorName);
 
     private void LogSensorInventory(IReadOnlyList<IHardware> hardware)
     {
@@ -216,9 +216,9 @@ public sealed class SystemTemperatureService : ISystemTemperatureService
 
     private static IReadOnlyList<SystemTemperatureReading> UnavailableReadings() =>
     [
-        new("GPU", null, "NVIDIA telemetry unavailable"),
+        new("GPU", null, LocalizationService.Get("DetailNvidiaTelemetryUnavailable")),
         new("CPU", null, RequiresPawnIo("CPU")),
-        new("SSD", null, "Drive SMART temperature unavailable"),
+        new("SSD", null, LocalizationService.Get("DetailDriveSmartTemperatureUnavailable")),
         new("Motherboard", null, RequiresPawnIo("motherboard"))
     ];
 

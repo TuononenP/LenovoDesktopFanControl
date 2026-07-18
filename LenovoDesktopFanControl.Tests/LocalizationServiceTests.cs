@@ -52,6 +52,16 @@ public class LocalizationServiceTests : IDisposable
     }
 
     [Fact]
+    public void TemperatureMonitoringResources_AreLocalizedInFinnish()
+    {
+        LocalizationService.SetLanguage("fi-FI");
+
+        Assert.Equal("Järjestelmän lämpötilat", LocalizationService.Get("SystemTemperatures"));
+        Assert.Equal("GPU · Lämpötilahistoria", LocalizationService.Get("TemperatureHistoryTitle", "GPU"));
+        Assert.Equal("NVIDIA-telemetria ei ole käytettävissä", LocalizationService.Get("DetailNvidiaTelemetryUnavailable"));
+    }
+
+    [Fact]
     public void LocSetCulture_RaisesIndexerNotification()
     {
         string? propertyName = null;

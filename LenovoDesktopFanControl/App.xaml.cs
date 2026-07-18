@@ -36,8 +36,8 @@ public partial class App : System.Windows.Application
             _singleInstanceMutex.Dispose();
             _singleInstanceMutex = null;
             System.Windows.MessageBox.Show(
-                "Lenovo Desktop Fan Control is already running.",
-                "Lenovo Desktop Fan Control",
+                Services.LocalizationService.Get("MsgApplicationAlreadyRunning"),
+                Services.LocalizationService.Get("AppTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             Shutdown();

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using LenovoDesktopFanControl.Models;
+using LenovoDesktopFanControl.Services;
 
 namespace LenovoDesktopFanControl.ViewModels;
 
@@ -9,7 +10,8 @@ public sealed class SystemTemperatureViewModel : INotifyPropertyChanged
 {
     private int? _temperature;
     private string _detail = "";
-    public string Name { get; }
+    public string SourceId { get; }
+    public string Name { get; private set; }
     public TemperatureHistory TemperatureHistory { get; } = new();
     public ICommand OpenTemperatureChartCommand { get; }
     public int? Temperature { get => _temperature; private set { _temperature = value; OnPropertyChanged(); OnPropertyChanged(nameof(TemperatureText)); } }
@@ -17,8 +19,23 @@ public sealed class SystemTemperatureViewModel : INotifyPropertyChanged
     public string TemperatureText => Temperature is int value ? $"{value} °C" : "—";
     public SystemTemperatureViewModel(string name, Action<SystemTemperatureViewModel>? openTemperatureChart = null)
     {
+        SourceId = name;
         Name = name;
+        RefreshLocalizedName();
         OpenTemperatureChartCommand = new RelayCommand(() => openTemperatureChart?.Invoke(this));
+    }
+
+    internal void RefreshLocalizedName()
+    {
+        Name = SourceId switch
+        {
+            "GPU" => LocalizationService.Get("SystemTemperatureGpu"),
+            "CPU" => LocalizationService.Get("SystemTemperatureCpu"),
+            "SSD" => LocalizationService.Get("SystemTemperatureSsd"),
+            "Motherboard" => LocalizationService.Get("SystemTemperatureMotherboard"),
+            _ => SourceId
+        };
+        OnPropertyChanged(nameof(Name));
     }
 
     public void Update(SystemTemperatureReading reading)

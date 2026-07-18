@@ -179,6 +179,28 @@
   <data name="AutomationCurvePoint" xml:space="preserve"><value>Fan speed at {0} °C</value></data>
   <data name="AutomationCurvePointHelp" xml:space="preserve"><value>Use the arrow keys to adjust this curve point.</value></data>
 
+  <!-- Temperature monitoring -->
+  <data name="SystemTemperatures" xml:space="preserve"><value>System temperatures</value></data>
+  <data name="SystemTemperaturesSubtitle" xml:space="preserve"><value>Verified telemetry sources are shown; unavailable firmware sensors are labelled clearly.</value></data>
+  <data name="SystemTemperatureGpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="SystemTemperatureCpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="SystemTemperatureSsd" xml:space="preserve"><value>SSD</value></data>
+  <data name="SystemTemperatureMotherboard" xml:space="preserve"><value>Motherboard</value></data>
+  <data name="TooltipOpenTemperatureHistory" xml:space="preserve"><value>Click to view temperature history</value></data>
+  <data name="TemperatureHistoryTitle" xml:space="preserve"><value>{0} · Temperature history</value></data>
+  <data name="TemperatureHistorySubtitle" xml:space="preserve"><value>Temperature history · detailed for the last hour, compacted up to 12 hours</value></data>
+  <data name="TemperatureHistoryCurrent" xml:space="preserve"><value>Current</value></data>
+  <data name="TemperatureHistoryLow" xml:space="preserve"><value>Low</value></data>
+  <data name="TemperatureHistoryHigh" xml:space="preserve"><value>High</value></data>
+  <data name="TemperatureHistoryEmpty" xml:space="preserve"><value>Temperature history will appear after the next reading.</value></data>
+  <data name="DetailNvidiaTelemetryUnavailable" xml:space="preserve"><value>NVIDIA telemetry unavailable</value></data>
+  <data name="DetailNvidiaGpuTemperature" xml:space="preserve"><value>NVIDIA GPU temperature</value></data>
+  <data name="DetailDriveSmartTemperatureUnavailable" xml:space="preserve"><value>Drive SMART temperature unavailable</value></data>
+  <data name="DetailNoSensorExposed" xml:space="preserve"><value>No {0} sensor exposed by this system</value></data>
+  <data name="DetailInstallPawnIo" xml:space="preserve"><value>Install PawnIO to read {0} temperature</value></data>
+  <data name="DetailFirmwareSharedSystemSensor" xml:space="preserve"><value>Lenovo firmware shared system sensor (ID {0})</value></data>
+  <data name="MsgApplicationAlreadyRunning" xml:space="preserve"><value>Lenovo Desktop Fan Control is already running.</value></data>
+
   <!-- Tray -->
   <data name="TrayShow" xml:space="preserve"><value>Show</value></data>
   <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>

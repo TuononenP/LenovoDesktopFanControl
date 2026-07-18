@@ -167,7 +167,7 @@
                         VerticalAlignment="Top"
                         Visibility="{Binding ShowTemperature, Converter={StaticResource Bool2Vis}}"
                         Command="{Binding OpenTemperatureChartCommand}"
-                        ToolTip="Click to view temperature history"
+                        ToolTip="{loc:Loc TooltipOpenTemperatureHistory}"
                         Cursor="Hand"
                         Background="{StaticResource SurfaceElevatedBrush}"
                         BorderBrush="{StaticResource BorderBrush}"

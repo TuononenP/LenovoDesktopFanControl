@@ -1,4 +1,5 @@
 using LenovoDesktopFanControl.Models;
+using LenovoDesktopFanControl.Services;
 using LenovoDesktopFanControl.ViewModels;
 
 namespace LenovoDesktopFanControl.Tests;
@@ -28,6 +29,23 @@ public sealed class SystemTemperatureViewModelTests
         viewModel.OpenTemperatureChartCommand.Execute(null);
 
         Assert.Same(viewModel, opened);
+    }
+
+    [Fact]
+    public void RefreshLocalizedName_UsesLocalizedDisplayNameWhileKeepingStableSourceId()
+    {
+        try
+        {
+            LocalizationService.SetLanguage("fi-FI");
+            var viewModel = new SystemTemperatureViewModel("Motherboard");
+
+            Assert.Equal("Motherboard", viewModel.SourceId);
+            Assert.Equal("Emolevy", viewModel.Name);
+        }
+        finally
+        {
+            LocalizationService.SetLanguage("en");
+        }
     }
 
     [Fact]

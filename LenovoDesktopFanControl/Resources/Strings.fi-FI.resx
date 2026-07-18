@@ -179,6 +179,28 @@
   <data name="AutomationCurvePoint" xml:space="preserve"><value>Tuulettimen nopeus lämpötilassa {0} °C</value></data>
   <data name="AutomationCurvePointHelp" xml:space="preserve"><value>Säädä tätä käyräpistettä nuolinäppäimillä.</value></data>
 
+  <!-- Lämpötilan valvonta -->
+  <data name="SystemTemperatures" xml:space="preserve"><value>Järjestelmän lämpötilat</value></data>
+  <data name="SystemTemperaturesSubtitle" xml:space="preserve"><value>Varmennetut telemetrialähteet näytetään; saatavilla olemattomat laiteohjelmistoanturit merkitään selkeästi.</value></data>
+  <data name="SystemTemperatureGpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="SystemTemperatureCpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="SystemTemperatureSsd" xml:space="preserve"><value>SSD</value></data>
+  <data name="SystemTemperatureMotherboard" xml:space="preserve"><value>Emolevy</value></data>
+  <data name="TooltipOpenTemperatureHistory" xml:space="preserve"><value>Napsauta nähdäksesi lämpötilahistorian</value></data>
+  <data name="TemperatureHistoryTitle" xml:space="preserve"><value>{0} · Lämpötilahistoria</value></data>
+  <data name="TemperatureHistorySubtitle" xml:space="preserve"><value>Lämpötilahistoria · tarkat tiedot viimeiseltä tunnilta, kooste enintään 12 tunnilta</value></data>
+  <data name="TemperatureHistoryCurrent" xml:space="preserve"><value>Nykyinen</value></data>
+  <data name="TemperatureHistoryLow" xml:space="preserve"><value>Alin</value></data>
+  <data name="TemperatureHistoryHigh" xml:space="preserve"><value>Korkein</value></data>
+  <data name="TemperatureHistoryEmpty" xml:space="preserve"><value>Lämpötilahistoria näytetään seuraavan mittauksen jälkeen.</value></data>
+  <data name="DetailNvidiaTelemetryUnavailable" xml:space="preserve"><value>NVIDIA-telemetria ei ole käytettävissä</value></data>
+  <data name="DetailNvidiaGpuTemperature" xml:space="preserve"><value>NVIDIA-näytönohjaimen lämpötila</value></data>
+  <data name="DetailDriveSmartTemperatureUnavailable" xml:space="preserve"><value>Aseman SMART-lämpötila ei ole käytettävissä</value></data>
+  <data name="DetailNoSensorExposed" xml:space="preserve"><value>Järjestelmä ei tarjoa {0}-anturia</value></data>
+  <data name="DetailInstallPawnIo" xml:space="preserve"><value>Asenna PawnIO lukeaksesi {0}-lämpötilan</value></data>
+  <data name="DetailFirmwareSharedSystemSensor" xml:space="preserve"><value>Lenovon laiteohjelmiston jaettu järjestelmäanturi (tunnus {0})</value></data>
+  <data name="MsgApplicationAlreadyRunning" xml:space="preserve"><value>Lenovo Desktop Fan Control on jo käynnissä.</value></data>
+
   <!-- Tray -->
   <data name="TrayShow" xml:space="preserve"><value>Näytä</value></data>
   <data name="TrayExit" xml:space="preserve"><value>Lopeta</value></data>

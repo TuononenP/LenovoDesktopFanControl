@@ -33,9 +33,6 @@ public partial class TemperatureChartWindow : Window
     private TemperatureChartWindow(string sourceName, int? currentTemperature, TemperatureHistory history)
     {
         SourceName = sourceName;
-        Title = $"{sourceName} · Temperature history";
-        AutomationProperties.SetName(this, Title);
-        SourceInitialized += (_, _) => NativeWindowTheme.Apply(this);
         _samples = history.Samples.OrderBy(sample => sample.TimestampUtc).ToArray();
         var values = _samples.Select(sample => sample.Celsius).ToArray();
         CurrentLabel = currentTemperature is int current ? $"{current} °C" : "—";
@@ -43,6 +40,9 @@ public partial class TemperatureChartWindow : Window
         HighLabel = values.Length > 0 ? $"{values.Max()} °C" : "—";
         DataContext = this;
         InitializeComponent();
+        Title = LocalizationService.Get("TemperatureHistoryTitle", sourceName);
+        AutomationProperties.SetName(this, Title);
+        SourceInitialized += (_, _) => NativeWindowTheme.Apply(this);
         Loaded += (_, _) => DrawChart();
     }
 

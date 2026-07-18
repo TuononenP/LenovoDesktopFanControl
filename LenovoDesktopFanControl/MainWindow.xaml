@@ -464,9 +464,9 @@
                         BorderThickness="1"
                         CornerRadius="14">
                     <StackPanel>
-                        <TextBlock Text="System Temperatures"
+                        <TextBlock Text="{loc:Loc SystemTemperatures}"
                                    Style="{StaticResource EyebrowTextStyle}" />
-                        <TextBlock Text="Verified telemetry sources are shown; unavailable firmware sensors are labelled clearly."
+                        <TextBlock Text="{loc:Loc SystemTemperaturesSubtitle}"
                                    Margin="0,5,0,14"
                                    FontSize="11"
                                    Foreground="{StaticResource TextMutedBrush}" />
@@ -479,7 +479,7 @@
                                     <Button Margin="0,0,9,0"
                                             Padding="0"
                                             Cursor="Hand"
-                                            ToolTip="Click to view temperature history"
+                                            ToolTip="{loc:Loc TooltipOpenTemperatureHistory}"
                                             Command="{Binding OpenTemperatureChartCommand}"
                                             Background="Transparent"
                                             BorderThickness="0">

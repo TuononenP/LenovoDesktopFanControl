@@ -206,6 +206,8 @@ public class MainViewModel : INotifyPropertyChanged
         Loc.SetCulture(LocalizationService.CurrentCulture);
         foreach (var fan in Fans)
             fan.RefreshLocalizedName();
+        foreach (var temperature in SystemTemperatures)
+            temperature.RefreshLocalizedName();
         _settings.Language = lang;
         _settingsService.Save(_settings);
         if (IsBusy)
@@ -257,7 +259,7 @@ public class MainViewModel : INotifyPropertyChanged
             _settings = _settingsService.Load();
             foreach (var temperature in SystemTemperatures)
             {
-                if (_settings.SystemTemperatureHistory.TryGetValue(temperature.Name, out var history))
+                if (_settings.SystemTemperatureHistory.TryGetValue(temperature.SourceId, out var history))
                     temperature.RestoreTemperatureHistory(history);
             }
             _timer.Interval = TimeSpan.FromMilliseconds(
@@ -434,7 +436,7 @@ public class MainViewModel : INotifyPropertyChanged
             var readings = await _systemTemperatureService.ReadAsync();
             foreach (var reading in readings)
             {
-                var viewModel = SystemTemperatures.FirstOrDefault(item => item.Name == reading.Name);
+                var viewModel = SystemTemperatures.FirstOrDefault(item => item.SourceId == reading.Name);
                 viewModel?.Update(reading);
             }
 
@@ -449,7 +451,7 @@ public class MainViewModel : INotifyPropertyChanged
                 var fallback = FindFirmwareSystemTemperature();
                 if (fallback != null)
                 {
-                    SystemTemperatures.FirstOrDefault(item => item.Name == "Motherboard")
+                    SystemTemperatures.FirstOrDefault(item => item.SourceId == "Motherboard")
                         ?.Update(fallback);
                 }
             }
@@ -483,7 +485,7 @@ public class MainViewModel : INotifyPropertyChanged
             : new SystemTemperatureReading(
                 "Motherboard",
                 sensor.Celsius,
-                $"Lenovo firmware shared system sensor (ID {sensor.SensorId})");
+                LocalizationService.Get("DetailFirmwareSharedSystemSensor", sensor.SensorId));
     }
 
     private void UpdateSharedTemperaturePresentation()
@@ -905,7 +907,7 @@ public class MainViewModel : INotifyPropertyChanged
         {
             temperature.TemperatureHistory.Compact(DateTime.UtcNow);
             if (temperature.TemperatureHistory.Samples.Count > 0)
-                _settings.SystemTemperatureHistory[temperature.Name] = temperature.TemperatureHistory;
+                _settings.SystemTemperatureHistory[temperature.SourceId] = temperature.TemperatureHistory;
         }
     }
 }
