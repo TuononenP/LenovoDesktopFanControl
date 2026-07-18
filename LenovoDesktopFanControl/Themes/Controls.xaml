@@ -222,11 +222,12 @@
             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="MinHeight" Value="26" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
-                        <Grid Background="Transparent">
+                        <Grid MinHeight="26" Background="Transparent">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="18" />
                                 <ColumnDefinition Width="8" />
@@ -288,14 +289,16 @@
                             </Grid.ColumnDefinitions>
                             <Border x:Name="SwitchTrack"
                                     Width="38" Height="22"
+                                    VerticalAlignment="Center"
                                     Background="{StaticResource SurfaceHoverBrush}"
                                     BorderBrush="{StaticResource BorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="11">
                                 <Ellipse x:Name="SwitchThumb"
                                          Width="14" Height="14"
-                                         Margin="3"
+                                         Margin="3,0"
                                          HorizontalAlignment="Left"
+                                         VerticalAlignment="Center"
                                          Fill="{StaticResource TextSecondaryBrush}" />
                             </Border>
                             <ContentPresenter Grid.Column="2"
